@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 1000px;
+      max-width: 1300px;
       margin: auto;
       padding: 2rem;
     }
@@ -72,7 +72,34 @@
     .szerzo-row input {
       flex: 1;
     }
-  </style>
+
+.rating-score {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rating-score label {
+  flex: 1;
+}
+
+.score-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.score-input input {
+  width: 60px;
+}
+
+.rating-item {
+  margin-bottom: 2rem;
+}
+</style>
+
 </head>
 <body>
   <label for="paperSelect">Dolgozat kiválasztása:</label>
@@ -84,71 +111,95 @@
   <h1>Tudományos és Művészeti Diákköri Konferencia</h1>
   <h2>Pontozólap a dolgozat bírálatához</h2>
 
+  <hr>
+  <p>Az értékelő lap feltöltéséhez kérem kattintson a Browse gombra!</p>
+  <p><input type="file" id="upload" accept=".xlsx, .xls" </p>
+  <br>
+
   <h3>Szerző(k) adatai</h3>
-  <div id="szerzok-container">
-    <!-- 4 sor alapból -->
-    <div class="szerzo-row">
-      <input type="text" placeholder="Szerző neve">
-      <input type="text" placeholder="Szak">
-      <input type="text" placeholder="Évfolyam">
-    </div>
-    <div class="szerzo-row">
-      <input type="text" placeholder="Szerző neve">
-      <input type="text" placeholder="Szak">
-      <input type="text" placeholder="Évfolyam">
-    </div>
-    <div class="szerzo-row">
-      <input type="text" placeholder="Szerző neve">
-      <input type="text" placeholder="Szak">
-      <input type="text" placeholder="Évfolyam">
-    </div>
-    <div class="szerzo-row">
-      <input type="text" placeholder="Szerző neve">
-      <input type="text" placeholder="Szak">
-      <input type="text" placeholder="Évfolyam">
-    </div>
+<div class="szerzo-row" style="font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 4px;">
+  <div style="flex:1">Név</div>
+  <div style="flex:1">Szak</div>
+  <div style="flex:1">Évfolyam</div>
+</div>
+
+<div id="szerzok-container">
+  <!-- A JavaScript fogja majd feltölteni a megfelelő számú szerzői sort -->
+</div>
+
+
   </div>
 
   <!-- Módosított rész -->
-  <div class="row-flex" style="flex-direction: column;">
+  <div class="row-flex" style="flex-direction: column; font-weight: bold;">
     <label>A dolgozat címe:<br><input type="text" id="cim" /></label>
     <label>A szekció neve:<br><input type="text" id="szekcio" /></label>
   </div>
 
-  <h2>Értékelési szempontok</h2>
+<h2>Értékelési szempontok</h2>
 
-  <table>
-    <tbody>
-      <tr>
-        <td>1. A dolgozat szerkesztése, stílusa (max. 9 pont)</td>
-        <td><textarea id="text1"></textarea></td>
-        <td class="score"><input type="number" id="score1" min="0" max="9" /></td>
-      </tr>
-      <tr>
-        <td>2. Irodalmi feldolgozás (max. 9 pont)</td>
-        <td><textarea id="text2"></textarea></td>
-        <td class="score"><input type="number" id="score2" min="0" max="9" /></td>
-      </tr>
-      <tr>
-        <td>3. A téma kidolgozásának színvonala (max. 9 pont)</td>
-        <td><textarea id="text3"></textarea></td>
-        <td class="score"><input type="number" id="score3" min="0" max="9" /></td>
-      </tr>
-      <tr>
-        <td>4. Eredmények kiértékelése (max. 9 pont)</td>
-        <td><textarea id="text4"></textarea></td>
-        <td class="score"><input type="number" id="score4" min="0" max="9" /></td>
-      </tr>
-      <tr>
-        <td>5. A kapott eredmények alkalmazhatósága (max. 9 pont)</td>
-        <td><textarea id="text5"></textarea></td>
-        <td class="score"><input type="number" id="score5" min="0" max="9" /></td>
-      </tr>
-    </tbody>
-  </table>
+<div class="rating-block">
+  <div class="rating-item">
+    <div class="rating-score">
+      <label for="score1">1. A dolgozat szerkesztése, stílusa (max. 9 pont)</label>
+      <div class="score-input">
+        <span>Pontszám:</span>
+        <input type="number" id="score1" min="0" max="9" />
+      </div>
+    </div>
+    <textarea id="text1"></textarea>
+  </div>
+
+  <div class="rating-item">
+    <div class="rating-score">
+      <label for="score2">2. Irodalmi feldolgozás (max. 9 pont)</label>
+      <div class="score-input">
+        <span>Pontszám:</span>
+        <input type="number" id="score2" min="0" max="9" />
+      </div>
+    </div>
+    <textarea id="text2"></textarea>
+  </div>
+
+  <div class="rating-item">
+    <div class="rating-score">
+      <label for="score3">3. A téma kidolgozásának színvonala (max. 9 pont)</label>
+      <div class="score-input">
+        <span>Pontszám:</span>
+        <input type="number" id="score3" min="0" max="9" />
+      </div>
+    </div>
+    <textarea id="text3"></textarea>
+  </div>
+
+  <div class="rating-item">
+    <div class="rating-score">
+      <label for="score4">4. Eredmények kiértékelése (max. 9 pont)</label>
+      <div class="score-input">
+        <span>Pontszám:</span>
+        <input type="number" id="score4" min="0" max="9" />
+      </div>
+    </div>
+    <textarea id="text4"></textarea>
+  </div>
+
+  <div class="rating-item">
+    <div class="rating-score">
+      <label for="score5">5. A kapott eredmények alkalmazhatósága (max. 9 pont)</label>
+      <div class="score-input">
+        <span>Pontszám:</span>
+        <input type="number" id="score5" min="0" max="9" />
+      </div>
+    </div>
+    <textarea id="text5"></textarea>
+  </div>
+</div>
+
+</div>
+
 
 <div class="total">
-  Elérhető maximális pontszám: 45 pont<br>
+  Elérhető maximális pontszám: 45<br>
   A dolgozatra kapott összpontszám: <span id="totalScore">0</span>
 </div>
 
@@ -164,43 +215,49 @@
   </div>
 </div>
 
-<hr><br>
-<input type="file" id="upload" accept=".xlsx, .xls" />
-
 <script>
   document.getElementById("upload").addEventListener("change", handleFile, false);
 
-  function handleFile(e) {
-    const file = e.target.files[0];
-    const reader = new FileReader();
+function handleFile(e) {
+  const file = e.target.files[0];
+  const reader = new FileReader();
 
-    reader.onload = function (e) {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  reader.onload = function (e) {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Szerzők (4 sor)
-      for (let i = 0; i < 4; i++) {
-        const nameCell = sheet[`A${4 + i}`];
-        const szakCell = sheet[`B${4 + i}`];
-        const evfCell = sheet[`C${4 + i}`];
-        const row = document.querySelectorAll("#szerzok-container .szerzo-row")[i];
-        if (row) {
-          row.children[0].value = nameCell ? nameCell.v : "";
-          row.children[1].value = szakCell ? szakCell.v : "";
-          row.children[2].value = evfCell ? evfCell.v : "";
-        }
-      }
+    // 🎯 Csak pontszámok
+    document.getElementById("score1").value = sheet["C12"]?.v || '';
+    document.getElementById("score2").value = sheet["C14"]?.v || '';
+    document.getElementById("score3").value = sheet["C16"]?.v || '';
+    document.getElementById("score4").value = sheet["C18"]?.v || '';
+    document.getElementById("score5").value = sheet["C20"]?.v || '';
 
-      // Dolgozat címe és szekció
-      const cimCell = sheet["A9"];
-      const szekcioCell = sheet["A11"];
-      document.getElementById("cim").value = cimCell ? cimCell.v : "";
-      document.getElementById("szekcio").value = szekcioCell ? szekcioCell.v : "";
-    };
 
-    reader.readAsArrayBuffer(file);
-  }
+    // 🎯 Szöveges értékelések
+    document.getElementById("text1").value = sheet["A13"]?.v || '';
+    document.getElementById("text2").value = sheet["A15"]?.v || '';
+    document.getElementById("text3").value = sheet["A17"]?.v || '';
+    document.getElementById("text4").value = sheet["A19"]?.v || '';
+    document.getElementById("text5").value = sheet["A21"]?.v || '';
+
+
+    // 🎯 Dátum és zsűri elnöke
+    const rawDatum = sheet["A24"]?.v || '';
+    const onlyDate = rawDatum.match(/\d{4}\.\d{2}\.\d{2}\./)?.[0] || '';
+    document.getElementById("datum").value = onlyDate;
+
+    document.getElementById("elnok").value = sheet["C24"]?.v || '';
+
+    // 🎯 Összpontszám
+    document.getElementById("totalScore").textContent = sheet["C22"]?.v || '0';
+  };
+
+
+  reader.readAsArrayBuffer(file);
+}
+
 
   // 🔹 1. Dolgozatlista betöltése
   fetch('/api/papers')
@@ -213,31 +270,56 @@
         option.textContent = paper.cim;
         select.appendChild(option);
       });
-    }) // ← EDDIG HIÁNYZOTT A ZÁRÁS!
+    })
     .catch(err => console.error('Hiba a dolgozatok betöltésénél:', err));
 
   // 🔹 2. Dolgozat adatainak betöltése választáskor
   document.getElementById('paperSelect').addEventListener('change', function() {
-    const id = this.value;
-    if (!id) return;
+  const id = this.value;
+  if (!id) return;
 
-    fetch(`/api/papers/${id}`)
-      .then(res => res.json())
-      .then(paper => {
-        document.getElementById('cim').value = paper.cim || '';
-        document.getElementById('szekcio').value = paper.szekcio || '';
+  fetch(`/api/papers/${id}`)
+    .then(res => res.json())
+    .then(paper => {
+      // Cím és szekció beállítása
+      document.getElementById('cim').value = paper.cim || '';
+      document.getElementById('szekcio').value = paper.szekcio || '';
 
-        const szerzoRows = document.querySelectorAll("#szerzok-container .szerzo-row");
-        if (paper.szerzok && paper.szerzok.length > 0) {
-          paper.szerzok.slice(0, 4).forEach((szerzo, i) => {
-            szerzoRows[i].children[0].value = szerzo.nev || '';
-            szerzoRows[i].children[1].value = szerzo.szak || '';
-            szerzoRows[i].children[2].value = szerzo.evfolyam || '';
-          });
-        }
-      })
-      .catch(err => console.error('Hiba a dolgozat adatainak betöltésénél:', err));
-  });
+      // Előző szerzői sorok törlése
+      const szerzokContainer = document.getElementById('szerzok-container');
+      szerzokContainer.innerHTML = '';
+
+      // Új sorok létrehozása szerzők alapján
+      if (Array.isArray(paper.szerzok)) {
+        paper.szerzok.forEach(szerzo => {
+          const row = document.createElement('div');
+          row.className = 'szerzo-row';
+
+          const nevInput = document.createElement('input');
+          nevInput.type = 'text';
+          nevInput.placeholder = 'Szerző neve';
+          nevInput.value = szerzo.nev || '';
+
+          const szakInput = document.createElement('input');
+          szakInput.type = 'text';
+          szakInput.placeholder = 'Szak';
+          szakInput.value = szerzo.szak || '';
+
+          const evfInput = document.createElement('input');
+          evfInput.type = 'text';
+          evfInput.placeholder = 'Évfolyam';
+          evfInput.value = szerzo.evfolyam || '';
+
+          row.appendChild(nevInput);
+          row.appendChild(szakInput);
+          row.appendChild(evfInput);
+          szerzokContainer.appendChild(row);
+        });
+      }
+    })
+    .catch(err => console.error('Hiba a dolgozat adatainak betöltésénél:', err));
+});
+
 </script>
 
 </body>

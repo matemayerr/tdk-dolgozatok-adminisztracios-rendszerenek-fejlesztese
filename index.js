@@ -670,25 +670,25 @@ app.get('/api/dolgozatok/ertekeleshez', async (req, res) => {
 // Egy dolgozat lekérése ID alapján
 app.get('/api/papers/:id', async (req, res) => {
   try {
-    const paper = await Paper.findById(req.params.id);
+    const paper = await mongoose.connection.collection('dolgozats').findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
 
     if (!paper) {
       return res.status(404).json({ error: 'A dolgozat nem található.' });
     }
 
-    // Alakítsuk át a dolgozatot megfelelő formátumra
+    const felhasznalok = await mongoose.connection.collection('felhasznalos').find({}).toArray();
+
     const szerzok = (paper.hallgato_ids || []).map(neptun => {
       const felhasznalo = felhasznalok.find(f => f.neptun === neptun);
       return {
         nev: felhasznalo?.nev || '',
-        szak: '',      // ha van ilyen adatod, ide behelyettesítheted
-        evfolyam: ''   // ha van ilyen adatod, ide behelyettesítheted
+        szak: felhasznalo?.szak || '',
+        evfolyam: felhasznalo?.evfolyam || ''
       };
     });
 
     res.json({
-      cim: paper['cím'],
-      szekcio: paper.leiras,  // vagy külön mező ha van
+      cim: paper["cím"],
       szerzok
     });
   } catch (err) {
@@ -696,6 +696,7 @@ app.get('/api/papers/:id', async (req, res) => {
     res.status(500).json({ error: 'Szerverhiba' });
   }
 });
+
 
 
 
