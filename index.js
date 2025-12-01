@@ -1438,6 +1438,26 @@ app.get('/api/karok', async (req, res) => {
 });
 
 
+// ✅ Dolgozat eltávolítása szekcióból
+app.put('/api/dolgozatok/:id/remove-from-section', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const dolgozat = await Dolgozat.findById(id);
+    if (!dolgozat) {
+      return res.status(404).json({ error: 'Dolgozat nem található' });
+    }
+
+    dolgozat.szekcioId = null;
+    await dolgozat.save();
+
+    res.json({ message: 'Dolgozat eltávolítva a szekcióból' });
+  } catch (err) {
+    console.error('Hiba a dolgozat szekcióból való eltávolításakor:', err);
+    res.status(500).json({ error: 'Szerverhiba' });
+  }
+});
+
+
 
 // Szerver indítása megadott porton
 app.listen(port, () => {

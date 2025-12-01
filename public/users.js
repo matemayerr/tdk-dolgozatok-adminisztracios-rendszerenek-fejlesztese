@@ -20,33 +20,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const karok = await response.json();
 
         const karSelect = document.getElementById('felhasznalo-kar');
-        const modositKarSelect = document.getElementById('modosit-kar');
-
-        karok.forEach(kar => {
-            const option = document.createElement('option');
-            option.value = kar.rovidites;
-            option.textContent = `${kar.rovidites} - ${kar.nev}`;
-            karSelect.appendChild(option);
-
-            const modositOption = document.createElement('option');
-            modositOption.value = kar.rovidites;
-            modositOption.textContent = `${kar.rovidites} - ${kar.nev}`;
-            modositKarSelect.appendChild(modositOption);
-        });
+        
     } catch (err) {
         console.error('Hiba a karok betöltésekor:', err);
     }
 }
 
 
-// A kar módosítása
-const modositKarSelect = document.getElementById('modosit-kar');
-karok.forEach(kar => {
-    const option = document.createElement('option');
-    option.value = kar.rovidites;
-    option.textContent = `${kar.rovidites} - ${kar.nev}`;
-    modositKarSelect.appendChild(option);
-});
 
 // 🔹 Sorok száma vezérlés
 const rowsPerPageSelect = document.getElementById('rows-per-page');

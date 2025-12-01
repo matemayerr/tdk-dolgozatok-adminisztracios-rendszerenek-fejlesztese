@@ -2,7 +2,7 @@
 let allPapersCache = null; // cache az összes dolgozathoz
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 🔹 1️⃣ Aktuális félév lekérése és megjelenítése
+  // 🄹 1️⃣ Aktuális félév lekérése és megjelenítése
   try {
     const response = await fetch('/api/settings/current-semester');
     const data = await response.json();
@@ -18,11 +18,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   await betoltKarok();
-
-  // 🔹 2️⃣ Szekciók betöltése
   await loadSections();
 
-  // Karok betöltése
   async function betoltKarok() {
     try {
       const response = await fetch('/api/university-structure');
@@ -31,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       karLista.forEach(kar => {
         const option = document.createElement('option');
-        option.value = kar.nev; // teljes kar név mentése
+        option.value = kar.nev;
         option.textContent = kar.nev;
         karSelect.appendChild(option);
       });
@@ -40,7 +37,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Új szekció hozzáadása
   document.getElementById('section-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const nameInput = document.getElementById('section-name');
@@ -66,7 +62,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // 🔹 Szekciók betöltése
   async function loadSections() {
     const tableBody = document.getElementById('sections-table-body');
     tableBody.innerHTML = '';
@@ -81,7 +76,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       allPapersCache = await respPapers.json();
 
       for (const section of sections) {
-        // --- FŐ SOR ---
         const row = document.createElement('tr');
         const nameCell = document.createElement('td');
         nameCell.innerHTML = `
@@ -120,11 +114,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         deleteButton.addEventListener('click', () => deleteSection(section._id));
         actionsCell.appendChild(deleteButton);
 
-
         row.appendChild(actionsCell);
         tableBody.appendChild(row);
 
-        // --- Lenyíló rész ---
         const detailRow = document.createElement('tr');
         const detailCell = document.createElement('td');
         detailCell.colSpan = 4;
@@ -137,51 +129,85 @@ document.addEventListener('DOMContentLoaded', async () => {
           const innerTable = document.createElement('table');
           innerTable.classList.add('inner-table');
           innerTable.innerHTML = `
-            <thead><tr><th>Cím</th><th>Állapot</th></tr></thead>
+            <thead><tr><th>Cím</th><th>Állapot</th><th></th></tr></thead>
             <tbody></tbody>`;
 
           const innerTbody = innerTable.querySelector('tbody');
 
           for (const p of papersInSection) {
             const innerRow = document.createElement('tr');
-            innerRow.innerHTML = `
-            <td class="clickable-paper">
-            <span>${p.cim || p.cím || 'Névtelen dolgozat'}</span>
-            <span class="toggle-icon">▼</span>
-            </td>
-            <td>${p.allapot || '-'}</td>`;
-            innerTbody.appendChild(innerRow);
 
+            const titleCell = document.createElement('td');
+            const statusCell = document.createElement('td');
+            const deleteCell = document.createElement('td');
+
+            const torlesButton = document.createElement('button');
+            torlesButton.textContent = 'Eltávolítás';
+            torlesButton.classList.add('btn', 'btn-danger', 'btn-sm');
+            torlesButton.addEventListener('click', async (e) => {
+              e.stopPropagation();
+              if (!confirm('Biztosan el szeretnéd távolítani a dolgozatot a szekcióból?')) return;
+              try {
+                const response = await fetch(`/api/dolgozatok/${p._id}/remove-from-section`, {
+                  method: 'PUT'
+                });
+                if (response.ok) {
+                  alert('Dolgozat eltávolítva a szekcióból.');
+                  await loadSections();
+                } else {
+                  alert('Hiba történt az eltávolítás során.');
+                }
+              } catch (error) {
+                console.error('Hiba a dolgozat eltávolításakor:', error);
+                alert('Szerverhiba a dolgozat eltávolításakor.');
+              }
+            });
+
+            const toggleSpan = document.createElement('span');
+            toggleSpan.textContent = '▼';
+            toggleSpan.classList.add('toggle-icon');
+
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = p.cim || p.cím || 'Névtelen dolgozat';
+
+            const clickableDiv = document.createElement('div');
+            clickableDiv.classList.add('clickable-paper');
+            clickableDiv.appendChild(titleSpan);
+            clickableDiv.appendChild(toggleSpan);
+
+            clickableDiv.addEventListener('click', () => {
+              const isVisible = innerDetailRow.style.display === 'table-row';
+              innerDetailRow.style.display = isVisible ? 'none' : 'table-row';
+              toggleSpan.textContent = isVisible ? '▼' : '▲';
+            });
+
+            titleCell.appendChild(clickableDiv);
+            statusCell.textContent = p.allapot || '-';
+            deleteCell.appendChild(torlesButton);
+
+            innerRow.appendChild(titleCell);
+            innerRow.appendChild(statusCell);
+            innerRow.appendChild(deleteCell);
+            innerTbody.appendChild(innerRow);
 
             const innerDetailRow = document.createElement('tr');
             const innerDetailCell = document.createElement('td');
-            innerDetailCell.colSpan = 2;
-
+            innerDetailCell.colSpan = 3;
 
             const hallgatokSzoveg = (p.szerzok || []).map(s => `${s.nev} (${s.neptun})`).join(', ') || '—';
             const temavezetoSzoveg = (p.temavezeto || []).map(t => `${t.nev} (${t.neptun})`).join(', ') || '—';
 
-
             innerDetailCell.innerHTML = `
-            <div class="dolgozat-details-panel">
-            <p><strong>Tartalmi összefoglaló:</strong><br>${p.leiras || '—'}</p>
-            <p><strong>Hallgató(k):</strong> ${hallgatokSzoveg}</p>
-            <p><strong>Témavezető(k):</strong> ${temavezetoSzoveg}</p>
-            </div>`;
-
+              <div class="dolgozat-details-panel">
+                <p><strong>Tartalmi összefoglaló:</strong><br>${p.leiras || '—'}</p>
+                <p><strong>Hallgató(k):</strong> ${hallgatokSzoveg}</p>
+                <p><strong>Témavezető(k):</strong> ${temavezetoSzoveg}</p>
+              </div>`;
 
             innerDetailRow.appendChild(innerDetailCell);
             innerDetailRow.style.display = 'none';
             innerTbody.appendChild(innerDetailRow);
-
-
-            innerRow.addEventListener('click', () => {
-            const isVisible = innerDetailRow.style.display === 'table-row';
-            innerDetailRow.style.display = isVisible ? 'none' : 'table-row';
-            const iconSpan = innerRow.querySelector('.toggle-icon');
-            if (iconSpan) iconSpan.textContent = isVisible ? '▼' : '▲';
-            });
-            }
+          }
 
           detailCell.appendChild(innerTable);
         }
@@ -190,7 +216,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         detailRow.style.display = 'none';
         tableBody.appendChild(detailRow);
 
-        // Lenyitás a szekcióknál
         nameCell.querySelector('.clickable-title').addEventListener('click', () => {
           const isVisible = detailRow.style.display === 'table-row';
           detailRow.style.display = isVisible ? 'none' : 'table-row';
@@ -203,7 +228,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Szekció törlése
   async function deleteSection(id) {
     if (!confirm('Biztosan törölni szeretnéd ezt a szekciót?')) return;
     const response = await fetch(`/api/sections/${id}`, { method: 'DELETE' });
@@ -214,7 +238,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Szekció módosítása
   function editSection(section) {
     const newName = prompt('Add meg az új nevet:', section.name);
     if (!newName || newName.trim() === '') return;
@@ -232,7 +255,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  /* Modal vezérlőfüggvények */
   let selectedSectionId = null;
 
   function openAssignModal(sectionId) {
