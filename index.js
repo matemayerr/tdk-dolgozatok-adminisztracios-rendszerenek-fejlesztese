@@ -1,22 +1,24 @@
+// Express.js és szükséges modulok betöltése
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
 
+// Alkalmazás és port inicializálása
 const app = express();
 const port = 3000;
 
-// MongoDB kapcsolat
+// MongoDB kapcsolat létrehozása
 mongoose.connect('mongodb://localhost:27017/tdk_adatbazis')
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('Could not connect to MongoDB:', err));
 
-// Statikus fájlok kiszolgálása
+// Statikus fájlok kiszolgálása (pl. CSS, JavaScript, képek)
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
+app.use(express.json()); // JSON adatküldés engedélyezése (pl. POST és PUT kérésekhez)
 
-// Mongoose modellek
+// Mongoose modellek létrehozása a "Dolgozat" és "Felhasznalo" gyűjteményekhez
 const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     cím: { type: String, required: true },
     hallgato_id: { type: String, required: true },
@@ -35,22 +37,21 @@ const Felhasznalo = mongoose.model('felhasznalo', new mongoose.Schema({
     csoport: { type: String, required: true }
 }));
 
-// Nodemailer beállítás SendGrid SMTP-vel
+// Nodemailer beállítása SendGrid SMTP szerverrel az e-mail küldéshez
 const transporter = nodemailer.createTransport({
     host: 'smtp.sendgrid.net',
     port: 587,
     auth: {
-        user: 'apikey', // ez a fix felhasználónév a SendGrid-ben
-        pass: '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' // cseréld ki a generált SendGrid API kulcsodra
+        user: 'apikey', // SendGrid fix felhasználónév
+        pass: 'API_KEY_HERE' // SendGrid API kulcsod helye
     }
 });
 
-
-// E-mail küldése bírálónak
+// Értesítés küldése bírálónak e-mailben
 async function kuldErtesitesBiralonak(biraloEmail, dolgozat) {
     const mailOptions = {
         from: 'm48625729@gmail.com',
-        to: 'mayer.mate@outlook.com',
+        to: biraloEmail,
         subject: 'Új dolgozat érkezett értékelésre',
         text: `Tisztelt Bíráló!
 
@@ -71,24 +72,24 @@ TDK Adminisztrációs Rendszer`
     }
 }
 
-// Multer fájlkezelés beállítása
+// Multer beállítása fájlok feltöltéséhez
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads');  // Az 'uploads' mappa a 'public' mappán kívül van
+        cb(null, 'uploads'); // Fájlok mentése az 'uploads' mappába
     },
     filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
+        cb(null, `${Date.now()}-${file.originalname}`); // Fájlnév dátummal egyedi név biztosítása érdekében
     }
 });
 const upload = multer({ storage });
 
-// Fájl megtekintése speciális URL-en keresztül
+// Feltöltött fájl elérése közvetlen URL-en keresztül
 app.get('/uploads/:filename', (req, res) => {
     const filePath = path.join(__dirname, 'uploads', req.params.filename);
     res.sendFile(filePath);
 });
 
-// CRUD műveletek
+// CRUD műveletek a dolgozatokra
 
 // Minden dolgozat lekérdezése
 app.get('/api/dolgozatok', async (req, res) => {
@@ -100,11 +101,11 @@ app.get('/api/dolgozatok', async (req, res) => {
     }
 });
 
-// Kész dolgozatok lekérdezése a feltöltési oldalhoz
+// Csak a kész dolgozatok lekérdezése
 app.get('/api/dolgozatok/kesz', async (req, res) => {
     try {
-        const keszDolgozatok = await Dolgozat.find({ 
-            allapot: { $in: ['elfogadva', 'feltöltésre vár', 'feltöltve', 'értékelve'] } 
+        const keszDolgozatok = await Dolgozat.find({
+            allapot: { $in: ['elfogadva', 'feltöltésre vár', 'feltöltve', 'értékelve'] }
         });
         res.json(keszDolgozatok);
     } catch (error) {
@@ -159,7 +160,9 @@ app.delete('/api/dolgozatok/:id', async (req, res) => {
     }
 });
 
-// Felhasználók hozzáadása
+// Felhasználó CRUD műveletek
+
+// Új felhasználó hozzáadása
 app.post('/api/felhasznalok', async (req, res) => {
     const { nev, neptun, email, csoport } = req.body;
     const felhasznalo = new Felhasznalo({ nev, neptun, email, csoport });
@@ -172,7 +175,7 @@ app.post('/api/felhasznalok', async (req, res) => {
     }
 });
 
-// Felhasználók lekérdezése
+// Felhasználók listázása
 app.get('/api/felhasznalok', async (req, res) => {
     try {
         const felhasznalok = await Felhasznalo.find();
@@ -182,7 +185,7 @@ app.get('/api/felhasznalok', async (req, res) => {
     }
 });
 
-// Csoportok szerinti felhasználók lekérdezése
+// Csoportok szerinti felhasználók listázása
 app.get('/api/felhasznalok/csoportok', async (req, res) => {
     try {
         const hallgatok = await Felhasznalo.find({ csoport: 'hallgato' });
@@ -229,10 +232,10 @@ app.delete('/api/felhasznalok/:id', async (req, res) => {
     }
 });
 
-// Fájl feltöltése és e-mail küldése
+// Fájl feltöltése és értesítés küldése a bírálónak
 app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res) => {
     const { id } = req.params;
-    const alapertelmezettEmail = 'mayer.mate@outlook.com'; // Itt add meg a fix e-mail címet
+    const alapertelmezettEmail = 'mayer.mate@outlook.com'; // Fix e-mail cím
 
     if (!req.file) {
         return res.status(400).json({ error: 'Fájl nem lett kiválasztva!' });
@@ -248,11 +251,9 @@ app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res
         dolgozat.allapot = 'feltöltve';
         await dolgozat.save();
 
-        // Bíráló vagy témavezető e-mail cím keresése
         const temavezeto = await Felhasznalo.findOne({ neptun: dolgozat.temavezeto_id });
         const biraloEmail = temavezeto ? temavezeto.email : alapertelmezettEmail;
 
-        // Értesítés küldése
         await kuldErtesitesBiralonak(biraloEmail, dolgozat);
         res.status(200).json({ message: 'Fájl sikeresen feltöltve és e-mail elküldve.', filePath: dolgozat.filePath });
     } catch (error) {
@@ -261,7 +262,7 @@ app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res
     }
 });
 
-// Dolgozat értékelési fájl és pontszám feltöltése
+// Értékelés fájl feltöltése és értesítések küldése a hallgatónak és témavezetőnek
 app.post('/api/dolgozatok/ertekeles-feltoltes/:id', upload.single('file'), async (req, res) => {
     const { id } = req.params;
     const { pontszam } = req.body;
@@ -276,17 +277,14 @@ app.post('/api/dolgozatok/ertekeles-feltoltes/:id', upload.single('file'), async
             return res.status(404).json({ error: 'Dolgozat nem található' });
         }
 
-        // Fájl mentése és állapot frissítése
         dolgozat.ertekelesFilePath = `/uploads/${req.file.filename}`;
         dolgozat.pontszam = pontszam;
         dolgozat.allapot = 'értékelve';
         await dolgozat.save();
 
-        // Hallgató és témavezető e-mail címének lekérdezése a Neptun-kód alapján
         const hallgato = await Felhasznalo.findOne({ neptun: dolgozat.hallgato_id });
         const temavezeto = await Felhasznalo.findOne({ neptun: dolgozat.temavezeto_id });
 
-        // E-mail küldése, ha megtaláltuk a hallgató és témavezető e-mail címét
         if (hallgato && hallgato.email) {
             await kuldErtesitesHallgatonakEsTemavezetonek(hallgato.email, dolgozat, "hallgató");
         }
@@ -326,9 +324,7 @@ TDK Adminisztrációs Rendszer`
     }
 }
 
-
-// Szerver indítása
+// Szerver indítása megadott porton
 app.listen(port, () => {
     console.log(`Server started on port ${port}`);
 });
-

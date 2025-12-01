@@ -1,0 +1,62 @@
+MongoDB adatbázis elérése:
+---------------------------------------------------------------------
+MongoDB shell:
+mongosh
+
+Adatbázisok listázása:
+show dbs
+
+Adatbázis kiválasztása:
+use tdk_adatbazis
+
+Kollekciók listázása:
+show collentions
+
+Dokementumok lekérdezése:
+db.kollekcio_nev.find()
+
+Csak az első megtalált dokumentum lekérdezése:
+db.kollekcio_nev.findOne()
+
+Szűrés egy adott felvételnél(például csak azok a dokumentumok, ahol kor: 25):
+db.kollekcio_nev.find({ kor: 25 })
+
+Dokumentum frissítése: feltétel szerint: nev: "Minta Felhasználó"
+db.kollekcio_nev.updateOne(
+  { nev: "Minta Felhasználó" },
+  { $set: { kor: 26 } }
+)
+
+Több dokumentum frissítáése:
+db.kollekcio_nev.updateMany(
+  { kor: { $lt: 30 } },
+  { $set: { kor: 30 } }
+)
+
+Egy dokumentum beszúrása:
+db.kollekcio_nev.instertOne({ nev: "Minta Felhasználó", kor: 25})
+
+db.kollekcio_nev.insertMany([
+  { nev: "Felhasználó 1", kor: 22 },
+  { nev: "Felhasználó 2", kor: 28 }
+])
+
+Dokumentum törlése:
+db.kollekcio_nev.deleteOne({ nev: "Minta Felhasználó" })
+
+Több dokumentum törlése:
+db.kollekcio_nev.deleteMany({ kor: 30 })
+
+Kollekció törlése:
+db.kollekcio_nev.drop()
+
+Adatbázis törlése:
+db.dropDatabase()
+
+Kilépés a MongoDB shellből:
+exit
+--------------------------------------------------------------------
+
+
+
+
