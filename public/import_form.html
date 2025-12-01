@@ -320,6 +320,27 @@ function handleFile(e) {
     .catch(err => console.error('Hiba a dolgozat adatainak betöltésénél:', err));
 });
 
+
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    const cim = urlParams.get('cim');
+    const hallgato = urlParams.get('hallgato');
+    const temavezeto = urlParams.get('temavezeto');
+
+    if (id) {
+        const cimInput = document.getElementById('cim');
+        const hallgatoInput = document.getElementById('hallgato');
+        const temavezetoInput = document.getElementById('temavezeto');
+        const dolgozatIdInput = document.getElementById('dolgozatId');
+
+        if (cimInput) cimInput.value = cim || '';
+        if (hallgatoInput) hallgatoInput.value = hallgato || '';
+        if (temavezetoInput) temavezetoInput.value = temavezeto || '';
+        if (dolgozatIdInput) dolgozatIdInput.value = id;
+    }
+});
+
 </script>
 
 </body>

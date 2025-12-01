@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Megjelenítés
     function megjelenitDolgozatok() {
         const filtered = dolgozatok
-            .filter(d => ['feltöltve', 'értékelve'].includes(d.allapot))
+            .filter(d => ['elfogadva - témavezető által', 'értékelve'].includes(d.allapot))
             .filter(d =>
                 d.cím.toLowerCase().includes(searchInput.value.toLowerCase()) ||
                 d.hallgato_id?.toLowerCase().includes(searchInput.value.toLowerCase()) ||

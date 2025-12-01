@@ -659,7 +659,7 @@ app.post('/api/regisztracio', async (req, res) => {
 app.get('/api/dolgozatok/ertekeleshez', async (req, res) => {
     try {
         const dolgozatok = await Dolgozat.find({
-            allapot: { $in: ['feltöltve', 'értékelve'] }
+            allapot: { $in: ['feltöltve', 'értékelve','elfogadva - témavezető által'] }
         });
         res.json(dolgozatok);
     } catch (error) {
