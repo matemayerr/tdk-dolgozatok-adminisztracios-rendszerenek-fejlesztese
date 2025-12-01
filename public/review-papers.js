@@ -19,9 +19,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Ha már van értékelés mentve, akkor "Megtekintés", különben "Értékelés"
             const vanErtekeles = dolgozat.ertekeles && Object.keys(dolgozat.ertekeles).length > 0;
+
             const gomb = vanErtekeles
-                ? `<a href="import_form.html?id=${dolgozat._id}&readonly=true" class="custom-button view-button">Megtekintés</a>`
-                : `<a href="import_form.html?id=${dolgozat._id}" class="custom-button eval-button">Értékelés</a>`;
+                
+                ? `<a href="import_form.html?id=${dolgozat._id}&readonly=true" class="modosit-btn">Megtekintés</a>`
+                : `<a href="import_form.html?id=${dolgozat._id}" class="jelentkezes-btn">Értékelés</a>`;
 
             sor.innerHTML = `
                 <td>${dolgozat.cim}</td>

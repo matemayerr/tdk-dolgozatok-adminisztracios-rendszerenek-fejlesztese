@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentPage = 1;
     let aktualisModositandoId = null;
     let itemsPerPage = 25;
+    let loggedInUser = null; // 🔹 bejelentkezett felhasználó adatai
+
 
 //sor kiválasztás
     const sorSzamSelect = document.getElementById('sorok-szama-dolgozat');
@@ -24,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
             megjelenitDolgozatok();
         });
     }
-    
+
 
 // Felhasználók betöltése csoportok szerint
 async function betoltFelhasznalok() {
@@ -32,44 +34,47 @@ async function betoltFelhasznalok() {
         const response = await fetch('/api/felhasznalok/csoportok');
         const { hallgatok, temavezetok } = await response.json();
 
-        // Hallgatók betöltése
-        const hallgatoLista = document.getElementById('hallgato-lista');
-        hallgatoLista.innerHTML = hallgatok.map(h => `
-            <label>
-                <input type="checkbox" value="${h.neptun}">
-                ${h.nev} (${h.neptun})
-            </label>
-        `).join('');
+        // Hallgató-listát itt már nem használjuk az ÚJ dolgozat formnál
 
-        // Témavezetők betöltése
+        // Témavezetők betöltése (ez marad)
         const temavezetoLista = document.getElementById('temavezeto-lista');
-        temavezetoLista.innerHTML = temavezetok.map(t => `
-            <label>
-                <input type="checkbox" value="${t.neptun}">
-                ${t.nev} (${t.neptun})
-            </label>
-        `).join('');
+        if (temavezetoLista) {
+            temavezetoLista.innerHTML = temavezetok.map(t => `
+                <label>
+                    <input type="checkbox" value="${t.neptun}">
+                    ${t.nev} (${t.neptun})
+                </label>
+            `).join('');
+        }
 
     } catch (error) {
         console.error('Hiba történt a felhasználók betöltése során:', error);
     }
 }
 
-// Hallgatói kereső szűrés
-document.getElementById('hallgato-kereso').addEventListener('input', function () {
-    const keres = this.value.toLowerCase();
-    document.querySelectorAll('#hallgato-lista label').forEach(label => {
-        label.style.display = label.textContent.toLowerCase().includes(keres) ? '' : 'none';
-    });
-});
 
-// Témavezető kereső szűrés
-document.getElementById('temavezeto-kereso').addEventListener('input', function () {
-    const keres = this.value.toLowerCase();
-    document.querySelectorAll('#temavezeto-lista label').forEach(label => {
-        label.style.display = label.textContent.toLowerCase().includes(keres) ? '' : 'none';
+// Hallgatói kereső szűrés – most már opcionális, mert lehet, hogy nincs ilyen elem
+const hallgatoKereso = document.getElementById('hallgato-kereso');
+if (hallgatoKereso) {
+    hallgatoKereso.addEventListener('input', function () {
+        const keres = this.value.toLowerCase();
+        document.querySelectorAll('#hallgato-lista label').forEach(label => {
+            label.style.display = label.textContent.toLowerCase().includes(keres) ? '' : 'none';
+        });
     });
-});
+}
+
+// Témavezető kereső szűrés – itt is védekezünk, ha nincs input
+const temavezetoKereso = document.getElementById('temavezeto-kereso');
+if (temavezetoKereso) {
+    temavezetoKereso.addEventListener('input', function () {
+        const keres = this.value.toLowerCase();
+        document.querySelectorAll('#temavezeto-lista label').forEach(label => {
+            label.style.display = label.textContent.toLowerCase().includes(keres) ? '' : 'none';
+        });
+    });
+}
+
 
 
     // Dolgozatok lekérdezése
@@ -138,8 +143,8 @@ const filteredDolgozatok = dolgozatok.filter(dolgozat => {
 </td>   
     <td>${dolgozat.allapot || 'N/A'}</td>
     <td>
-        <button onclick="editDolgozat('${dolgozat._id}')">Módosítás</button>
-        <button onclick="deleteDolgozat('${dolgozat._id}')">Törlés</button>
+        <button class="modosit-btn" onclick="editDolgozat('${dolgozat._id}')">Módosítás</button>
+        <button class="delete-btn" onclick="deleteDolgozat('${dolgozat._id}')">Törlés</button>
     </td>
 `;
 
@@ -180,68 +185,65 @@ dolgozatTbody.appendChild(detailTr);  // Először a részletek jönnek alulra
 }
 
 
-    // Új dolgozat hozzáadása
+// Új dolgozat hozzáadása
 if (dolgozatForm) {
-    dolgozatForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
+  dolgozatForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
 
-        const selectedHallgatok = Array.from(document.querySelectorAll('#hallgato-lista input[type="checkbox"]:checked'))
-            .map(checkbox => checkbox.value);
-
-        if (selectedHallgatok.length === 0) {
-            alert('Válassz legalább egy hallgatót!');
-            return;
-        }
-
-        const selectedTemavezetok = Array.from(document.querySelectorAll('#temavezeto-lista input[type="checkbox"]:checked'))
-        .map(cb => cb.value);
-    
-    if (selectedTemavezetok.length === 0) {
-        alert('Válassz legalább egy témavezetőt!');
-        return;
+    if (!loggedInUser || !loggedInUser.neptun) {
+      alert('Nem sikerült azonosítani a bejelentkezett hallgatót. Jelentkezz be újra!');
+      return;
     }
-    
 
-        const formData = {
-            cim: document.getElementById('dolgozat-cim').value,
-            leiras: document.getElementById('dolgozat-leiras').value,
-            hallgato_ids: selectedHallgatok,
-            temavezeto_ids: selectedTemavezetok,
-            allapot: "bírálás alatt"
+    const selectedTemavezetok = Array
+      .from(document.querySelectorAll('#temavezeto-lista input[type="checkbox"]:checked'))
+      .map(cb => cb.value);
 
-        };
+    if (selectedTemavezetok.length === 0) {
+      alert('Válassz legalább egy témavezetőt!');
+      return;
+    }
 
-        if (!formData.cím || !formData.leiras || formData.temavezeto_ids.length === 0 || formData.hallgato_ids.length === 0) {
-            alert('Kérlek, töltsd ki az összes mezőt!');
-            return;
-        }
-        
+    const cim = document.getElementById('dolgozat-cim').value.trim();
+    const leiras = document.getElementById('dolgozat-leiras').value.trim();
 
-        try {
-            const response = await fetch('/api/dolgozatok', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
+    if (!cim || !leiras) {
+      alert('Kérlek, töltsd ki a címet és az összefoglalót!');
+      return;
+    }
 
-            if (response.ok) {
-                const ujDolgozat = await response.json();
-                console.log('Sikeres POST:', ujDolgozat);
-                dolgozatok.push(ujDolgozat);
-                megjelenitDolgozatok();
-                dolgozatForm.reset();
-                document.getElementById('uj-dolgozat-form').style.display = 'none';
-                document.getElementById('homalyositas').style.display = 'none';
-            } else {
-                console.error('Hiba történt a dolgozat hozzáadása során');
-            }
-        } catch (error) {
-            console.error('Hiba történt a dolgozat mentése során:', error);
-        }
-    });
+    const formData = {
+      cím: cim,
+      leiras,
+      hallgato_ids: [loggedInUser.neptun],
+      temavezeto_ids: selectedTemavezetok
+    };
+
+    try {
+      const response = await fetch('/api/dolgozatok', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        const ujDolgozat = await response.json();
+        console.log('Sikeres POST:', ujDolgozat);
+
+        // ⬇️ EZ A LÉNYEG: frissítsd a listát a /api/papers-ből
+        await listazDolgozatok();
+
+        dolgozatForm.reset();
+        document.getElementById('uj-dolgozat-form').style.display = 'none';
+        document.getElementById('homalyositas').style.display = 'none';
+      } else {
+        console.error('Hiba történt a dolgozat hozzáadása során');
+      }
+    } catch (error) {
+      console.error('Hiba történt a dolgozat mentése során:', error);
+    }
+  });
 }
-
-
 
     // Dolgozat szerkesztése
     window.editDolgozat = async function (id) {
@@ -415,11 +417,44 @@ megseGomb.addEventListener('click', () => {
     homalyositas.style.display = 'none';
 });
 
+async function betoltAktualisFelhasznalo() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.warn('Nincs token, nem tudom betölteni a bejelentkezett felhasználót.');
+        return;
+    }
 
-    // Indításkor dolgozatok betöltése és felhasználók betöltése csoport szerint
+    try {
+        const res = await fetch('/api/felhasznalok/jelenlegi', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!res.ok) {
+            console.error('Nem sikerült betölteni a bejelentkezett felhasználót.');
+            return;
+        }
+
+        loggedInUser = await res.json();
+
+        const nevSpan = document.getElementById('aktualis-hallgato-nev');
+        if (nevSpan && loggedInUser.nev) {
+            const neptun = loggedInUser.neptun || 'nincs Neptun-kód';
+            nevSpan.textContent = `${loggedInUser.nev} (${neptun})`;
+        }
+    } catch (err) {
+        console.error('Hiba az aktuális felhasználó lekérésekor:', err);
+    }
+}
+
+
+    // Indításkor: bejelentkezett felhasználó, dolgozatok, témavezetők
+    betoltAktualisFelhasznalo();
     listazDolgozatok();
     betoltFelhasznalok();
 });
+
 
 // Lebegő menü dropdownok kezeléséhez
 document.querySelectorAll('.dropdown-btn').forEach(btn => {
@@ -460,7 +495,49 @@ window.toggleDetails = function (dolgozatId) {
   if (icon) icon.textContent = isVisible ? '▼' : '▲';
 };
 
+    // ─────────────────────────────
+    // TÉMAVEZETŐ MODAL LOGIKA
+    // ─────────────────────────────
+    const temavezetoModal = document.getElementById('temavezeto-modal');
+    const temavezetoOpenBtn = document.getElementById('temavezeto-open-modal');
+    const temavezetoMentesBtn = document.getElementById('temavezeto-mentes-gomb');
+    const temavezetoMegseBtn = document.getElementById('temavezeto-megse-gomb');
+    const temavezetoKivonat = document.getElementById('temavezeto-kivonat');
 
+    // Modal megnyitása
+    if (temavezetoOpenBtn && temavezetoModal) {
+        temavezetoOpenBtn.addEventListener('click', () => {
+            temavezetoModal.style.display = 'block';
+            if (homalyositas) homalyositas.style.display = 'block';
+        });
+    }
+
+    // Mégse gomb
+    if (temavezetoMegseBtn && temavezetoModal) {
+        temavezetoMegseBtn.addEventListener('click', () => {
+            temavezetoModal.style.display = 'none';
+            if (homalyositas) homalyositas.style.display = 'none';
+        });
+    }
+
+    // OK gomb – kivonat frissítése
+    if (temavezetoMentesBtn && temavezetoModal) {
+        temavezetoMentesBtn.addEventListener('click', () => {
+            const selected = Array.from(
+                document.querySelectorAll('#temavezeto-lista input[type="checkbox"]:checked')
+            );
+
+            if (selected.length === 0) {
+                temavezetoKivonat.textContent = 'Nincs kiválasztott témavezető.';
+            } else {
+                const nevek = selected.map(cb => cb.parentElement.textContent.trim());
+                temavezetoKivonat.textContent = nevek.join(', ');
+            }
+
+            temavezetoModal.style.display = 'none';
+            if (homalyositas) homalyositas.style.display = 'none';
+        });
+    }
 
 
 

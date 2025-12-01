@@ -548,13 +548,24 @@ const authMiddleware = (req, res, next) => {
 
 app.get('/api/felhasznalok/jelenlegi', authMiddleware, async (req, res) => {
   try {
-    const felhasznalo = await Felhasznalo.findById(req.user.id);
-    if (!felhasznalo) return res.status(404).json({ error: 'Felhasználó nem található' });
-    res.json({ nev: felhasznalo.nev, email: felhasznalo.email });
+    const felhasznalo = await Felhasznalo.findById(req.user.id).lean();
+    if (!felhasznalo) {
+      return res.status(404).json({ error: 'Felhasználó nem található' });
+    }
+
+    res.json({
+      id: felhasznalo._id,
+      nev: felhasznalo.nev,
+      neptun: felhasznalo.neptun || '',
+      email: felhasznalo.email,
+      csoportok: felhasznalo.csoportok || []
+    });
   } catch (err) {
+    console.error('Hiba a jelenlegi felhasználó lekérésekor:', err);
     res.status(500).json({ error: 'Szerverhiba' });
   }
 });
+
 
 
 

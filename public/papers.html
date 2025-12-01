@@ -59,26 +59,23 @@
         <input type="text" id="dolgozat-cim" placeholder="Dolgozat címe">
         <textarea id="dolgozat-leiras" placeholder="Tartalmi összefoglaló"></textarea>
 
-    <!-- Hallgatók -->
-    <div class="user-dropdown">
-        <button type="button" class="dropdown-btn">Hallgató(k) kiválasztása ▾</button>
-        <div class="dropdown-content scrollable-list">
-            <input type="text" id="hallgato-kereso" placeholder="Keresés"lista-kereso">
-            <div id="hallgato-lista"></div>
-        </div>
+    <!-- Bejelentkezett hallgató – nincs választási lehetőség -->
+    <div class="current-user-info">
+        <label><strong>Hallgató:</strong></label>
+        <span id="aktualis-hallgato-nev">Bejelentkezett felhasználó betöltése...</span>
     </div>
 
-    <!-- Témavezetők -->
-    <div class="user-dropdown">
-        <button type="button" class="dropdown-btn">Témavezető kiválasztása ▾</button>
-        <div class="dropdown-content scrollable-list">
-            <input type="text" id="temavezeto-kereso" placeholder="Keresés"lista-kereso">
-            <div id="temavezeto-lista"></div>
+    <!-- Témavezetők – gomb + összefoglaló -->
+        <div class="form-group">
+            <button type="button" id="temavezeto-open-modal" class="btn btn-primary">
+                Témavezető(k) kiválasztása
+            </button>
+            <div id="temavezeto-kivonat" style="margin-top:6px;font-size:14px;color:#555;">
+                Nincs kiválasztott témavezető.
+            </div>
         </div>
-    </div>
 
-        <div class="dropdown-content" id="temavezeto-lista"></div>
-    </div>
+
         
         <button type="submit" id="hozzaadas-gomb">Hozzáadás</button>
         <button type="button" id="megse-gomb">Mégse</button>
@@ -154,6 +151,25 @@
         <button type="submit" id="modosit-mentes-gomb">Mentés</button>
         <button type="button" id="modosit-megse-gomb">Mégse</button>
     </form>
+
+    <!-- Témavezető választó MODAL -->
+<div id="temavezeto-modal" class="modal-form" style="display:none;">
+    <h3>Témavezető(k) kiválasztása</h3>
+
+    <input
+        type="text"
+        id="temavezeto-kereso"
+        class="lista-kereso"
+        placeholder="Keresés"
+    >
+
+    <div id="temavezeto-lista" class="scrollable-list"></div>
+
+    <div class="gombok-kozeppontban">
+        <button type="button" id="temavezeto-mentes-gomb" class="mentes-btn">OK</button>
+        <button type="button" id="temavezeto-megse-gomb" class="megse-btn">Mégse</button>
+    </div>
+</div>
 
 
 

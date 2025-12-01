@@ -33,21 +33,22 @@ document.addEventListener('DOMContentLoaded', function () {
         paginatedDolgozatok.forEach(dolgozat => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${dolgozat.cím || 'N/A'}</td>
-                <td>${dolgozat.hallgato_ids ? dolgozat.hallgato_ids.join(', ') : 'N/A'}</td>
-                <td>${dolgozat.temavezeto_ids ? dolgozat.temavezeto_ids.join(', ') : 'N/A'}</td>
-                <td>${dolgozat.allapot || 'N/A'}</td>
-                <td>
-                    ${dolgozat.allapot === 'jelentkezett' ? 
-    `<button onclick="feltoltes('${dolgozat._id}')">Feltöltés</button>` : 
-    ''
-}
-                    ${dolgozat.filePath && (dolgozat.allapot === 'feltöltve' || dolgozat.allapot === 'értékelve') ? 
-                        `<button onclick="megtekintes('${dolgozat.filePath}')">Megtekintés</button>` : 
-                        ''
-                    }
-                </td>
-            `;
+    <td>${dolgozat.cím || 'N/A'}</td>
+    <td>${dolgozat.hallgato_ids ? dolgozat.hallgato_ids.join(', ') : 'N/A'}</td>
+    <td>${dolgozat.temavezeto_ids ? dolgozat.temavezeto_ids.join(', ') : 'N/A'}</td>
+    <td>${dolgozat.allapot || 'N/A'}</td>
+    <td class="actions-cell">
+        ${dolgozat.allapot === 'jelentkezett' ? 
+            `<button class="jelentkezes-btn" onclick="feltoltes('${dolgozat._id}')">Feltöltés</button>` : 
+            ''
+        }
+        ${dolgozat.filePath && (dolgozat.allapot === 'feltöltve' || dolgozat.allapot === 'értékelve') ? 
+            `<button class="view-button" onclick="megtekintes('${dolgozat.filePath}')">Megtekintés</button>` : 
+            ''
+        }
+    </td>
+`;
+
             dolgozatTbody.appendChild(tr);
         });
 
