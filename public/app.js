@@ -55,7 +55,7 @@ function megjelenitDolgozatok() {
         dolgozat.temavezeto_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
         dolgozat.allapot.toLowerCase().includes(searchInput.value.toLowerCase())
     );
-
+    
     const start = (currentPage - 1) * itemsPerPage;
     const paginatedDolgozatok = filteredDolgozatok.slice(start, start + itemsPerPage);
     
