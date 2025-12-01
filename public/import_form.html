@@ -244,8 +244,8 @@
   </div>
 
   <div style="margin-top: 1rem; text-align: right;">
-    <label for="elnok">A zsűri elnöke:</label><br>
-    <input type="text" id="elnok" style="width: 25%;">
+    <label for="elnok">Bíráló:</label><br>
+    <input type="text" id="biralo" style="width: 25%;">
   </div>
 </div>
 
@@ -392,7 +392,7 @@ function mentesErtekeles() {
     kerdesek: document.getElementById('bírálói_kérdések').value,
     otdk: document.getElementById('otdk_reszvetel').value,
     datum: document.getElementById('datum').value,
-    elnok: document.getElementById('elnok').value
+    elnok: document.getElementById('biralo').value
   };
 
   fetch(`/api/papers/${id}/ertekeles`, {
@@ -450,7 +450,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       document.getElementById('bírálói_kérdések').value = data.kerdesek || '';
       document.getElementById('otdk_reszvetel').value = data.otdk || 'Nem';
       document.getElementById('datum').value = data.datum || '';
-      document.getElementById('elnok').value = data.elnok || '';
+      document.getElementById('biralo').value = data.elnok || '';
 
       // 🎯 Összpontszám kiszámítása
       const total = [1, 2, 3, 4, 5]

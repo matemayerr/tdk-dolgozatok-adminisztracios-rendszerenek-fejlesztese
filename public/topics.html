@@ -32,18 +32,31 @@
 
     <button id="new-topic-btn">Új témajavaslat hozzáadása</button>
 
-    <form id="topic-form" style="display:none; margin-top: 1rem;">
-      <input type="text" id="topic-title" placeholder="Téma címe" required><br><br>
-      <textarea id="topic-description" placeholder="Tartalmi összefoglaló" required></textarea><br><br>
+   <!-- Homályosító réteg -->
+<div id="uj-topic-homalyositas" class="blur-layer" style="display:none;"></div>
 
-      <label for="topic-supervisor">Témavezető:</label><br>
-      <select id="topic-supervisor" required>
-        <option value="">Válassz témavezetőt...</option>
-      </select><br><br>
+<!-- Modal új témajavaslathoz -->
+<form id="topic-form" class="modal-form" style="display:none;">
+  <h3>Új témajavaslat hozzáadása</h3>
 
-      <button type="submit">Mentés</button>
-      <button type="button" id="topic-cancel">Mégse</button>
-    </form>
+  <div class="form-group">
+    <label for="topic-title">Téma címe:</label>
+    <input type="text" id="topic-title" placeholder="Add meg a téma címét" required>
+  </div>
+
+  <div class="form-group">
+    <label for="topic-description">Tartalmi összefoglaló:</label>
+    <textarea id="topic-description" placeholder="Írd le röviden a témajavaslat tartalmát..." required></textarea>
+  </div>
+
+
+  <div class="gombok-kozeppontban">
+    <button type="submit" id="topic-save" style="background-color: green; color: white;">Mentés</button>
+    <button type="button" id="topic-cancel" style="background-color: gray; color: white;">Mégse</button>
+  </div>
+</form>
+
+
 
     <h3>Elérhető témajavaslatok</h3>
     <table id="topic-table" width="100%">
@@ -59,15 +72,24 @@
       <tbody></tbody>
     </table>
 
-    <!-- Modal a hallgatók kiválasztásához -->
-<div id="jelentkezes-modal" class="modal" style="display: none;">
-  <div class="modal-content">
-    <h3>Hallgatók kiválasztása a témához</h3>
-    <div id="hallgato-valaszto"></div>
-    <button id="jelentkezes-mentes">Jelentkezés mentése</button>
-    <button id="jelentkezes-bezar">Mégse</button>
+<!-- Modal a hallgatók kiválasztásához -->
+<div id="jelentkezes-homalyositas" class="blur-layer" style="display:none;"></div>
+
+<div id="jelentkezes-modal" class="modal-form" style="display:none;">
+  <h3>Hallgatók kiválasztása</h3>
+  <!-- Hallgató kereső + lista -->
+<input type="text" id="hallgato-kereso" placeholder="Hallgató keresése..." class="lista-kereso">
+
+<div id="hallgato-valaszto" class="hallgato-lista"></div>
+
+
+  <div class="gombok-kozeppontban">
+    <button id="jelentkezes-mentes" style="background-color: green; color: white;">Jelentkezés mentése</button>
+    <button id="jelentkezes-bezar" style="background-color: gray; color: white;">Mégse</button>
   </div>
 </div>
+
+
 
   </section>
 </main>

@@ -1161,4 +1161,160 @@ body.login-oldal {
   width: 95%;
 }
 
-  
+
+/* ─────────────────────────────── */
+/* MODAL – Új témajavaslat design  */
+/* ─────────────────────────────── */
+#topic-form.modal-form {
+  width: 600px;              /* nagyobb szélesség */
+  max-width: 90%;
+  padding: 30px 40px;
+  box-sizing: border-box;
+  align-items: stretch;      /* ne legyen minden középre húzva */
+}
+
+#topic-form .form-group {
+  width: 100%;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+#topic-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 15px;
+  color: #242a43;
+}
+
+#topic-form input,
+#topic-form select,
+#topic-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+#topic-form textarea {
+  min-height: 200px;         /* nagyobb szöveges mező */
+  resize: vertical;
+  line-height: 1.5;
+}
+
+#topic-form h3 {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+#topic-form .gombok-kozeppontban {
+  justify-content: center;
+  margin-top: 10px;
+}
+
+#topic-save, #topic-cancel {
+  min-width: 130px;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 15px;
+}
+
+/* ─────────────────────────────── */
+/* JAVÍTOTT HALLGATÓLISTA STÍLUS  */
+/* ─────────────────────────────── */
+
+#jelentkezes-modal.modal-form {
+  width: 600px;                 /* szélesebb ablak */
+  max-width: 95%;
+  padding: 40px 50px;
+  box-sizing: border-box;
+}
+
+
+.hallgato-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 16px 20px;
+  max-height: 380px;         /* kicsit nagyobb látható terület */
+  overflow-y: auto;
+  box-sizing: border-box;
+  width: 100%;               /* kitölti a modal teljes szélességét */
+}
+
+
+.hallgato-lista label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;  /* név és checkbox egy sorban */
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.2s, transform 0.1s;
+  min-height: 40px;
+}
+
+.hallgato-lista label:hover {
+  background-color: #eef5ff;
+}
+
+.hallgato-lista label span {
+  flex: 1;                      /* név kitölti a sort */
+  text-align: left;
+}
+
+.hallgato-lista input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-left: 10px;             /* név után helyezkedik el */
+  flex-shrink: 0;
+}
+
+.hallgato-lista::-webkit-scrollbar {
+  width: 8px;
+}
+.hallgato-lista::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 4px;
+}
+.hallgato-lista::-webkit-scrollbar-thumb:hover {
+  background-color: #888;
+}
+
+/* ─────────────────────────────── */
+/* Egységes betűstílus az űrlapokon */
+/* ─────────────────────────────── */
+#topic-form input,
+#topic-form select,
+#topic-form textarea,
+#topic-form label,
+#topic-form h3 {
+  font-family: "Arial", sans-serif;
+  font-size: 15px;
+  color: #242a43;
+  line-height: 1.5;
+}
+
+/* A táblázat szövegének egységesítése */
+#topic-table th,
+#topic-table td {
+  font-family: "Arial", sans-serif;
+  font-size: 14px;
+  color: #242a43;
+}
+
+/* Gombok betűstílusa */
+#topic-save,
+#topic-cancel {
+  font-family: "Arial", sans-serif;
+  font-weight: bold;
+}
+
