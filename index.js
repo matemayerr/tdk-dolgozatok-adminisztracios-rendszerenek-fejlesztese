@@ -495,6 +495,25 @@ app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res
     }
 });
 
+// Értékelés mentése
+app.post('/api/papers/:id/ertekeles', async (req, res) => {
+  const { id } = req.params;
+  const ertekeles = req.body;
+
+  try {
+    const paper = await Dolgozat.findById(id);
+    if (!paper) return res.status(404).send('Dolgozat nem található');
+
+    paper.ertekeles = ertekeles;
+    await paper.save();
+
+    res.send({ message: 'Értékelés elmentve' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Hiba történt');
+  }
+});
+
 
   // Csak a kész (feltölthető) dolgozatok lekérdezése
 app.get('/api/dolgozatok/kesz', async (req, res) => {
@@ -666,6 +685,18 @@ app.get('/api/dolgozatok/ertekeleshez', async (req, res) => {
         res.status(500).json({ error: 'Hiba történt az értékelhető dolgozatok lekérésekor' });
     }
 });
+
+app.post('/api/ertekelesek', async (req, res) => {
+    try {
+        const ujErtekeles = new ErtekelesModel(req.body);
+        await ujErtekeles.save();
+        res.status(201).send({ message: 'Értékelés elmentve' });
+    } catch (error) {
+        console.error('Hiba az értékelés mentésénél:', error);
+        res.status(500).send({ error: 'Hiba történt az értékelés mentésekor.' });
+    }
+});
+
 
 // Egy dolgozat lekérése ID alapján
 app.get('/api/papers/:id', async (req, res) => {

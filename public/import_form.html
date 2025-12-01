@@ -98,6 +98,19 @@
 .rating-item {
   margin-bottom: 2rem;
 }
+
+#mentesGomb {
+  padding: 5px 15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+#mentesGomb:hover {
+  background-color: #45a049;
+}
+
 </style>
 
 </head>
@@ -115,6 +128,11 @@
   <p>Az értékelő lap feltöltéséhez kérem kattintson a Browse gombra!</p>
   <p><input type="file" id="upload" accept=".xlsx, .xls" </p>
   <br>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+  <button id="mentesGomb" onclick="mentesErtekeles()">Értékelés mentése</button>
+</div>
+
 
   <h3>Szerző(k) adatai</h3>
 <div class="szerzo-row" style="font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 4px;">
@@ -353,7 +371,62 @@ fetch('/api/papers')
     .catch(err => console.error('Hiba a dolgozat adatainak betöltésénél:', err));
 });
 
+function mentesErtekeles() {
+  const id = document.getElementById('paperSelect').value;
+  if (!id) {
+    alert('Előbb válassz dolgozatot!');
+    return;
+  }
 
+  const ertekeles = {
+    score1: document.getElementById('score1').value,
+    score2: document.getElementById('score2').value,
+    score3: document.getElementById('score3').value,
+    score4: document.getElementById('score4').value,
+    score5: document.getElementById('score5').value,
+    text1: document.getElementById('text1').value,
+    text2: document.getElementById('text2').value,
+    text3: document.getElementById('text3').value,
+    text4: document.getElementById('text4').value,
+    text5: document.getElementById('text5').value,
+    kerdesek: document.getElementById('bírálói_kérdések').value,
+    otdk: document.getElementById('otdk_reszvetel').value,
+    datum: document.getElementById('datum').value,
+    elnok: document.getElementById('elnok').value
+  };
+
+  fetch(`/api/papers/${id}/ertekeles`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ertekeles)
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert('Értékelés elmentve!');
+    })
+    .catch(err => {
+      console.error('Hiba az értékelés mentésénél:', err);
+      alert('Hiba történt!');
+    });
+}
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const readonlyMode = urlParams.get('readonly') === 'true';
+
+    if (readonlyMode) {
+        // Minden input és textarea mezőt letiltunk
+        document.querySelectorAll('input, textarea, select').forEach(elem => {
+            elem.setAttribute('readonly', true);
+            elem.setAttribute('disabled', true);
+        });
+
+        // Gombokat elrejtjük
+        const gombok = document.querySelectorAll('button, input[type="submit"], input[type="file"]');
+        gombok.forEach(gomb => gomb.style.display = 'none');
+    }
+});
 
 
 </script>
