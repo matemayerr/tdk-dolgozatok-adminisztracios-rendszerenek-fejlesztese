@@ -17,43 +17,120 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Dolgozatok megjelenítése
-    function megjelenitDolgozatok() {
-        const filteredDolgozatok = dolgozatok.filter(dolgozat => 
-            (dolgozat.cím && dolgozat.cím.toLowerCase().includes(searchInput.value.toLowerCase())) ||
-            (dolgozat.hallgato_ids && dolgozat.hallgato_ids.join(', ').toLowerCase().includes(searchInput.value.toLowerCase())) ||
-            (dolgozat.temavezeto_ids && dolgozat.temavezeto_ids.join(', ').toLowerCase().includes(searchInput.value.toLowerCase())) ||
-            (dolgozat.allapot && dolgozat.allapot.toLowerCase().includes(searchInput.value.toLowerCase()))
-        );
+// Dolgozatok megjelenítése
+async function megjelenitDolgozatok() {
+    const searchText = searchInput.value.toLowerCase();
 
-        const start = (currentPage - 1) * itemsPerPage;
-        const paginatedDolgozatok = filteredDolgozatok.slice(start, start + itemsPerPage);
-        
-        dolgozatTbody.innerHTML = '';
-        paginatedDolgozatok.forEach(dolgozat => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-    <td>${dolgozat.cím || 'N/A'}</td>
-    <td>${dolgozat.hallgato_ids ? dolgozat.hallgato_ids.join(', ') : 'N/A'}</td>
-    <td>${dolgozat.temavezeto_ids ? dolgozat.temavezeto_ids.join(', ') : 'N/A'}</td>
-    <td>${dolgozat.allapot || 'N/A'}</td>
-    <td class="actions-cell">
-        ${dolgozat.allapot === 'jelentkezett' ? 
-            `<button class="jelentkezes-btn" onclick="feltoltes('${dolgozat._id}')">Feltöltés</button>` : 
-            ''
-        }
-        ${dolgozat.filePath && (dolgozat.allapot === 'feltöltve' || dolgozat.allapot === 'értékelve') ? 
-            `<button class="view-button" onclick="megtekintes('${dolgozat.filePath}')">Megtekintés</button>` : 
-            ''
-        }
-    </td>
-`;
-
-            dolgozatTbody.appendChild(tr);
+    // 🔹 Felhasználók betöltése név-térképhez
+    let felhasznalokNevek = {};
+    try {
+        const res = await fetch('/api/felhasznalok');
+        const felhasznalok = await res.json();
+        felhasznalok.forEach(f => {
+            if (f.neptun && f.nev) {
+                felhasznalokNevek[f.neptun] = f.nev;
+            }
         });
-
-        frissitPaginacio(filteredDolgozatok.length);
+    } catch (err) {
+        console.error('Nem sikerült lekérni a felhasználókat:', err);
     }
+
+    // 🔹 Szűrés (cím, állapot, Neptun)
+    const filteredDolgozatok = dolgozatok.filter(dolgozat => {
+        const cim = (dolgozat.cim || dolgozat.cím || '').toLowerCase();
+        const allapot = (dolgozat.allapot || '').toLowerCase();
+        const hallgatoStr = (dolgozat.hallgato_ids || []).join(', ').toLowerCase();
+        const temavezetoStr = (dolgozat.temavezeto_ids || []).join(', ').toLowerCase();
+
+        return (
+            cim.includes(searchText) ||
+            allapot.includes(searchText) ||
+            hallgatoStr.includes(searchText) ||
+            temavezetoStr.includes(searchText)
+        );
+    });
+
+    const start = (currentPage - 1) * itemsPerPage;
+    const paginatedDolgozatok = filteredDolgozatok.slice(start, start + itemsPerPage);
+
+    dolgozatTbody.innerHTML = '';
+
+    paginatedDolgozatok.forEach(dolgozat => {
+        const cim = dolgozat.cim || dolgozat.cím || 'N/A';
+        const allapot = dolgozat.allapot || 'N/A';
+
+        // 🔹 Nevek + Neptun -> hallgatók / témavezetők szövege
+        const hallgatokText =
+            (dolgozat.hallgato_ids || [])
+                .map(neptun => {
+                    const nev = felhasznalokNevek[neptun];
+                    return nev ? `${nev} (${neptun})` : neptun;
+                })
+                .join(', ') || '—';
+
+        const temavezetoText =
+            (dolgozat.temavezeto_ids || [])
+                .map(neptun => {
+                    const nev = felhasznalokNevek[neptun];
+                    return nev ? `${nev} (${neptun})` : neptun;
+                })
+                .join(', ') || '—';
+
+        const leiras = dolgozat.leiras || '—';
+
+        // 🔹 Fő sor (Cím + Állapot + Műveletek)
+        const tr = document.createElement('tr');
+        tr.dataset.id = dolgozat._id;
+        tr.innerHTML = `
+            <td class="clickable-title" onclick="toggleDetails('${dolgozat._id}')">
+                <div class="cim-es-ikon">
+                    <span class="cim-szoveg" title="${cim}">${cim}</span>
+                    <span class="toggle-icon" id="toggle-icon-${dolgozat._id}">▼</span>
+                </div>
+            </td>
+            <td>${allapot}</td>
+            <td class="actions-cell">
+                ${
+                    dolgozat.allapot === 'jelentkezett'
+                        ? `<button class="jelentkezes-btn" onclick="feltoltes('${dolgozat._id}')">Feltöltés</button>`
+                        : ''
+                }
+                ${
+                    dolgozat.filePath &&
+                    (dolgozat.allapot === 'feltöltve' || dolgozat.allapot === 'értékelve')
+                        ? `<button class="view-button" onclick="megtekintes('${dolgozat.filePath}')">Megtekintés</button>`
+                        : ''
+                }
+            </td>
+        `;
+
+        // 🔹 Részletek sor (lenyíló)
+        const detailTr = document.createElement('tr');
+        detailTr.classList.add('dolgozat-details-row');
+        detailTr.id = `details-${dolgozat._id}`;
+        detailTr.style.display = 'none';
+
+        detailTr.innerHTML = `
+            <td colspan="3">
+                <div class="dolgozat-details-panel">
+                    <p class="dolgozat-leiras">
+                        <span class="leiras-cimke">Tartalmi összefoglaló:</span><br>
+                        <span class="leiras-szoveg">${leiras}</span>
+                    </p>
+
+                    <p><strong>Hallgatók:</strong> ${hallgatokText}</p>
+                    <p><strong>Témavezetők:</strong> ${temavezetoText}</p>
+                </div>
+            </td>
+        `;
+
+        dolgozatTbody.appendChild(tr);
+        dolgozatTbody.appendChild(detailTr);
+    });
+
+    frissitPaginacio(filteredDolgozatok.length);
+}
+
 
     // Lapozó gombok frissítése
     function frissitPaginacio(totalItems) {
@@ -122,6 +199,21 @@ document.addEventListener('DOMContentLoaded', function () {
         currentPage = 1;
         megjelenitDolgozatok();
     }
+
+    window.toggleDetails = function (dolgozatId) {
+    const detailRow = document.getElementById(`details-${dolgozatId}`);
+    const icon = document.getElementById(`toggle-icon-${dolgozatId}`);
+
+    if (!detailRow) return;
+
+    const isVisible = detailRow.style.display === 'table-row';
+    detailRow.style.display = isVisible ? 'none' : 'table-row';
+
+    if (icon) {
+        icon.textContent = isVisible ? '▼' : '▲';
+    }
+};
+
 
     // Indításkor dolgozatok betöltése
     listazDolgozatok();

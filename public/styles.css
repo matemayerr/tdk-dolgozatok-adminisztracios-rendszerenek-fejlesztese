@@ -2262,3 +2262,16 @@ body.login-oldal {
   text-decoration: none;      /* hoverre se legyen aláhúzva */
 }
 
+
+/* Nyíl az értékelés lenyitóhoz */
+.toggle-arrow {
+  display: inline-block;
+  width: 14px;
+  margin-left: 4px;
+}
+
+/* Kicsit szorosabb margók a lenyitó blokkban */
+#ertekeles-table .dolgozat-details-panel {
+  background-color: #f9f9f9;
+  padding: 10px 15px;
+}
