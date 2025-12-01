@@ -37,57 +37,67 @@
  <button id="uj-felhasznalo-gomb">Új felhasználó hozzáadása</button>
 
 <!-- Felhasználó hozzáadás űrlap -->
-<form id="felhasznalo-form" class="modal-form uj-felhasznalo-form" style="display: none;">
-<div class="form-group">
-  <input type="text" id="felhasznalo-nev" placeholder="Név" required>
-</div>
-<div class="form-group">
-    <input type="text" id="felhasznalo-neptun" placeholder="Neptun kód (opcionális)">
-</div>
-<div class="form-group">
-  <input type="email" id="felhasznalo-email" placeholder="E-mail" required>
-</div>
+<form id="felhasznalo-form" class="modal-form uj-felhasznalo-form-modern" style="display:none;">
+  <h3>Új felhasználó hozzáadása</h3>
 
-<div class="form-group">
-  <input type="text" id="felhasznalo-szak" placeholder="Szak (pl. Villamosmérnök BSc)">
-</div>
-<div class="form-group">
-  <input type="text" id="felhasznalo-evfolyam" placeholder="Évfolyam (pl. 3. vagy 2025)">
-</div>
-
-
-<div class="form-group">
-    <input type="password" id="felhasznalo-jelszo" placeholder="Jelszó" required>
-  </div>
-  <div class="form-group">
-    <input type="password" id="felhasznalo-jelszo-ismet" placeholder="Jelszó újra" required>
-  </div>
-
-<div class="form-group">
-    <label for="felhasznalo-kar">Kar (opcionális):</label>
-    <select id="felhasznalo-kar">
-      <option value="">-- Válassz kart --</option>
-    </select>
-  </div>
-
-
-    <div class="user-dropdown">
-        <button type="button" class="dropdown-btn">Csoport(ok)   kiválasztása ▾</button>
-        <div class="dropdown-content" id="felhasznalo-csoport">
-            <label><input type="checkbox" value="hallgato"> Hallgató</label>
-            <label><input type="checkbox" value="temavezeto"> Témavezető</label>
-            <label><input type="checkbox" value="biralo"> Bíráló</label>
-            <label><input type="checkbox" value="zsuri"> Zsűri</label>
-            <label><input type="checkbox" value="kariadmin"> Kari adminisztrátor</label>
-            <label><input type="checkbox" value="egyetemiadmin"> Egyetemi adminisztrátor</label>
-            <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
-
-        </div>
+  <div class="form-grid">
+    <div>
+      <label>Név</label>
+      <input type="text" id="felhasznalo-nev" placeholder="Teljes név" required>
     </div>
+    <div>
+      <label>Neptun-kód</label>
+      <input type="text" id="felhasznalo-neptun" placeholder="Pl. ABC123">
+    </div>
+    <div>
+      <label>E-mail</label>
+      <input type="email" id="felhasznalo-email" placeholder="felhasznalo@uni.sze.hu" required>
+    </div>
+    <div>
+      <label>Kar</label>
+      <select id="felhasznalo-kar">
+        <option value="">-- Válassz kart --</option>
+      </select>
+    </div>
+    <div>
+      <label>Szak</label>
+      <input type="text" id="felhasznalo-szak" placeholder="Pl. Mérnökinformatikus BSc">
+    </div>
+    <div>
+      <label>Évfolyam</label>
+      <input type="text" id="felhasznalo-evfolyam" placeholder="Pl. 2025">
+    </div>
+  </div>
 
-    <button type="submit" id="felhasznalo-hozzaadas-gomb">Hozzáadás</button>
-    <button type="button" id="felhasznalo-megse-gomb">Mégse</button>
+  <div class="form-group">
+    <label>Jelszó</label>
+    <input type="password" id="felhasznalo-jelszo" placeholder="********" required>
+  </div>
+
+  <div class="form-group">
+    <label>Csoport(ok)</label>
+    <div class="user-dropdown">
+      <button type="button" class="dropdown-btn">Csoport kiválasztása ▼</button>
+      <div class="dropdown-content scrollable-list" id="felhasznalo-csoport">
+        <input type="text" class="lista-kereso" placeholder="Keresés...">
+        <label><input type="checkbox" value="hallgato"> Hallgató</label>
+        <label><input type="checkbox" value="temavezeto"> Témavezető</label>
+        <label><input type="checkbox" value="biralo"> Bíráló</label>
+        <label><input type="checkbox" value="zsuri"> Zsűri</label>
+        <label><input type="checkbox" value="kariadmin"> Kari adminisztrátor</label>
+        <label><input type="checkbox" value="egyetemiadmin"> Egyetemi adminisztrátor</label>
+        <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="gombok-kozeppontban">
+    <button id="felhasznalo-hozzaadas-gomb">Hozzáadás</button>
+    <button id="felhasznalo-megse-gomb" type="button">Mégse</button>
+  </div>
 </form>
+
+
 
 
 <!-- Homályos réteg -->
