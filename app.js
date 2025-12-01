@@ -7,19 +7,11 @@ document.addEventListener('DOMContentLoaded', function () {
         dolgozatForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const formData = {
-                cím: document.getElementById('dolgozat-cim').value,
-                hallgato_id: document.getElementById('dolgozat-hallgato-id').value,
-                temavezeto_id: document.getElementById('dolgozat-temavezeto-id').value,
-                allapot: document.getElementById('dolgozat-allapot').value
-            };
+            const formData = new FormData(dolgozatForm); // FormData használata a fájlok feltöltéséhez
 
             const response = await fetch('/api/dolgozatok/feltoltes', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
+                body: formData // FormData küldése
             });
 
             if (response.ok) {
