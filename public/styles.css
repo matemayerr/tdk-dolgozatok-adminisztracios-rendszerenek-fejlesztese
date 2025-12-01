@@ -2267,3 +2267,17 @@ body.login-oldal {
   align-items: stretch;  /* ne középre húzza az inputokat */
   overflow: hidden;      /* a belső lista scrollozzon, ne az egész */
 }
+
+
+.jelentkezes-btn.disabled-btn,
+.jelentkezes-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #888 !important;
+}
+
+
+/* Admin menü alapból rejtve – csak JS-ből mutatjuk meg */
+#menu-adminisztraciok {
+  display: none;
+}

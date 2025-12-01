@@ -133,7 +133,12 @@ app.post('/api/login', async (req, res) => {
         }
 
         console.log("Jelszó egyezik, token generálás...");
-        const token = jwt.sign({ id: felhasznalo._id, csoport: felhasznalo.csoport }, secretKey, { expiresIn: '2h' });
+        const token = jwt.sign(
+  { id: felhasznalo._id, csoportok: felhasznalo.csoportok || [] },
+  secretKey,
+  { expiresIn: '2h' }
+);
+
 
         console.log("Bejelentkezés sikeres!");
         res.json({ token, felhasznalo });
@@ -636,42 +641,53 @@ app.get('/api/felhasznalok/jelenlegi', authMiddleware, async (req, res) => {
 
 // Fájl feltöltése és értesítés küldése a témavezetőnek
 app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res) => {
-    const { id } = req.params;
-    const alapertelmezettEmail = 'mayer.mate@outlook.com'; // ideiglenes email
+  const { id } = req.params;
+  const alapertelmezettEmail = 'mayer.mate@outlook.com';
 
-    if (!req.file) {
-        return res.status(400).json({ error: 'Fájl nem lett kiválasztva!' });
+  if (!req.file) {
+    return res.status(400).json({ error: 'Fájl nem lett kiválasztva!' });
+  }
+
+  try {
+    const dolgozat = await Dolgozat.findById(id);
+    if (!dolgozat) {
+      return res.status(404).json({ error: 'Dolgozat nem található' });
     }
 
-    try {
-        const dolgozat = await Dolgozat.findById(id);
-        if (!dolgozat) {
-            return res.status(404).json({ error: 'Dolgozat nem található' });
-        }
-
-        if (dolgozat.allapot !== 'jelentkezett') {
-            return res.status(400).json({ error: 'Csak jelentkezett állapotú dolgozathoz tölthető fel fájl.' });
-        }
-
-        dolgozat.filePath = `/uploads/${req.file.filename}`;
-        dolgozat.allapot = 'feltöltve - témavezető válaszára vár';
-        await dolgozat.save();
-
-        // küldünk értesítést a témavezetőnek
-        const temavezeto = await Felhasznalo.findOne({ neptun: dolgozat.temavezeto_ids[0] });
-        const emailCim = temavezeto ? temavezeto.email : alapertelmezettEmail;
-
-        await kuldErtesitesTemavezetonek(emailCim, dolgozat);
-
-        res.status(200).json({ 
-            message: 'Fájl sikeresen feltöltve, a témavezető értesítve lett.',
-            filePath: dolgozat.filePath 
-        });
-    } catch (error) {
-        console.error('Hiba történt a fájl mentése során:', error);
-        res.status(500).json({ error: 'Hiba történt a fájl mentésekor' });
+    // 🔹 HATÁRIDŐ ELLENŐRZÉS – ide való az await!
+    const hataridoLejart = await isUploadDeadlineExpiredForDolgozat(dolgozat);
+    if (hataridoLejart) {
+      return res.status(400).json({
+        error: 'A dolgozat feltöltési határideje lejárt ezen a karon. További módosítás nem engedélyezett.'
+      });
     }
+
+    if (dolgozat.allapot !== 'jelentkezett') {
+      return res.status(400).json({ error: 'Csak jelentkezett állapotú dolgozathoz tölthető fel fájl.' });
+    }
+
+    dolgozat.filePath = `/uploads/${req.file.filename}`;
+    dolgozat.allapot = 'feltöltve - témavezető válaszára vár';
+    await dolgozat.save();
+
+    const temavezeto = await Felhasznalo.findOne({ neptun: dolgozat.temavezeto_ids[0] });
+    const emailCim = temavezeto ? temavezeto.email : alapertelmezettEmail;
+
+    await kuldErtesitesTemavezetonek(emailCim, dolgozat);
+
+    res.status(200).json({
+      message: 'Fájl sikeresen feltöltve, a témavezető értesítve lett.',
+      filePath: dolgozat.filePath
+    });
+  } catch (error) {
+    console.error('Hiba történt a fájl mentése során:', error);
+    res.status(500).json({ error: 'Hiba történt a fájl mentésekor' });
+  }
 });
+
+
+
+
 
 // Értékelés mentése
 app.post('/api/papers/:id/ertekeles', async (req, res) => {
@@ -1380,6 +1396,31 @@ app.get('/api/stats/szemelyek', async (req, res) => {
   
 const UniversityStructure = require('./models/universityStructure.js');
 
+async function isUploadDeadlineExpiredForDolgozat(dolgozat) {
+  try {
+    if (!dolgozat || !dolgozat.kar) return false;
+
+    const karDoc = await UniversityStructure.findOne({
+      $or: [
+        { rovidites: dolgozat.kar }, // pl. GIVK
+        { nev: dolgozat.kar }        // ha valahol teljes név van tárolva
+      ]
+    }).lean();
+
+    if (!karDoc || !karDoc.feltoltesHatarido) return false;
+
+    const now = new Date(); // 🔹 szerver ideje!
+    const hatarido = new Date(karDoc.feltoltesHatarido);
+
+    return now.getTime() > hatarido.getTime(); // true = lejárt
+  } catch (err) {
+    console.error('Hiba a feltöltési határidő ellenőrzésekor:', err);
+    // hiba esetén inkább ne tiltsunk (false), hogy ne bénuljon le a rendszer
+    return false;
+  }
+}
+
+
 // 🔹 Egyetemi struktúra lekérdezése
 app.get('/api/university-structure', async (req, res) => {
   try {
@@ -1835,6 +1876,15 @@ app.post('/api/dolgozatok/:id/files', upload.array('files'), async (req, res) =>
       return res.status(404).json({ error: 'Dolgozat nem található' });
     }
 
+      // 🔹 HATÁRIDŐ ELLENŐRZÉS – szerver idő alapján
+  const hataridoLejart = await isUploadDeadlineExpiredForDolgozat(dolgozat);
+  if (hataridoLejart) {
+    return res.status(400).json({
+      error: 'A dolgozat feltöltési határideje lejárt ezen a karon. A feltöltés és módosítás már nem engedélyezett.'
+    });
+  }
+
+
     // megjegyezzük a régi állapotot, hogy csak egyszer küldjünk e-mailt
     const regiAllapot = dolgozat.allapot;
 
@@ -2012,6 +2062,14 @@ app.delete('/api/dolgozatok/:id/files/:fileId', async (req, res) => {
     const { id, fileId } = req.params;
     const dolgozat = await Dolgozat.findById(id);
     if (!dolgozat) return res.status(404).json({ error: 'Dolgozat nem található' });
+
+       // 🔹 HATÁRIDŐ ELLENŐRZÉS
+    const hataridoLejart = await isUploadDeadlineExpiredForDolgozat(dolgozat);
+    if (hataridoLejart) {
+      return res.status(400).json({
+        error: 'A dolgozat feltöltési határideje lejárt ezen a karon. A fájlok már nem módosíthatók.'
+      });
+    }
 
     const index = (dolgozat.files || []).findIndex(f => String(f._id) === String(fileId));
     if (index === -1) return res.status(404).json({ error: 'Fájl nem található' });
