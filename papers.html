@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dolgozatok kezelése</title>
+    <title>Új dolgozat hozzáadása</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -17,7 +17,7 @@
                     <a href="#" class="dropbtn">Dolgozatok kezelése</a>
                     <div class="dropdown-content">
                         <a href="papers.html">Új dolgozatok hozzáadása</a>
-                        <a href="completed-papers.html">Kész dolgozatok feltöltése</a>
+                        <a href="completed-papers.html">Dolgozatok feltöltése</a>
                         <a href="review-papers.html">Dolgozatok értékelése</a>
                     </div>
                 </li>
@@ -27,7 +27,7 @@
 
     <main>
         <section>
-            <p><h2>Új dolgozat hozzáadása</h2>
+            <p><h2>Új dolgozat hozzáadása:</h2>
             <form id="dolgozat-form" enctype="multipart/form-data">
                 <input type="text" id="dolgozat-cim" name="cím" placeholder="Cím" required>
                 <input type="text" id="dolgozat-hallgato-id" name="hallgato_id" placeholder="Hallgató Neptun-kód" required>
@@ -35,7 +35,7 @@
                 <button type="submit">Dolgozat hozzáadása</button>
             </form>
 
-            <h2>Felvett dolgozatok</h2>
+            <h2>Felvett dolgozatok:</h2>
             <table id="dolgozatok-table">
                 <thead>
                     <tr>
