@@ -203,6 +203,22 @@
   A dolgozatra kapott összpontszám: <span id="totalScore">0</span>
 </div>
 
+<!-- Bírálói kérdések -->
+<div class="form-group">
+  <label for="bírálói_kérdések">Bírálói kérdések:</label>
+  <textarea id="bírálói_kérdések" name="bírálói_kérdések" class="form-control" rows="3"></textarea>
+</div>
+
+<!-- OTDK részvétel -->
+<div class="form-group">
+  
+<label for="otdk_reszvetel" style="margin-top: 12px; display: inline-block;">OTDK részvétel?</label>
+  <select id="otdk_reszvetel" name="otdk_reszvetel" class="form-control">
+    <option value="Igen">Igen</option>
+    <option value="Nem">Nem</option>
+  </select>
+</div>
+
 <div style="margin-top: 2rem;">
   <div style="display: flex; align-items: center; gap: 1rem;">
     <label for="datum" style="white-space: nowrap;">Dátum: Győr,</label>
@@ -242,9 +258,15 @@ function handleFile(e) {
     document.getElementById("text4").value = sheet["A19"]?.v || '';
     document.getElementById("text5").value = sheet["A21"]?.v || '';
 
+    const biraloiKerdesek = sheet['B24'] ? sheet['B24'].v : '';
+    const otdkReszvetel = sheet['B25'] ? sheet['B25'].v : '';
+
+    document.getElementById('bírálói_kérdések').value = biraloiKerdesek;
+    document.getElementById('otdk_reszvetel').value = otdkReszvetel;
+
 
     // 🎯 Dátum és zsűri elnöke
-    const rawDatum = sheet["A24"]?.v || '';
+    const rawDatum = sheet["A27"]?.v || '';
     const onlyDate = rawDatum.match(/\d{4}\.\d{2}\.\d{2}\./)?.[0] || '';
     document.getElementById("datum").value = onlyDate;
 
