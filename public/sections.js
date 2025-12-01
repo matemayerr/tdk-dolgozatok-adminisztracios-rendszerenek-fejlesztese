@@ -125,30 +125,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const zsuriButton = document.createElement('button');
         zsuriButton.textContent = 'Zsűri adminisztráció';
-        zsuriButton.classList.add('btn', 'btn-info', 'me-2');
+        zsuriButton.classList.add('modosit-btn');
         zsuriButton.addEventListener('click', () => openZsuriModal(section._id));
-        actionsCell.appendChild(zsuriButton);
 
         const assignButton = document.createElement('button');
         assignButton.textContent = 'Dolgozatok hozzáadása';
-        assignButton.classList.add('btn', 'btn-secondary', 'me-2');
+        assignButton.classList.add('mentes-btn');
         assignButton.addEventListener('click', () => openAssignModal(section._id));
-        actionsCell.appendChild(assignButton);
 
         const editButton = document.createElement('button');
         editButton.textContent = 'Átnevezés';
-        editButton.classList.add('btn', 'btn-warning', 'me-2');
+        editButton.classList.add('modosit-btn');
         editButton.addEventListener('click', () => editSection(section));
-        actionsCell.appendChild(editButton);
 
         const deleteButton = document.createElement('button');
         deleteButton.textContent = 'Törlés';
-        deleteButton.classList.add('btn', 'btn-danger');
+        deleteButton.classList.add('btn-danger');
         deleteButton.addEventListener('click', () => deleteSection(section._id));
+
+        // 👉 Itt tesszük bele őket a cellába:
+        actionsCell.appendChild(zsuriButton);
+        actionsCell.appendChild(assignButton);
+        actionsCell.appendChild(editButton);
         actionsCell.appendChild(deleteButton);
 
         row.appendChild(actionsCell);
         tableBody.appendChild(row);
+
 
         // Lenyíló sor a dolgozatoknak
         const detailRow = document.createElement('tr');

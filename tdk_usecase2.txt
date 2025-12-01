@@ -1,0 +1,30 @@
+@startuml
+left to right direction
+skinparam actorStyle awesome
+title TDK adminisztrációs rendszer – Hallgató / Bíraló
+
+actor "Hallgató" as Student
+actor "Bíraló"   as Reviewer
+
+' --- Hallgató use-case-ek ---
+usecase UC_NewPaper   as "Új dolgozat\njelentkezése"
+usecase UC_UploadPDF  as "Dolgozat PDF\nfeltöltése"
+usecase UC_OwnStatus  as "Saját dolgozat és\nstátusz megtekintése"
+usecase UC_SeeReview  as "Szöveges bírálat\nmegtekintése"
+
+' --- Bíraló use-case-ek ---
+usecase UC_Assigned   as "Kiosztott dolgozatok\nlistázása"
+usecase UC_ScoreText  as "Pontszámos és szöveges\nértékelés rögzítése"
+usecase UC_Excel      as "Excel alapú\nértékelés import"
+
+' --- Kapcsolatok ---
+Student  --> UC_NewPaper
+Student  --> UC_UploadPDF
+Student  --> UC_OwnStatus
+Student  --> UC_SeeReview
+
+Reviewer --> UC_Assigned
+Reviewer --> UC_ScoreText
+Reviewer --> UC_Excel
+
+@enduml

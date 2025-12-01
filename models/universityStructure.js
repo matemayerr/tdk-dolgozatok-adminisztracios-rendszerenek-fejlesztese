@@ -12,7 +12,7 @@ const UniversityStructureSchema = new mongoose.Schema({
   rovidites: { type: String, required: true },  // pl. GIVK, KGGK
   szakok: [szakSchema],
 
-  // 🔹 Dolgozat-feltöltési határidő ehhez a karhoz
+  // Dolgozat-feltöltési határidő ehhez a karhoz
   feltoltesHatarido: { type: Date, default: null }
 });
 

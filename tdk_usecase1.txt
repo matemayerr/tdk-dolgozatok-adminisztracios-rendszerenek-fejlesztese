@@ -1,0 +1,40 @@
+@startuml
+left to right direction
+skinparam actorStyle awesome
+title TDK adminisztrációs rendszer – Admin / Témavezető / Zsűri
+
+actor Admin
+actor "Témavezető" as Supervisor
+actor "Zsűritag\n(elnök/titkár/tag)" as Jury
+
+' --- Admin use-case-ek ---
+usecase UC_Users       as "Felhasználók kezelése"
+usecase UC_PapersAdmin as "Dolgozatok adminisztrációja"
+usecase UC_Sections    as "Szekciók és zsűri kezelése"
+usecase UC_Faculty     as "Karstruktúra\n(UniversityStructure) kezelése"
+usecase UC_Deadlines   as "Határidők beállítása"
+usecase UC_Stats       as "Statisztikák megtekintése"
+
+' --- Témavezető use-case-ek ---
+usecase UC_SuperApprove as "Témavezetői\njóváhagyás / elutasítás"
+usecase UC_SuperPapers  as "Témavezetőhöz kapcsolt\ndolgozatok áttekintése"
+
+' --- Zsűri use-case-ek ---
+usecase UC_JuryOverview as "Szekció dolgozatainak\nés bírálatainak áttekintése"
+usecase UC_JuryText     as "Szöveges bírálatok\nmegtekintése"
+
+' --- Kapcsolatok ---
+Admin --> UC_Users
+Admin --> UC_PapersAdmin
+Admin --> UC_Sections
+Admin --> UC_Faculty
+Admin --> UC_Deadlines
+Admin --> UC_Stats
+
+Supervisor --> UC_SuperApprove
+Supervisor --> UC_SuperPapers
+
+Jury --> UC_JuryOverview
+Jury --> UC_JuryText
+
+@enduml

@@ -370,10 +370,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const editFaculty    = document.getElementById('edit-faculty');
     const editSummary    = document.getElementById('edit-summary');
 
-    if (!editTitle || !editSupervisor || !editDept || !editFaculty || !editSummary) {
-      console.warn('Hiányzó edit modal elemek.');
-      return;
-    }
+if (!editTitle || !editSupervisor /* || !editDept */ || !editFaculty || !editSummary) {
+  console.warn('Hiányzó edit modal elemek.');
+  return;
+}
 
     editTitle.value      = cells[0].innerText.trim();
     editSupervisor.value = cells[1].innerText.trim();

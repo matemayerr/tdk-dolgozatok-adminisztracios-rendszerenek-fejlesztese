@@ -36,12 +36,28 @@ document.addEventListener('DOMContentLoaded', function () {
   ];
 
   // ---------------------------
+  // 🔐 Auth helper függvények
+  // ---------------------------
+  function getToken() {
+    return localStorage.getItem('token');
+  }
+
+  function getLoggedInUser() {
+    const raw = localStorage.getItem('felhasznalo');
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  // ---------------------------
   // 🔔 Egységes toast értesítő
   // ---------------------------
   function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) {
-      // ha valamiért nincs konténer, fallback alert
       alert(message);
       return;
     }
@@ -52,7 +68,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     container.appendChild(toast);
 
-    // kis csúsztatás, hogy az animáció biztosan lefusson
     requestAnimationFrame(() => {
       toast.classList.add('show');
     });
@@ -74,11 +89,30 @@ document.addEventListener('DOMContentLoaded', function () {
   // 1. Dolgozatok lekérdezése
   // ---------------------------
   async function listazDolgozatok() {
+    const token = getToken();
+    if (!token) {
+      showToast('Nincs bejelentkezett felhasználó, kérjük jelentkezz be újra!', 'error');
+      // ha van login oldalad:
+      // window.location.href = 'login.html';
+      return;
+    }
+
     try {
-      const response = await fetch('/api/dolgozatok/feltoltheto');
-      if (!response.ok) {
-        throw new Error('Sikertelen válasz a /api/dolgozatok/feltoltheto végponttól.');
+      const response = await fetch('/api/dolgozatok/kesz', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        showToast('Nincs jogosultság a dolgozatok megtekintéséhez.', 'error');
+        return;
       }
+
+      if (!response.ok) {
+        throw new Error('Sikertelen válasz a /api/dolgozatok/kesz végponttól.');
+      }
+
       dolgozatok = await response.json();
       await megjelenitDolgozatok();
     } catch (err) {
@@ -93,10 +127,49 @@ document.addEventListener('DOMContentLoaded', function () {
   async function megjelenitDolgozatok() {
     const searchText = (searchInput.value || '').toLowerCase();
 
-    // 🔹 Felhasználók betöltése név-térképhez
+    const user = getLoggedInUser();
+    const sajatNeptun = user?.neptun || '';
+    const csoportok = user?.csoportok || [];
+
+    const adminSzerepek = [
+      'admin',
+      'egyetemi adminisztrátor',
+      'kari adminisztrátor',
+      'rendszergazda'
+    ];
+
+    const isAdmin = csoportok.some(c => adminSzerepek.includes(c));
+
+    // 🔹 1) Szerepkör alapú szűrés (extra védelem a backend mellett)
+    let userFilteredDolgozatok = dolgozatok;
+
+    if (!isAdmin && sajatNeptun) {
+      userFilteredDolgozatok = dolgozatok.filter(d => {
+        const hallgatoIds = d.hallgato_ids || [];
+        const temavezetoIds = d.temavezeto_ids || [];
+        let match = false;
+
+        if (csoportok.includes('hallgato')) {
+          match = match || hallgatoIds.includes(sajatNeptun);
+        }
+
+        if (csoportok.includes('temavezeto')) {
+          match = match || temavezetoIds.includes(sajatNeptun);
+        }
+
+        // Ha bírálónak is lesz feltöltési joga, itt lehet bővíteni
+        return match;
+      });
+    }
+
+    // 🔹 2) Keresőmező szerinti szűrés
+    // Felhasználók betöltése név-térképhez
     let felhasznalokNevek = {};
     try {
-      const res = await fetch('/api/felhasznalok');
+      const token = getToken();
+      const res = await fetch('/api/felhasznalok', {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+      });
       if (!res.ok) throw new Error('Hiba a /api/felhasznalok hívásnál');
       const felhasznalok = await res.json();
       felhasznalok.forEach(f => {
@@ -106,11 +179,10 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     } catch (err) {
       console.error('Nem sikerült lekérni a felhasználókat:', err);
-      showToast('Nem sikerült betölteni a felhasználókat.', 'error');
+      // hallgatók esetén itt max. a név nem fog látszani, de a Neptun igen
     }
 
-    // 🔹 Szűrés (cím, állapot, Neptun)
-    const filteredDolgozatok = dolgozatok.filter(dolgozat => {
+    const filteredDolgozatok = userFilteredDolgozatok.filter(dolgozat => {
       const cim = (dolgozat.cim || dolgozat.cím || '').toLowerCase();
       const allapot = (dolgozat.allapot || '').toLowerCase();
       const hallgatoStr = (dolgozat.hallgato_ids || []).join(', ').toLowerCase();
@@ -212,7 +284,6 @@ document.addEventListener('DOMContentLoaded', function () {
         </td>
       `;
 
-
       dolgozatTbody.appendChild(tr);
       dolgozatTbody.appendChild(detailTr);
     });
@@ -247,20 +318,17 @@ document.addEventListener('DOMContentLoaded', function () {
     selectedFiles = [];
     uploadInput.value = '';
 
-        const dolgozat = dolgozatok.find(d => d._id === id);
+    const dolgozat = dolgozatok.find(d => d._id === id);
     const { text, human, lejart: hataridoLejart } = getKarDeadlineInfo(dolgozat);
 
     const deadlineElem = document.getElementById('upload-deadline-info');
     if (deadlineElem) {
       if (human) {
-        // Csak ez látszik: "Határidő: 2025. 11. 27. 16:55"
         deadlineElem.textContent = `Határidő: ${human}`;
       } else {
-        // ha nincs konkrét dátum, marad a magyarázó szöveg
         deadlineElem.textContent = text || '';
       }
     }
-
 
     uploadSaveBtn.disabled = hataridoLejart;
     if (hataridoLejart) {
@@ -333,7 +401,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (file.path) window.open(file.path, '_blank');
       });
 
-      // confirm() helyett saját modal
       li.querySelector('.delete-btn').addEventListener('click', () => {
         openFileDeleteConfirmModal(file._id, fileName);
       });
@@ -409,14 +476,12 @@ document.addEventListener('DOMContentLoaded', function () {
     deleteTargetFileName = '';
   }
 
-  // "Mégse" gomb a modalban
   if (fileDeleteConfirmNoBtn) {
     fileDeleteConfirmNoBtn.addEventListener('click', () => {
       closeFileDeleteConfirmModal();
     });
   }
 
-  // Modal háttérre kattintás – (ha a teljes overlay a modal elem)
   if (fileDeleteConfirmModal) {
     fileDeleteConfirmModal.addEventListener('click', (e) => {
       if (e.target === fileDeleteConfirmModal) {
@@ -425,7 +490,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // "Törlés" gomb a modalban
   if (fileDeleteConfirmYesBtn) {
     fileDeleteConfirmYesBtn.addEventListener('click', async () => {
       if (!currentUploadPaperId || !deleteTargetFileId) {
@@ -502,7 +566,7 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       const res = await fetch('/api/karok');
       if (!res.ok) throw new Error('Nem sikerült betölteni a karokat');
-      KAROK = await res.json(); // [{_id, nev, rovidites, feltoltesHatarido, ...}]
+      KAROK = await res.json();
     } catch (err) {
       console.error('Hiba a karok betöltésekor:', err);
       KAROK = [];
@@ -510,7 +574,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // 🔹 Globális dolgozatfeltöltési határidő betöltése
   async function betoltGlobalFeltoltesHatarido() {
     try {
       const res = await fetch('/api/deadlines/dolgozat_feltoltes_global');
@@ -532,7 +595,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let hatarido = null;
     let forras = '';
 
-    // 1️⃣ Kar-specifikus határidő
     if (dolgozat.kar && KAROK && KAROK.length > 0) {
       const karDoc = KAROK.find(k =>
         (k.rovidites && k.rovidites === dolgozat.kar) ||
@@ -548,7 +610,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    // 2️⃣ Ha nincs kar-specifikus, akkor globális
     if (!hatarido && GLOBAL_UPLOAD_DEADLINE) {
       const d = new Date(GLOBAL_UPLOAD_DEADLINE);
       if (!Number.isNaN(d.getTime())) {
@@ -557,7 +618,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    // 3️⃣ Ha semmi nincs → nincs korlát
     if (!hatarido) {
       return {
         text: 'Nincs beállítva határidő (korlátlan feltöltés)',

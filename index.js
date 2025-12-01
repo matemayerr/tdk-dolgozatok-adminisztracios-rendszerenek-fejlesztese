@@ -49,10 +49,10 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
   elutasitas_oka: { type: String },
   szovegesErtekeles: { type: String },
 
-  // 🔹 régi "egy darab" értékelés objektum (kompatibilitás miatt meghagyjuk)
+  // régi "egy darab" értékelés objektum (kompatibilitás miatt meghagyjuk)
   ertekeles: { type: Object, default: {} },
 
-  // 🔹 ÚJ: bírálónkénti értékelések
+  // ÚJ: bírálónkénti értékelések
   ertekelesek: [
     {
       biraloId: { type: mongoose.Schema.Types.ObjectId, ref: 'Felhasznalos' },
@@ -63,7 +63,7 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     }
   ],
 
-  // 🔹 ÚJ: jelölés, hogy a két fő bírálat között > 12 pont különbség van
+  // ÚJ: jelölés, hogy a két fő bírálat között > 12 pont különbség van
   nagyElteres12: { type: Boolean, default: false },
 
   biralok: [
@@ -97,7 +97,7 @@ const DeadlineSchema = new mongoose.Schema({
 const Deadline = mongoose.model('Deadline', DeadlineSchema);
 
 
-// 🔹 Összes határidő lekérése
+// Összes határidő lekérése
 app.get('/api/deadlines', async (req, res) => {
   try {
     const deadlines = await Deadline.find().lean();
@@ -108,7 +108,7 @@ app.get('/api/deadlines', async (req, res) => {
   }
 });
 
-// 🔹 Egy konkrét határidő lekérése kulcs alapján
+// Egy konkrét határidő lekérése kulcs alapján
 app.get('/api/deadlines/:key', async (req, res) => {
   try {
     const deadline = await Deadline.findOne({ key: req.params.key }).lean();
@@ -122,7 +122,7 @@ app.get('/api/deadlines/:key', async (req, res) => {
   }
 });
 
-// 🔹 Határidő létrehozása / módosítása kulcs alapján (upsert)
+// Határidő létrehozása / módosítása kulcs alapján (upsert)
 app.put('/api/deadlines/:key', async (req, res) => {
   try {
     const key = req.params.key;               // pl. 'dolgozat_jelentkezes'
@@ -215,7 +215,7 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// 🔹 Segédfüggvény: admin-jellegű felhasználó-e
+// Segédfüggvény: admin-jellegű felhasználó-e
 function isAdminLikeUser(user) {
   if (!user || !Array.isArray(user.csoportok)) return false;
 
@@ -381,7 +381,7 @@ app.get('/uploads/:filename', (req, res) => {
 });
 
 
-// 🔹 Segédfüggvény: userId kiolvasása az Authorization headerből (ha van)
+// Segédfüggvény: userId kiolvasása az Authorization headerből (ha van)
 function getUserIdFromToken(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
@@ -395,8 +395,7 @@ function getUserIdFromToken(req) {
   }
 }
 
-// 🔹 Segédfüggvény: bírálati állapot és pontszám frissítése egy dolgozatnál
-// 🔹 Segédfüggvény: bírálati állapot és pontszám frissítése egy dolgozatnál
+// Segédfüggvény: bírálati állapot és pontszám frissítése egy dolgozatnál
 function frissitsBiralatiAllapot(dolgozat) {
   const accepted = (dolgozat.biralok || []).filter(b => b.allapot === 'Elfogadva');
   const acceptedIds = accepted.map(b => String(b.felhasznaloId));
@@ -438,11 +437,11 @@ function frissitsBiralatiAllapot(dolgozat) {
   if (scores.length === 2) {
     const diff = Math.abs(scores[0] - scores[1]);
 
-    // ⬇⬇ Itt figyelünk 12 pontra (>= 12)
+    // Itt figyelünk 12 pontra (>= 12)
     if (diff >= 12) {
       // Ha MÉG nincs kész a 3. bírálat → jelöljük, hogy nagy eltérés van
       if (!(completed >= 3 && totalAccepted >= 3)) {
-        dolgozat.nagyElteres12 = true;                // 👉 ezt látja a faculties.js
+        dolgozat.nagyElteres12 = true;                // ezt látja a faculties.js
         if (dolgozat.allapot !== 'bírálva') {
           dolgozat.allapot = 'bírálat alatt';
         }
@@ -450,7 +449,7 @@ function frissitsBiralatiAllapot(dolgozat) {
         // Itt már a 3. bíráló is kész → ez lesz a végleges
         const thirdEval = sorted[2];
         if (thirdEval && typeof thirdEval.pontszam !== 'undefined') {
-          dolgozat.nagyElteres12 = false;             // 👉 konfliktus megoldva, jelölés törölve
+          dolgozat.nagyElteres12 = false;             // konfliktus megoldva, jelölés törölve
           dolgozat.allapot = 'bírálva';
           dolgozat.pontszam = String(thirdEval.pontszam);
           dolgozat.ertekeles = {
@@ -466,7 +465,7 @@ function frissitsBiralatiAllapot(dolgozat) {
         }
       }
     } else {
-      // 🟢 Két bírálat, különbség < 12 pont → átlagolt végső pontszám
+      // Két bírálat, különbség < 12 pont → átlagolt végső pontszám
       const avg = Math.round((scores[0] + scores[1]) / 2);
       dolgozat.nagyElteres12 = false;
       dolgozat.allapot = 'bírálva';
@@ -486,7 +485,7 @@ function frissitsBiralatiAllapot(dolgozat) {
 
 // CRUD műveletek a dolgozatokra
 
-// 🔹 Dolgozatok sorrendjének mentése drag and drop után
+// Dolgozatok sorrendjének mentése drag and drop után
 app.put('/api/dolgozatok/reorder', async (req, res) => {
   try {
     const body = req.body || {};
@@ -514,10 +513,10 @@ app.put('/api/dolgozatok/reorder', async (req, res) => {
       updatedCount += result.modifiedCount ?? result.nModified ?? 0;
     }
 
-    console.log('✅ Sorrend frissítve, módosított dokumentumok:', updatedCount);
+    console.log('Sorrend frissítve, módosított dokumentumok:', updatedCount);
     res.json({ message: 'Sorrend sikeresen frissítve.', updated: updatedCount });
   } catch (err) {
-    console.error('❌ Hiba a sorrend mentésekor:', err);
+    console.error('Hiba a sorrend mentésekor:', err);
     res.status(500).json({ error: 'Szerverhiba a sorrend mentésekor.', details: String(err.message || err) });
   }
 });
@@ -529,14 +528,14 @@ app.get('/api/dolgozatok', authMiddleware, async (req, res) => {
     const bejelentkezettFelhasznaloId = req.user.id;
     const bejelentkezettCsoportok = req.user.csoportok || [];
 
-    // 🔹 Megkeressük a teljes felhasználói rekordot (neptun miatt)
+    // Megkeressük a teljes felhasználói rekordot (neptun miatt)
     const aktualisFelhasznalo = await Felhasznalo.findById(bejelentkezettFelhasznaloId).lean();
     const sajatNeptun = aktualisFelhasznalo?.neptun || null;
 
-    // 🔹 Alap query: minden dolgozat
+    // Alap query: minden dolgozat
     let query = {};
 
-    // 🔹 Ha NEM admin-jellegű felhasználó → szűrünk
+    // Ha NEM admin-jellegű felhasználó → szűrünk
     if (!isAdminLikeUser({ csoportok: bejelentkezettCsoportok })) {
       const orFeltetelek = [];
 
@@ -603,23 +602,72 @@ app.get('/api/dolgozatok', authMiddleware, async (req, res) => {
 
 
 
-// Feltöltéshez elérhető dolgozatok lekérdezése
-app.get('/api/dolgozatok/feltoltheto', async (req, res) => {
-    try {
-        const feltolthetoDolgozatok = await Dolgozat.find({
-            allapot: { $in: ['jelentkezett','feltöltve - témavezető válaszára vár','elfogadva - témavezető által',
-                    'elutasítva - témavezető által'] }
-        });
-        res.json(feltolthetoDolgozatok);
-    } catch (error) {
-        res.status(500).json({ error: 'Hiba történt a feltölthető dolgozatok lekérésekor' });
+// Feltöltéshez elérhető dolgozatok lekérdezése (szerepkör alapú szűréssel)
+app.get('/api/dolgozatok/feltoltheto', authMiddleware, async (req, res) => {
+  try {
+    const bejelentkezettFelhasznaloId = req.user.id;
+    const bejelentkezettCsoportok = req.user.csoportok || [];
+
+    // Az aktuális felhasználó a Neptun miatt kell
+    const aktualisFelhasznalo = await Felhasznalo.findById(bejelentkezettFelhasznaloId).lean();
+    const sajatNeptun = aktualisFelhasznalo?.neptun || null;
+
+    const allowedStates = [
+      'jelentkezett',
+      'feltöltve - témavezető válaszára vár',
+      'elfogadva - témavezető által',
+      'elutasítva - témavezető által'
+    ];
+
+    // Alap: csak a feltölthető állapotok
+    let query = { allapot: { $in: allowedStates } };
+
+    // Ha NEM admin jellegű user (hallgató, témavezető, bíráló...) akkor szűrünk
+    if (!isAdminLikeUser({ csoportok: bejelentkezettCsoportok })) {
+      const orFeltetelek = [];
+
+      // Hallgató: csak a saját dolgozatai
+      if (bejelentkezettCsoportok.includes('hallgato') && sajatNeptun) {
+        orFeltetelek.push({ hallgato_ids: sajatNeptun });
+      }
+
+      // Témavezető: azok, ahol ő a témavezető
+      if (bejelentkezettCsoportok.includes('temavezeto') && sajatNeptun) {
+        orFeltetelek.push({ temavezeto_ids: sajatNeptun });
+      }
+
+      // Bíráló: azok, ahol bírálóként szerepel
+      if (bejelentkezettCsoportok.includes('biralo')) {
+        orFeltetelek.push({ 'biralok.felhasznaloId': bejelentkezettFelhasznaloId });
+      }
+
+      if (orFeltetelek.length > 0) {
+        // allapot + saját releváns dolgozatok metszete
+        query = {
+          $and: [
+            { allapot: { $in: allowedStates } },
+            { $or: orFeltetelek }
+          ]
+        };
+      } else {
+        // ha nincs releváns szerepe, akkor ne kapjon semmit
+        query = { _id: null };
+      }
     }
+
+    const feltolthetoDolgozatok = await Dolgozat.find(query);
+    res.json(feltolthetoDolgozatok);
+  } catch (error) {
+    console.error('Hiba történt a feltölthető dolgozatok lekérésekor:', error);
+    res.status(500).json({ error: 'Hiba történt a feltölthető dolgozatok lekérésekor' });
+  }
 });
+
 
 
 // Új dolgozat hozzáadása
 app.post('/api/dolgozatok', async (req, res) => {
-    // 🔹 Határidő ellenőrzés – csak akkor tilt, ha be van állítva
+    // Határidő ellenőrzés – csak akkor tilt, ha be van állítva
   if (await isGlobalDeadlineExpired('dolgozat_jelentkezes')) {
     return res.status(400).json({
       error: 'A dolgozat jelentkezési határideje lejárt, új dolgozat már nem adható le.'
@@ -629,7 +677,7 @@ app.post('/api/dolgozatok', async (req, res) => {
   const { cím, hallgato_ids, temavezeto_ids, leiras, kar: bodyKar } = req.body;
 
   try {
-    // 🔹 Alapértelmezett: nincs kar
+    // Alapértelmezett: nincs kar
     let kar = bodyKar || '';
 
     // Minimális validáció
@@ -638,7 +686,7 @@ app.post('/api/dolgozatok', async (req, res) => {
       return res.status(400).json({ error: 'Hiányzó adatok az új dolgozathoz.' });
     }
 
-    // 🔹 Ha a frontend nem küldött kart, próbáljuk meg kideríteni az első hallgató alapján
+    // Ha a frontend nem küldött kart, próbáljuk meg kideríteni az első hallgató alapján
     if (!kar && hallgato_ids.length > 0) {
       const elsoHallgato = await Felhasznalo.findOne({ neptun: hallgato_ids[0] }).lean();
       if (elsoHallgato && elsoHallgato.kar) {
@@ -979,7 +1027,7 @@ async function isGlobalDeadlineExpired(key) {
 
 
 // Értékelés mentése
-// 🔹 Többszörös bírálat mentése
+// Többszörös bírálat mentése
 app.post('/api/papers/:id/ertekeles', async (req, res) => {
   const { id } = req.params;
   const ertekeles = req.body || {};
@@ -1033,7 +1081,7 @@ app.post('/api/papers/:id/ertekeles', async (req, res) => {
 
     // Ha nem tudjuk, ki a bíráló, visszaesünk a régi viselkedésre
     if (!biraloId) {
-      console.warn('⚠ Nincs biraloId az értékelés mentésénél – régi mód szerint bírálva-ra állítjuk.');
+      console.warn('Nincs biraloId az értékelés mentésénél – régi mód szerint bírálva-ra állítjuk.');
       dolgozat.allapot = 'bírálva';
       await dolgozat.save();
       return res.json({ message: 'Értékelés elmentve (biraloId nélkül)', dolgozat });
@@ -1044,7 +1092,7 @@ app.post('/api/papers/:id/ertekeles', async (req, res) => {
       dolgozat.ertekelesek = [];
     }
 
-    // 🔹 pontszám kinyerése / kiszámítása
+    // pontszám kinyerése / kiszámítása
     let pontszam = ertekeles.pontszam;
 
     if (pontszam === null || pontszam === undefined || pontszam === '') {
@@ -1095,7 +1143,7 @@ app.post('/api/papers/:id/ertekeles', async (req, res) => {
       });
     }
 
-    // 🔹 Bírálati állapot frissítése (1/2, 2/2, 3/3 logika + nagy eltérés)
+    // Bírálati állapot frissítése (1/2, 2/2, 3/3 logika + nagy eltérés)
     const stat = frissitsBiralatiAllapot(dolgozat);
 
     await dolgozat.save();
@@ -1132,7 +1180,7 @@ app.get('/api/papers/:id/ertekeles', async (req, res) => {
       return res.status(404).json({ error: 'Dolgozat nem található' });
     }
 
-    // 🔹 bíráló azonosítása tokenből vagy query paraméterből
+    // bíráló azonosítása tokenből vagy query paraméterből
     const tokenUserId = getUserIdFromToken(req);
     const qBiraloId =
       req.query.biraloId ||
@@ -1153,7 +1201,7 @@ app.get('/api/papers/:id/ertekeles', async (req, res) => {
       }
     }
 
-    // 🔙 visszaesés a régi egy darab értékelésre (admin / régi adatok)
+    // visszaesés a régi egy darab értékelésre (admin / régi adatok)
     res.json(dolgozat.ertekeles || {});
   } catch (err) {
     console.error('Hiba az értékelés lekérdezésekor:', err);
@@ -1161,18 +1209,68 @@ app.get('/api/papers/:id/ertekeles', async (req, res) => {
   }
 });
 
-  // Csak a kész (feltölthető) dolgozatok lekérdezése
-app.get('/api/dolgozatok/kesz', async (req, res) => {
-    try {
-        const keszDolgozatok = await Dolgozat.find({
-            allapot: { $in: ['jelentkezett', 'elfogadva', 'feltöltve - témavezető válaszára vár'] }
-        });
-        res.json(keszDolgozatok);
-    } catch (error) {
-        console.error('Hiba a kész dolgozatok lekérésekor:', error);
-        res.status(500).json({ error: 'Hiba történt a kész dolgozatok lekérésekor' });
+// Csak a kész (feltölthető) dolgozatok lekérdezése – SZEREPKÖR ALAPÚ SZŰRÉSSEL
+app.get('/api/dolgozatok/kesz', authMiddleware, async (req, res) => {
+  try {
+    const bejelentkezettFelhasznaloId = req.user.id;
+    const bejelentkezettCsoportok = req.user.csoportok || [];
+
+    // Az aktuális felhasználó a Neptun miatt kell
+    const aktualisFelhasznalo = await Felhasznalo.findById(bejelentkezettFelhasznaloId).lean();
+    const sajatNeptun = aktualisFelhasznalo?.neptun || null;
+
+    // Mely állapotokban engedjük a feltöltést / megjelenítést
+    const allowedStates = [
+      'jelentkezett',
+      'feltöltve - témavezető válaszára vár',
+      'elfogadva - témavezető által',
+      'elutasítva - témavezető által'
+    ];
+
+    // Alap: csak az allowedStates
+    let query = { allapot: { $in: allowedStates } };
+
+    // Ha NEM admin jellegű user → szűrjük a saját szerepe szerint
+    if (!isAdminLikeUser({ csoportok: bejelentkezettCsoportok })) {
+      const orFeltetelek = [];
+
+      // Hallgató: csak a SAJÁT dolgozatai
+      if (bejelentkezettCsoportok.includes('hallgato') && sajatNeptun) {
+        orFeltetelek.push({ hallgato_ids: sajatNeptun });
+      }
+
+      // Témavezető: ahol ő a témavezető
+      if (bejelentkezettCsoportok.includes('temavezeto') && sajatNeptun) {
+        orFeltetelek.push({ temavezeto_ids: sajatNeptun });
+      }
+
+      // Bíráló: ahol ő bíráló
+      if (bejelentkezettCsoportok.includes('biralo')) {
+        orFeltetelek.push({ 'biralok.felhasznaloId': bejelentkezettFelhasznaloId });
+      }
+
+      if (orFeltetelek.length > 0) {
+        query = {
+          $and: [
+            { allapot: { $in: allowedStates } },
+            { $or: orFeltetelek }
+          ]
+        };
+      } else {
+        // ha nincs releváns szerepe, ne lásson semmit
+        query = { _id: null };
+      }
     }
+
+    const keszDolgozatok = await Dolgozat.find(query);
+    res.json(keszDolgozatok);
+  } catch (error) {
+    console.error('Hiba a kész dolgozatok lekérésekor:', error);
+    res.status(500).json({ error: 'Hiba történt a kész dolgozatok lekérésekor' });
+  }
 });
+
+
 
 // Értékelés fájl feltöltése és értesítések küldése a hallgatónak és témavezetőnek
 app.post('/api/dolgozatok/ertekeles-feltoltes/:id', upload.single('file'), async (req, res) => {
@@ -1211,7 +1309,7 @@ app.post('/api/dolgozatok/ertekeles-feltoltes/:id', upload.single('file'), async
     }
 });
 
-// 🔹 Hallgatói nézethez: bírálatok listája egy dolgozathoz (pontszám nélkül)
+// Hallgatói nézethez: bírálatok listája egy dolgozathoz (pontszám nélkül)
 app.get('/api/papers/:id/ertekelesek-hallgato', async (req, res) => {
   try {
     const { id } = req.params;
@@ -1317,7 +1415,7 @@ app.get('/api/papers/:id/ertekelesek-hallgato', async (req, res) => {
   }
 });
 
-// 🔹 Zsűrinézethez: bírálatok listája (pontszámokkal, teljes űrlappal)
+// Zsűrinézethez: bírálatok listája (pontszámokkal, teljes űrlappal)
 app.get('/api/papers/:id/ertekelesek-zsuri', async (req, res) => {
   try {
     const { id } = req.params;
@@ -1404,7 +1502,7 @@ app.put('/api/dolgozatok/:id/temavezeto-nyilatkozat', async (req, res) => {
       return res.status(404).json({ error: 'Dolgozat nem található.' });
     }
 
-    // 🔔 Értesítés a hallgatónak
+    // Értesítés a hallgatónak
     const hallgato = await Felhasznalo.findOne({ neptun: updatedDolgozat.hallgato_ids[0] });
 
     if (hallgato && hallgato.email) {
@@ -1455,7 +1553,7 @@ async function kuldErtesitesHallgatonakEsTemavezetonek(cimzettEmail, dolgozat, s
     }
 }
 
-// 🔹 Regisztráció
+// Regisztráció
 app.post('/api/regisztracio', async (req, res) => {
     try {
         const { nev, neptun, email, jelszo } = req.body;
@@ -1551,7 +1649,7 @@ app.get('/api/papers/:id', async (req, res) => {
       };
     });
 
-    // 🔹 Elfogadott bírálók nevei (biralok tömb + allapot === 'Elfogadva')
+    // Elfogadott bírálók nevei (biralok tömb + allapot === 'Elfogadva')
     const acceptedReviewers = (paper.biralok || [])
       .filter(b => b.allapot === 'Elfogadva')
       .map(b => {
@@ -1566,7 +1664,7 @@ app.get('/api/papers/:id', async (req, res) => {
     // Ha több elfogadott bíráló van, mindet kiírjuk vesszővel elválasztva
     const biraloNev = acceptedReviewers.map(b => b.nev).join(', ');
 
-    // 🔹 Szekció neve (ha van)
+    // Szekció neve (ha van)
     let szekcioNev = '';
     if (paper.szekcioId) {
       const szekcio = await Section.findById(paper.szekcioId).lean();
@@ -1579,8 +1677,8 @@ app.get('/api/papers/:id', async (req, res) => {
       _id: paper._id,
       cim: paper.cím || paper.cim || '',
       szerzok,
-      biralo: biraloNev,     // 👉 Ezt használja az import_form.html a "Bíráló:" mezőhöz
-      biralok: acceptedReviewers,  // 👉 Ha később kell részletes lista
+      biralo: biraloNev,     // Ezt használja az import_form.html a "Bíráló:" mezőhöz
+      biralok: acceptedReviewers,  // Ha később kell részletes lista
       szekcioNev
     });
   } catch (err) {
@@ -1590,13 +1688,13 @@ app.get('/api/papers/:id', async (req, res) => {
 });
 
 
-// 🔹 Dolgozatok lekérése, szekciókhoz és listákhoz is használható formátumban (szerepkör alapú szűréssel)
+// Dolgozatok lekérése, szekciókhoz és listákhoz is használható formátumban (szerepkör alapú szűréssel)
 app.get('/api/papers', authMiddleware, async (req, res) => {
   try {
     const bejelentkezettFelhasznaloId = req.user.id;
     const bejelentkezettCsoportok = req.user.csoportok || [];
 
-    // 🔹 Megkeressük a teljes felhasználót a Neptun-kód miatt
+    // Megkeressük a teljes felhasználót a Neptun-kód miatt
     const aktualisFelhasznalo = await Felhasznalo.findById(bejelentkezettFelhasznaloId).lean();
     const sajatNeptun = aktualisFelhasznalo?.neptun || null;
 
@@ -1712,7 +1810,7 @@ app.get('/api/papers', authMiddleware, async (req, res) => {
 
     res.json(eredmeny);
   } catch (error) {
-    console.error('❌ Hiba a dolgozatok lekérésekor (/api/papers):', error);
+    console.error('Hiba a dolgozatok lekérésekor (/api/papers):', error);
     res.status(500).json({ error: 'Szerverhiba a dolgozatok lekérésekor' });
   }
 });
@@ -1750,7 +1848,7 @@ app.post('/api/reset-jelszo-kerelem', async (req, res) => {
 });
 
 
-// 🔹 Témaajánlók kezeléséhez új Mongoose modell
+// Témaajánlók kezeléséhez új Mongoose modell
 const TemaJavaslat = mongoose.model('temajavaslat', new mongoose.Schema({
   cim: { type: String, required: true },
   osszefoglalo: { type: String, required: true },
@@ -1761,7 +1859,7 @@ const TemaJavaslat = mongoose.model('temajavaslat', new mongoose.Schema({
 }));
 
 
-// 🔹 Témaajánlatok lekérése
+// Témaajánlatok lekérése
 app.get('/api/topics', async (req, res) => {
   try {
     const topics = await TemaJavaslat.find();
@@ -1772,7 +1870,7 @@ app.get('/api/topics', async (req, res) => {
   }
 });
 
-// 🔹 Új témajavaslat mentése
+// Új témajavaslat mentése
 app.post('/api/topics', async (req, res) => {
   const { cim, osszefoglalo, temavezetoNev, temavezetoNeptun, kar, tanszek } = req.body;
 
@@ -1795,7 +1893,7 @@ app.post('/api/topics', async (req, res) => {
 });
 
 
-// 🔹 Téma törlése
+// Téma törlése
 app.delete('/api/topics/:id', async (req, res) => {
   try {
     const result = await TemaJavaslat.findByIdAndDelete(req.params.id);
@@ -1807,7 +1905,7 @@ app.delete('/api/topics/:id', async (req, res) => {
   }
 });
 
-// 🔹 Témavezetők listázása (MongoDB-ből)
+// Témavezetők listázása (MongoDB-ből)
 app.get('/api/temavezetok', async (req, res) => {
   try {
     const temavezetok = await Felhasznalo.find({ csoportok: { $in: ['temavezeto'] } })
@@ -1825,7 +1923,7 @@ app.post('/api/topics/:id/jelentkezes', async (req, res) => {
   const { id } = req.params;
   const { hallgato_ids } = req.body; // Több hallgató jelentkezhet
 
-    // 🔹 UGYANAZ A HATÁRIDŐ-ELLENŐRZÉS
+    // UGYANAZ A HATÁRIDŐ-ELLENŐRZÉS
   if (await isGlobalDeadlineExpired('dolgozat_jelentkezes')) {
     return res.status(400).json({
       error: 'A dolgozat jelentkezési határideje lejárt, témára már nem lehet jelentkezni.'
@@ -1836,7 +1934,7 @@ app.post('/api/topics/:id/jelentkezes', async (req, res) => {
     const topic = await TemaJavaslat.findById(id);
     if (!topic) return res.status(404).json({ error: 'Téma nem található' });
 
-    // 🔹 Kar meghatározása az első hallgató alapján
+    // Kar meghatározása az első hallgató alapján
     let kar = '';
     if (Array.isArray(hallgato_ids) && hallgato_ids.length > 0) {
       const elsoHallgato = await Felhasznalo.findOne({ neptun: hallgato_ids[0] }).lean();
@@ -1864,7 +1962,7 @@ app.post('/api/topics/:id/jelentkezes', async (req, res) => {
 
 
 
-// 🔹 Téma módosítása
+// Téma módosítása
 app.put('/api/topics/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -2081,7 +2179,7 @@ async function isUploadDeadlineExpiredForDolgozat(dolgozat) {
     let hatarido = null;
     let forras = 'nincs';
 
-    // 1️⃣ KAR-specifikus határidő – ha van kar, megpróbáljuk kinyerni
+    // 1️KAR-specifikus határidő – ha van kar, megpróbáljuk kinyerni
     if (dolgozat && dolgozat.kar) {
       const karDoc = await UniversityStructure.findOne({
         $or: [
@@ -2099,7 +2197,7 @@ async function isUploadDeadlineExpiredForDolgozat(dolgozat) {
       }
     }
 
-    // 2️⃣ Ha még nincs határidő, akkor jön a GLOBÁLIS
+    // 2️Ha még nincs határidő, akkor jön a GLOBÁLIS
     if (!hatarido) {
       const globalDeadlineDoc = await Deadline.findOne({
         key: 'dolgozat_feltoltes_global'
@@ -2114,7 +2212,7 @@ async function isUploadDeadlineExpiredForDolgozat(dolgozat) {
       }
     }
 
-    // 3️⃣ Ha se kar-specifikus, se globális nincs → nincs korlát
+    // 3️Ha se kar-specifikus, se globális nincs → nincs korlát
     if (!hatarido) {
       console.log(`⏱ NINCS feltöltési határidő (dolgozat=${dolgozat?._id})`);
       return false;
@@ -2138,7 +2236,7 @@ async function isUploadDeadlineExpiredForDolgozat(dolgozat) {
 
 
 
-// 🔹 Egyetemi struktúra lekérdezése
+// Egyetemi struktúra lekérdezése
 app.get('/api/university-structure', async (req, res) => {
   try {
     const strukturak = await UniversityStructure.find();
@@ -2351,7 +2449,7 @@ app.post('/api/szekciok', async (req, res) => {
 
 
 
-// Feltételezve, hogy a karokat a UniversityStructure kollekcióban tárolod
+// Feltételezve, hogy a karokat a UniversityStructure kollekcióban tárolom
 
 const universityStructureSchema = new mongoose.Schema({
   nev: String,
@@ -2369,13 +2467,13 @@ app.get('/api/karok', async (req, res) => {
   }
 });
 
-// 🔹 Karhoz tartozó dolgozat-feltöltési határidő mentése / törlése
+// Karhoz tartozó dolgozat-feltöltési határidő mentése / törlése
 app.put('/api/karok/:id/hatarido', async (req, res) => {
   try {
     const { id } = req.params;
     const { hatarido } = req.body;
 
-    // 👉 Ha nincs határidő megadva: kar-specifikus határidő törlése (null),
+    // Ha nincs határidő megadva: kar-specifikus határidő törlése (null),
     //    innentől a globális dolgozat_feltoltes_global lesz az érvényes.
     if (!hatarido) {
       const updated = await UniversityStructure.findByIdAndUpdate(
@@ -2391,7 +2489,7 @@ app.put('/api/karok/:id/hatarido', async (req, res) => {
       return res.json(updated);
     }
 
-    // 👉 Ha van dátum: normál mentés
+    // Ha van dátum: normál mentés
     const updated = await UniversityStructure.findByIdAndUpdate(
       id,
       { feltoltesHatarido: new Date(hatarido) },
@@ -2412,7 +2510,7 @@ app.put('/api/karok/:id/hatarido', async (req, res) => {
 
 
 
-// ✅ Dolgozat eltávolítása szekcióból
+// Dolgozat eltávolítása szekcióból
 app.put('/api/dolgozatok/:id/remove-from-section', async (req, res) => {
   try {
     const { id } = req.params;
@@ -2438,7 +2536,7 @@ app.post('/api/sections/:id/add-judge', async (req, res) => {
     const { id } = req.params;
     const { felhasznaloId, szerep } = req.body;
 
-    // 🔹 Zsűri-jelentkezési határidő ellenőrzése
+    // Zsűri-jelentkezési határidő ellenőrzése
     // Ha nincs beállítva ilyen határidő, az isGlobalDeadlineExpired(false)-t ad vissza, tehát engedjük.
     if (await isGlobalDeadlineExpired('zsuri_jelentkezes')) {
       return res.status(400).json({
@@ -2543,7 +2641,7 @@ app.post('/api/upload-homepage', upload.single('file'), async (req, res) => {
 
     const buffer = fs.readFileSync(req.file.path);
 
-    // 🖼️ Képek beágyazása Base64 formátumban
+    // Képek beágyazása Base64 formátumban
     const result = await mammoth.convertToHtml(
       { buffer },
       {
@@ -2551,7 +2649,7 @@ app.post('/api/upload-homepage', upload.single('file'), async (req, res) => {
   const imageBuffer = await image.read();
   const base64 = imageBuffer.toString("base64");
   const contentType = image.contentType;
-  // 🖼️ adjunk hozzá inline style-t a képhez
+  // adjunk hozzá inline style-t a képhez
   return {
     src: `data:${contentType};base64,${base64}`,
     alt: "Beágyazott kép",
@@ -2564,10 +2662,10 @@ app.post('/api/upload-homepage', upload.single('file'), async (req, res) => {
 
     const outputPath = path.join(__dirname, 'public', 'homepage.html');
 
-    // 💾 A konvertált HTML mentése
+    // A konvertált HTML mentése
     fs.writeFileSync(outputPath, result.value, 'utf8');
 
-    // 🧹 Opcionálisan: törölheted a feltöltött Word fájlt
+    // Opcionálisan: törölheted a feltöltött Word fájlt
     fs.unlinkSync(req.file.path);
 
     res.json({ message: 'Főoldal frissítve a Word dokumentum alapján (képekkel együtt).' });
@@ -2580,7 +2678,7 @@ app.post('/api/upload-homepage', upload.single('file'), async (req, res) => {
 
 async function sendDailyReviewReminders() {
   try {
-    // 1️⃣ Bírálati (soft) határidő lekérése
+    // 1️Bírálati (soft) határidő lekérése
     const deadline = await Deadline.findOne({ key: 'biralat_hatarido' });
     if (!deadline || !deadline.hatarido) {
       return; // nincs beállítva, nincs mit küldeni
@@ -2595,7 +2693,7 @@ async function sendDailyReviewReminders() {
 
     const todayStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
 
-    // 2️⃣ Összes olyan dolgozat, ahol van Elfogadott bíráló, de még NINCS kész a bírálat
+    // 2️Összes olyan dolgozat, ahol van Elfogadott bíráló, de még NINCS kész a bírálat
     const dolgozatok = await Dolgozat.find({
       'biralok.allapot': 'Elfogadva',
       allapot: { $ne: 'bírálva' }   // itt használjuk a fenti módosítást
@@ -2639,7 +2737,7 @@ async function sendDailyReviewReminders() {
   }
 }
 
-// 🔹 Bírálatok kiküldése hallgatóknak a globális határidő után
+// Bírálatok kiküldése hallgatóknak a globális határidő után
 async function sendReviewsToStudentsAfterDeadline() {
   try {
     const deadline = await Deadline.findOne({ key: 'biralat_kikuldese_hallgatoknak' }).lean();
@@ -2654,7 +2752,7 @@ async function sendReviewsToStudentsAfterDeadline() {
     // Csak akkor indulunk, ha már lejárt a hallgatói kiküldés határideje
     if (now <= hatarido) return;
 
-    // 🔍 Olyan dolgozatokat keresünk, amelyek már "bírálva" állapotúak,
+    // Olyan dolgozatokat keresünk, amelyek már "bírálva" állapotúak,
     // de a bírálatokat még NEM küldtük ki a hallgatóknak
     const dolgozatok = await Dolgozat.find({
       allapot: 'bírálva',
@@ -2712,7 +2810,7 @@ async function sendReviewsToStudentsAfterDeadline() {
         continue;
       }
 
-      // 🔹 Bírálatok szövegének összeállítása a sablonba
+      // Bírálatok szövegének összeállítása a sablonba
       const biralatiSzovegek = reviewsForMail
         .map((r, idx) => {
           return `\n${idx + 1}. bíráló (${r.biraloNev}):\n${r.szovegesErtekeles}\n`;
@@ -2759,7 +2857,7 @@ async function sendReviewsToStudentsAfterDeadline() {
 // 🔹 Zsűritagok értesítése a bírálatokról a globális határidő után
 async function sendZsuriNotificationsAfterDeadline() {
   try {
-    // 1️⃣ Határidő lekérése
+    // 1️Határidő lekérése
     const deadline = await Deadline.findOne({ key: 'zsuri_ertesites' }).lean();
     if (!deadline || !deadline.hatarido) {
       return; // nincs ilyen határidő beállítva
@@ -2772,7 +2870,7 @@ async function sendZsuriNotificationsAfterDeadline() {
     // Csak akkor indulunk, ha MÁR LEJÁRT a határidő
     if (now <= hatarido) return;
 
-    // 2️⃣ Olyan szekciók, ahol van legalább egy elfogadott zsűritag,
+    // 2️Olyan szekciók, ahol van legalább egy elfogadott zsűritag,
     //    de még NEM küldtünk értesítést (zsuriErtesitesSentAt == null)
     const sections = await Section.find({
       'zsuri.allapot': 'Elfogadva',
@@ -2817,23 +2915,23 @@ async function sendZsuriNotificationsAfterDeadline() {
 }
 
 
-// 3️⃣ Időzítő: óránként lefuttatjuk (lastReminderAt miatt így is csak napi 1 mail jut bírálónként)
+// 3️Időzítő: óránként lefuttatjuk (lastReminderAt miatt így is csak napi 1 mail jut bírálónként)
 setInterval(() => {
-  // 1️⃣ Bírálat indítható (feltöltési határidő lejárt + témavezető elfogadta)
+  // 1️Bírálat indítható (feltöltési határidő lejárt + témavezető elfogadta)
   sendReviewStartEmailsAfterUploadDeadline()
     .catch(err => console.error('Hiba a bírálat megkezdéséről szóló értesítéseknél:', err));
 
-  // 2️⃣ Már futó bírálatokhoz napi emlékeztető a bírálati határidő után
+  // 2️Már futó bírálatokhoz napi emlékeztető a bírálati határidő után
   sendDailyReviewReminders()
     .catch(err => console.error('Hiba az emlékeztető futtatásakor:', err));
 
-  // 3️⃣ Bírálatok kiküldése hallgatóknak (pontszám nélkül)
+  // 3️Bírálatok kiküldése hallgatóknak (pontszám nélkül)
   sendReviewsToStudentsAfterDeadline()
     .catch(err => console.error('Hiba a bírálatok hallgatóknak való kiküldésekor:', err));
-  // 4️⃣ Zsűritagok értesítése
+  // 4️Zsűritagok értesítése
       sendZsuriNotificationsAfterDeadline()
     .catch(err => console.error('Hiba a zsűritagok értesítésekor:', err));
-}, 1000 * 10); // kb. óránként
+}, 1000 * 60 * 60); // kb. óránként
 
 
 
@@ -2842,7 +2940,7 @@ async function sendReviewStartEmailsAfterUploadDeadline() {
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10);
 
-    // 🔍 Olyan dolgozatok, amelyeket a témavezető már elfogadott,
+    // Olyan dolgozatok, amelyeket a témavezető már elfogadott,
     // van elfogadott bírálójuk, de még NINCS kész bírálat.
     const dolgozatok = await Dolgozat.find({
       allapot: 'elfogadva - témavezető által',
@@ -2850,7 +2948,7 @@ async function sendReviewStartEmailsAfterUploadDeadline() {
     }).populate('biralok.felhasznaloId'); // kell az e-mail cím
 
     for (const d of dolgozatok) {
-      // ⏱ ellenőrizzük, hogy LEJÁRT-e a feltöltési határidő erre a dolgozatra
+      // ellenőrizzük, hogy LEJÁRT-e a feltöltési határidő erre a dolgozatra
       const uploadDeadlineExpired = await isUploadDeadlineExpiredForDolgozat(d);
       if (!uploadDeadlineExpired) continue;
 
@@ -2937,7 +3035,7 @@ app.post('/api/dolgozatok/:id/files', upload.array('files'), async (req, res) =>
       return res.status(404).json({ error: 'Dolgozat nem található' });
     }
 
-      // 🔹 HATÁRIDŐ ELLENŐRZÉS – szerver idő alapján
+      // HATÁRIDŐ ELLENŐRZÉS – szerver idő alapján
   const hataridoLejart = await isUploadDeadlineExpiredForDolgozat(dolgozat);
   if (hataridoLejart) {
     return res.status(400).json({
@@ -2974,7 +3072,7 @@ app.post('/api/dolgozatok/:id/files', upload.array('files'), async (req, res) =>
 
     await dolgozat.save();
 
-    // 🔔 csak akkor küldünk e-mailt, ha most lépett át jelentkezett → feltöltve - témavezető válaszára vár
+    // csak akkor küldünk e-mailt, ha most lépett át jelentkezett → feltöltve - témavezető válaszára vár
     if (
       regiAllapot === 'jelentkezett' &&
       dolgozat.allapot === 'feltöltve - témavezető válaszára vár'
@@ -2992,7 +3090,7 @@ app.post('/api/dolgozatok/:id/files', upload.array('files'), async (req, res) =>
 });
 
 
-// 🔹 Bírálók listázása (opcionálisan karszűréssel)
+// Bírálók listázása (opcionálisan karszűréssel)
 app.get('/api/biralok', async (req, res) => {
   try {
     const query = { csoportok: { $in: ['biralo'] } };
@@ -3012,7 +3110,7 @@ app.get('/api/biralok', async (req, res) => {
 });
 
 
-// 🔹 Bíráló hozzárendelése egy dolgozathoz
+// Bíráló hozzárendelése egy dolgozathoz
 app.post('/api/dolgozatok/:id/add-reviewer', async (req, res) => {
   try {
     const { id } = req.params;
@@ -3068,7 +3166,7 @@ app.post('/api/dolgozatok/:id/add-reviewer', async (req, res) => {
 });
 
 
-// 🔹 Bíráló eltávolítása egy dolgozatról
+// Bíráló eltávolítása egy dolgozatról
 app.delete('/api/dolgozatok/:id/remove-reviewer/:userId', async (req, res) => {
   try {
     const { id, userId } = req.params;
@@ -3091,7 +3189,7 @@ app.delete('/api/dolgozatok/:id/remove-reviewer/:userId', async (req, res) => {
 });
 
 
-// 🔹 Bírálói felkérés elfogadása / elutasítása
+// Bírálói felkérés elfogadása / elutasítása
 app.get('/api/dolgozatok/:paperId/reviewer-response', async (req, res) => {
   try {
     const { paperId } = req.params;
@@ -3124,7 +3222,7 @@ app.delete('/api/dolgozatok/:id/files/:fileId', async (req, res) => {
     const dolgozat = await Dolgozat.findById(id);
     if (!dolgozat) return res.status(404).json({ error: 'Dolgozat nem található' });
 
-       // 🔹 HATÁRIDŐ ELLENŐRZÉS
+       // HATÁRIDŐ ELLENŐRZÉS
     const hataridoLejart = await isUploadDeadlineExpiredForDolgozat(dolgozat);
     if (hataridoLejart) {
       return res.status(400).json({
@@ -3162,7 +3260,7 @@ app.delete('/api/dolgozatok/:id/files/:fileId', async (req, res) => {
 
 
 
-// 🔹 Határidő törlése kulcs alapján
+// Határidő törlése kulcs alapján
 app.delete('/api/deadlines/:key', async (req, res) => {
   try {
     const key = req.params.key;

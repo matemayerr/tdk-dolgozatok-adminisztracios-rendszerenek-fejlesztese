@@ -115,9 +115,14 @@ if (!jelszo) {
                 <td>${felhasznalo.evfolyam || ''}</td>
                 <td>${(felhasznalo.csoportok || []).join(', ')}</td>
                 <td>
-                <button onclick="modositFelhasznalo('${felhasznalo._id}')">Módosítás</button>
-                <button onclick="deleteFelhasznalo('${felhasznalo._id}')">Törlés</button>
+                    <button class="modosit-btn" onclick="modositFelhasznalo('${felhasznalo._id}')">
+                        Módosítás
+                    </button>
+                    <button class="btn-danger" onclick="deleteFelhasznalo('${felhasznalo._id}')">
+                        Törlés
+                    </button>
                 </td>
+
             `;
             tbody.appendChild(tr);
         });

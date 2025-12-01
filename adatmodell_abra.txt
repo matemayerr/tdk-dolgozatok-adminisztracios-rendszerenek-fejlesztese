@@ -1,0 +1,82 @@
+@startuml
+' ===== Fő osztályok =====
+
+class Felhasznalo {
+  +_id : ObjectId
+  +nev : string
+  +neptun : string
+  +email : string
+  +szerepkorok : [string]
+  +kar : string
+  +szak : string
+}
+
+class Dolgozat {
+  +_id : ObjectId
+  +cim : string
+  +hallgato_ids : [ObjectId]
+  +temavezeto_ids : [ObjectId]
+  +szekcioId : ObjectId
+  +allapot : string
+  +filePath : string
+  +ertekelesek : [Ertekeles]
+  +letrehozasDatuma : Date
+}
+
+class Section {
+  +_id : ObjectId
+  +nev : string
+  +kar : string
+  +helyszin : string
+  +idopont : Date
+  +elnokId : ObjectId
+  +titkarId : ObjectId
+  +zsuritagIds : [ObjectId]
+}
+
+class UniversityStructure {
+  +_id : ObjectId
+  +karNev : string
+  +karRovidites : string
+  +szakNev : string
+  +szakKod : string
+}
+
+class Deadline {
+  +_id : ObjectId
+  +tipus : string
+  +leiras : string
+  +hatarido : Date
+}
+
+class Ertekeles {
+  +biraloId : ObjectId
+  +pontszam : number
+  +szovegesErtekeles : string
+  +createdAt : Date
+}
+
+' ===== Kapcsolatok =====
+
+' Hallgató – Dolgozat
+Felhasznalo "0..*" o-- "1..*" Dolgozat : hallgató (szerző)
+
+' Témavezető – Dolgozat
+Felhasznalo "1" -- "0..*" Dolgozat : témavezető
+
+' Bíráló – Értékelés
+Felhasznalo "1" -- "0..*" Ertekeles : bíráló
+
+' Dolgozat – Értékelések
+Dolgozat "1" o-- "0..*" Ertekeles : ertekelesek
+
+' Dolgozat – Szekció
+Section "1" -- "0..*" Dolgozat : szekcióhoz_rendelve
+
+' Szekció – Zsűritagok
+Felhasznalo "0..*" -- "0..*" Section : zsűri (elnök/titkár/tag)
+
+' Szekció – Kar
+UniversityStructure "1" -- "0..*" Section : tartozik_karhoz
+
+@enduml
