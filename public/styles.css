@@ -377,8 +377,11 @@ nav ul li a.active {
     border-radius: 10px;
     width: 60%;
     max-width: 600px;
+    max-height: 80vh;           /* maximum magasság */
+    overflow-y: auto;           /* görgethető, ha túl nagy */
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
 }
+
 
 .modal-blur {
     position: fixed;
@@ -395,6 +398,45 @@ nav ul li a.active {
     font-size: 1rem;
     line-height: 1.5;
     white-space: pre-wrap;
+}
+
+.clickable-title {
+    cursor: pointer;
+    color: black;
+}
+
+.dolgozat-details td {
+    background-color: #f8f9fa;
+    font-size: 0.95em;
+}
+
+.dolgozat-details-row {
+    position: relative;
+    height: 0;
+}
+
+.dolgozat-details-panel {
+    overflow: hidden;
+    max-height: 0;
+    background-color: #f9f9f9;
+    box-sizing: border-box;
+}
+
+/* Aktív állapotban megjelenik */
+.dolgozat-details-panel.open {
+    max-height: 200px; /* vagy nagyobb, ha szükséges */
+    padding: 12px 16px;
+}
+
+
+#uj-felhasznalo-gomb {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Térköz az űrlap elemek között */
+.modal-form .form-group {
+  margin-bottom: 15px;
 }
 
 

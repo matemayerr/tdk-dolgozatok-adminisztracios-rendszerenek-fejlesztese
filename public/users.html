@@ -31,24 +31,41 @@
 
     <main>
         <section>
-            <p><h2>Új felhasználó hozzáadása:</h2>
-            <form id="felhasznalo-form">
-                <input type="text" id="felhasznalo-nev" placeholder="Név" required>
-                <input type="text" id="felhasznalo-neptun" placeholder="Neptun kód" required>
-                <input type="email" id="felhasznalo-email" placeholder="Email cím" required>
-               <div class="dropdown user-dropdown">
-    <button class="dropbtn">Csoport kiválasztása ▼</button>
-    <div class="dropdown-content" id="felhasznalo-csoport">
-        <label><input type="checkbox" value="hallgato"> Hallgató</label>
-        <label><input type="checkbox" value="temavezeto"> Témavezető</label>
-        <label><input type="checkbox" value="biralo"> Bíráló</label>
-        <label><input type="checkbox" value="zsuri"> Zsűri</label>
-        <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
-    </div>
+          <!-- Új felhasználó gomb -->
+          
+ <button id="uj-felhasznalo-gomb">Új felhasználó hozzáadása</button>
+
+<!-- Felhasználó hozzáadás űrlap -->
+<form id="felhasznalo-form" class="modal-form uj-felhasznalo-form" style="display: none;">
+<div class="form-group">
+  <input type="text" id="felhasznalo-nev" placeholder="Név" required>
+</div>
+<div class="form-group">
+  <input type="text" id="felhasznalo-neptun" placeholder="Neptun kód" required>
+</div>
+<div class="form-group">
+  <input type="email" id="felhasznalo-email" placeholder="Email cím" required>
 </div>
 
-                <p><button type="submit">Hozzáadás</button>
-            </form>
+
+    <div class="user-dropdown">
+        <button type="button" class="dropdown-btn">Csoport kiválasztása ▾</button>
+        <div class="dropdown-content" id="felhasznalo-csoport">
+            <label><input type="checkbox" value="hallgato"> Hallgató</label>
+            <label><input type="checkbox" value="temavezeto"> Témavezető</label>
+            <label><input type="checkbox" value="biralo"> Bíráló</label>
+            <label><input type="checkbox" value="zsuri"> Zsűri</label>
+            <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
+        </div>
+    </div>
+
+    <button type="submit" id="felhasznalo-hozzaadas-gomb">Hozzáadás</button>
+    <button type="button" id="felhasznalo-megse-gomb">Mégse</button>
+</form>
+
+<!-- Homályos réteg -->
+<div id="felhasznalo-homaly" class="blur-layer" style="display: none;"></div>
+
 
             <!-- Cím és kereső ikon egy sorban -->
             <div class="header-with-search">

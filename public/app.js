@@ -66,16 +66,30 @@ function megjelenitDolgozatok() {
         const tr = document.createElement('tr');
         tr.dataset.id = dolgozat._id;
         tr.innerHTML = `
-            <td title="${dolgozat.cím}">${roviditettCim}</td>
-            <td>${dolgozat.leiras || ''}</td> 
-            <td>${dolgozat.hallgato_ids ? dolgozat.hallgato_ids.join(', ') : 'N/A'}</td>
-            <td>${dolgozat.temavezeto_id || 'N/A'}</td>
-            <td>${dolgozat.allapot || 'N/A'}</td>
-            <td>
-                <button onclick="editDolgozat('${dolgozat._id}')">Módosítás</button>
-                <button onclick="deleteDolgozat('${dolgozat._id}')">Törlés</button>
-            </td>
-        `;
+    <td class="clickable-title" onclick="toggleDetails('${dolgozat._id}')">${roviditettCim}</td>
+    <td>${dolgozat.allapot || 'N/A'}</td>
+    <td>
+        <button onclick="editDolgozat('${dolgozat._id}')">Módosítás</button>
+        <button onclick="deleteDolgozat('${dolgozat._id}')">Törlés</button>
+    </td>
+`;
+
+const detailTr = document.createElement('tr');
+detailTr.classList.add('dolgozat-details-row');
+detailTr.id = `details-${dolgozat._id}`;
+detailTr.innerHTML = `
+    <td colspan="3">
+        <div class="dolgozat-details-panel" id="panel-${dolgozat._id}">
+            <p><strong>Leírás:</strong> ${dolgozat.leiras || '—'}</p>
+            <p><strong>Hallgató(k):</strong> ${dolgozat.hallgato_ids ? dolgozat.hallgato_ids.join(', ') : '—'}</p>
+            <p><strong>Témavezető:</strong> ${dolgozat.temavezeto_id || '—'}</p>
+        </div>
+    </td>
+`;
+
+dolgozatTbody.appendChild(tr);
+dolgozatTbody.appendChild(detailTr);
+
         dolgozatTbody.appendChild(tr);
     });
 
@@ -333,4 +347,13 @@ document.addEventListener('keydown', function (e) {
 document.addEventListener('click', () => {
     document.querySelectorAll('.user-dropdown').forEach(drop => drop.classList.remove('active'));
 });
+
+window.toggleDetails = function (dolgozatId) {
+    const panel = document.getElementById(`panel-${dolgozatId}`);
+    if (panel) {
+        panel.classList.toggle('open');
+    }
+};
+
+
 

@@ -177,8 +177,48 @@ document.addEventListener('click', function(event) {
     });
 });
 
+// 🔸 Lebegő ablak vezérlése
+const ujFelhasznaloGomb = document.getElementById('uj-felhasznalo-gomb');
+const felhasznaloForm = document.getElementById('felhasznalo-form');
+const felhasznaloMegse = document.getElementById('felhasznalo-megse-gomb');
+const homalyLayer = document.getElementById('felhasznalo-homaly');
 
+ujFelhasznaloGomb.addEventListener('click', () => {
+    felhasznaloForm.style.display = 'block';
+    homalyLayer.style.display = 'block';
+});
 
+felhasznaloMegse.addEventListener('click', () => {
+    felhasznaloForm.style.display = 'none';
+    homalyLayer.style.display = 'none';
+});
+
+// Legördülő menü aktiválása az új felhasználó űrlaphoz
+const felhasznaloDropdownBtn = document.querySelector('#felhasznalo-form .dropdown-btn');
+const felhasznaloDropdownContent = document.querySelector('#felhasznalo-form .dropdown-content');
+
+felhasznaloDropdownBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Ne zárja be más esemény
+    felhasznaloDropdownContent.style.display = 
+        felhasznaloDropdownContent.style.display === 'block' ? 'none' : 'block';
+});
+
+// Ne zárja be, ha checkboxra kattintasz
+felhasznaloDropdownContent.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
+// 🔸 Kereső mező megjelenítése/elrejtése
+window.toggleSearch = function () {
+    if (searchInput.style.display === 'none') {
+        searchInput.style.display = 'block';
+        searchInput.focus();
+    } else {
+        searchInput.style.display = 'none';
+        searchInput.value = '';
+        searchFelhasznalok();
+    }
+};
 
 
     loadFelhasznalok();
