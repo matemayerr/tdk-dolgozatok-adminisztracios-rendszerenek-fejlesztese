@@ -260,18 +260,29 @@ function handleFile(e) {
 
 
   // 🔹 1. Dolgozatlista betöltése
-  fetch('/api/papers')
-    .then(res => res.json())
-    .then(papers => {
-      const select = document.getElementById('paperSelect');
-      papers.forEach(paper => {
-        const option = document.createElement('option');
-        option.value = paper._id;
-        option.textContent = paper.cim;
-        select.appendChild(option);
-      });
-    })
-    .catch(err => console.error('Hiba a dolgozatok betöltésénél:', err));
+fetch('/api/papers')
+  .then(res => res.json())
+  .then(papers => {
+    const select = document.getElementById('paperSelect');
+    papers.forEach(paper => {
+      const option = document.createElement('option');
+      option.value = paper._id;
+      option.textContent = paper.cim;
+      select.appendChild(option);
+    });
+
+    // ⬇️ Automatikus kiválasztás URL paraméter alapján
+    const urlParams = new URLSearchParams(window.location.search);
+    const idFromUrl = urlParams.get('id');
+    if (idFromUrl) {
+      select.value = idFromUrl;
+      // Kiváltja a 'change' eseményt, hogy automatikusan töltse be az adatokat
+      const changeEvent = new Event('change');
+      select.dispatchEvent(changeEvent);
+    }
+  })
+  .catch(err => console.error('Hiba a dolgozatok betöltésénél:', err));
+
 
   // 🔹 2. Dolgozat adatainak betöltése választáskor
   document.getElementById('paperSelect').addEventListener('change', function() {
@@ -321,25 +332,7 @@ function handleFile(e) {
 });
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('id');
-    const cim = urlParams.get('cim');
-    const hallgato = urlParams.get('hallgato');
-    const temavezeto = urlParams.get('temavezeto');
 
-    if (id) {
-        const cimInput = document.getElementById('cim');
-        const hallgatoInput = document.getElementById('hallgato');
-        const temavezetoInput = document.getElementById('temavezeto');
-        const dolgozatIdInput = document.getElementById('dolgozatId');
-
-        if (cimInput) cimInput.value = cim || '';
-        if (hallgatoInput) hallgatoInput.value = hallgato || '';
-        if (temavezetoInput) temavezetoInput.value = temavezeto || '';
-        if (dolgozatIdInput) dolgozatIdInput.value = id;
-    }
-});
 
 </script>
 

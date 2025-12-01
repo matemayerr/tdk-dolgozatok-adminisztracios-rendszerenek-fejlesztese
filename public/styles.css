@@ -1089,6 +1089,22 @@ body.login-oldal {
       height: auto;
     }
   }
-  
+
+  .custom-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.custom-button:hover {
+    background-color: #45a049;
+}
   
   
