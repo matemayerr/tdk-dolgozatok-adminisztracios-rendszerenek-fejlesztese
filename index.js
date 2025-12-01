@@ -6,6 +6,7 @@ const multer = require('multer');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const resetTokens = {}; // egyszerű token tárolás memóriában (indítás után elveszik)
+const Paper = require('./models/Paper');
 
 
 // Alkalmazás és port inicializálása
@@ -45,6 +46,8 @@ const Felhasznalo = mongoose.model('felhasznalos', new mongoose.Schema({
     email: { type: String, required: true },
     csoportok: { type: [String], required: true },
     kar: { type: String, required: false },
+    szak: { type: String, required: false },
+    evfolyam: { type: String, required: false },
     jelszo: { type: String, required: false }
 }));
 
@@ -342,7 +345,7 @@ app.put('/api/dolgozatok/:id/status', async (req, res) => {
 
 // Új felhasználó hozzáadása
 app.post('/api/felhasznalok', async (req, res) => {
-    const { nev, neptun, email, csoportok, kar, jelszo } = req.body;
+    const { nev, neptun, email, jelszo, kar, csoportok, szak, evfolyam } = req.body;
 
     if (!nev || !email || !Array.isArray(csoportok)) {
         return res.status(400).json({ error: 'Hiányzó adatok' });
@@ -353,8 +356,11 @@ app.post('/api/felhasznalok', async (req, res) => {
             nev,
             neptun,
             email,
+            jelszo,
+            kar,
             csoportok,
-            kar
+            szak,
+            evfolyam
         };
 
         if (jelszo && jelszo.trim() !== '') {
@@ -402,14 +408,16 @@ app.get('/api/felhasznalok', async (req, res) => {
 // Felhasználó módosítása
 app.put('/api/felhasznalok/:id', async (req, res) => {
     const { id } = req.params;
-    const { nev, neptun, email, csoportok } = req.body;
+    const { nev, neptun, email, csoportok, kar, szak, evfolyam } = req.body;
+
 
     try {
         const updatedFelhasznalo = await Felhasznalo.findByIdAndUpdate(
-            id,
-            { nev, neptun, email, csoportok },
-            { new: true }
-        );
+    id,
+    { nev, neptun, email, csoportok, kar, szak, evfolyam },
+    { new: true }
+);
+
 
         if (!updatedFelhasznalo) {
             return res.status(404).json({ error: 'Felhasználó nem található' });
@@ -658,6 +666,82 @@ app.get('/api/dolgozatok/ertekeleshez', async (req, res) => {
         res.status(500).json({ error: 'Hiba történt az értékelhető dolgozatok lekérésekor' });
     }
 });
+
+// Egy dolgozat lekérése ID alapján
+app.get('/api/papers/:id', async (req, res) => {
+  try {
+    const paper = await Paper.findById(req.params.id);
+
+    if (!paper) {
+      return res.status(404).json({ error: 'A dolgozat nem található.' });
+    }
+
+    // Alakítsuk át a dolgozatot megfelelő formátumra
+    const szerzok = (paper.hallgato_ids || []).map(neptun => {
+      const felhasznalo = felhasznalok.find(f => f.neptun === neptun);
+      return {
+        nev: felhasznalo?.nev || '',
+        szak: '',      // ha van ilyen adatod, ide behelyettesítheted
+        evfolyam: ''   // ha van ilyen adatod, ide behelyettesítheted
+      };
+    });
+
+    res.json({
+      cim: paper['cím'],
+      szekcio: paper.leiras,  // vagy külön mező ha van
+      szerzok
+    });
+  } catch (err) {
+    console.error('Hiba a dolgozat lekérdezésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba' });
+  }
+});
+
+
+
+app.get('/api/papers', async (req, res) => {
+  try {
+    const dolgozatok = await mongoose.connection.collection('dolgozats').find({}).toArray();
+    const felhasznalok = await mongoose.connection.collection('felhasznalos').find({}).toArray();
+
+    // Map Neptun → felhasználó
+    const felhasznaloMap = {};
+    felhasznalok.forEach(f => {
+      if (f.neptun) felhasznaloMap[f.neptun] = f;
+    });
+
+    const eredmeny = dolgozatok.map(d => ({
+      _id: d._id,
+      cim: d["cím"],
+      leiras: d.leiras,
+      allapot: d.allapot,
+      pontszam: d.pontszam || '',
+      hallgatok: d.hallgato_ids.map(neptun => {
+        const felh = felhasznaloMap[neptun] || {};
+        return {
+          nev: felh.nev || '',
+          neptun: neptun,
+          szak: felh.szak || '',
+          evfolyam: felh.evfolyam || ''
+        };
+      }),
+      temavezeto: d.temavezeto_ids.map(neptun => {
+        const felh = felhasznaloMap[neptun] || {};
+        return {
+          nev: felh.nev || '',
+          neptun: neptun
+        };
+      })
+    }));
+
+    res.json(eredmeny);
+  } catch (error) {
+    console.error('Hiba a dolgozatok betöltésekor:', error);
+    res.status(500).json({ error: 'Hiba történt a dolgozatok lekérdezésekor' });
+  }
+});
+
+
 
 
 //Jelszó visszaállítás e-mail küldés tokennel

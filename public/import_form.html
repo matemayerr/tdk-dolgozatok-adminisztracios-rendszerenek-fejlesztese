@@ -75,6 +75,12 @@
   </style>
 </head>
 <body>
+  <label for="paperSelect">Dolgozat kiválasztása:</label>
+<select id="paperSelect">
+  <option value="">-- Válassz dolgozatot --</option>
+</select>
+
+
   <h1>Tudományos és Művészeti Diákköri Konferencia</h1>
   <h2>Pontozólap a dolgozat bírálatához</h2>
 
@@ -171,15 +177,13 @@
     reader.onload = function (e) {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: "array" });
-
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Szerző(k), szak, évfolyam (4 sor)
+      // Szerzők (4 sor)
       for (let i = 0; i < 4; i++) {
         const nameCell = sheet[`A${4 + i}`];
         const szakCell = sheet[`B${4 + i}`];
         const evfCell = sheet[`C${4 + i}`];
-
         const row = document.querySelectorAll("#szerzok-container .szerzo-row")[i];
         if (row) {
           row.children[0].value = nameCell ? nameCell.v : "";
@@ -193,37 +197,48 @@
       const szekcioCell = sheet["A11"];
       document.getElementById("cim").value = cimCell ? cimCell.v : "";
       document.getElementById("szekcio").value = szekcioCell ? szekcioCell.v : "";
-
-      // Szempontok szövegei és pontszámok
-      const texts = [13, 15, 17, 19, 21];
-      const scores = [12, 14, 16, 18, 20];
-      for (let i = 0; i < 5; i++) {
-        const textCell = sheet[`A${texts[i]}`];
-        const scoreCell = sheet[`C${scores[i]}`];
-        document.getElementById(`text${i + 1}`).value = textCell ? textCell.v : "";
-        document.getElementById(`score${i + 1}`).value = scoreCell ? scoreCell.v : "";
-      }
-
-      // Összpontszám (C22)
-      const totalCell = sheet["C22"];
-      if (totalCell) {
-        document.getElementById("totalScore").textContent = totalCell.v;
-      }
-
-      // Dátum (A24, de csak a vessző utáni rész)
-      const datumCell = sheet["A24"];
-      if (datumCell) {
-        const parts = datumCell.v.split(",");
-        if (parts.length > 1) {
-          document.getElementById("datum").value = parts[1].trim();
-        } else {
-          document.getElementById("datum").value = datumCell.v.trim();
-        }
-      }
     };
 
     reader.readAsArrayBuffer(file);
   }
+
+  // 🔹 1. Dolgozatlista betöltése
+  fetch('/api/papers')
+    .then(res => res.json())
+    .then(papers => {
+      const select = document.getElementById('paperSelect');
+      papers.forEach(paper => {
+        const option = document.createElement('option');
+        option.value = paper._id;
+        option.textContent = paper.cim;
+        select.appendChild(option);
+      });
+    }) // ← EDDIG HIÁNYZOTT A ZÁRÁS!
+    .catch(err => console.error('Hiba a dolgozatok betöltésénél:', err));
+
+  // 🔹 2. Dolgozat adatainak betöltése választáskor
+  document.getElementById('paperSelect').addEventListener('change', function() {
+    const id = this.value;
+    if (!id) return;
+
+    fetch(`/api/papers/${id}`)
+      .then(res => res.json())
+      .then(paper => {
+        document.getElementById('cim').value = paper.cim || '';
+        document.getElementById('szekcio').value = paper.szekcio || '';
+
+        const szerzoRows = document.querySelectorAll("#szerzok-container .szerzo-row");
+        if (paper.szerzok && paper.szerzok.length > 0) {
+          paper.szerzok.slice(0, 4).forEach((szerzo, i) => {
+            szerzoRows[i].children[0].value = szerzo.nev || '';
+            szerzoRows[i].children[1].value = szerzo.szak || '';
+            szerzoRows[i].children[2].value = szerzo.evfolyam || '';
+          });
+        }
+      })
+      .catch(err => console.error('Hiba a dolgozat adatainak betöltésénél:', err));
+  });
 </script>
+
 </body>
 </html>

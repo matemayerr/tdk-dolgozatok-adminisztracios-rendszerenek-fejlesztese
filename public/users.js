@@ -76,10 +76,11 @@ if (!jelszo || !jelszoIsmet || jelszo !== jelszoIsmet) {
     const kar = document.getElementById('felhasznalo-kar').value;
 
     const response = await fetch('/api/felhasznalok', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nev, neptun, email, csoportok, kar, jelszo })
-    });
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nev, neptun, email, csoportok, kar, jelszo, szak, evfolyam })
+});
+
 
     if (response.ok) {
         const newFelhasznalo = await response.json();
@@ -298,6 +299,9 @@ window.modositFelhasznalo = function(id) {
     document.getElementById('modosit-nev').value = felhasznalo.nev;
     document.getElementById('modosit-neptun').value = felhasznalo.neptun;
     document.getElementById('modosit-email').value = felhasznalo.email;
+    document.getElementById("modosit-szak").value = felhasznalo.szak;
+    document.getElementById("modosit-evfolyam").value = felhasznalo.evfolyam;
+
 
     document.querySelectorAll('#modosit-csoport-lista input[type="checkbox"]')
     .forEach(checkbox => {
@@ -316,12 +320,14 @@ document.getElementById('modosit-megse').addEventListener('click', () => {
 
 document.getElementById('modosit-mentes').addEventListener('click', async () => {
     const updated = {
-        nev: document.getElementById('modosit-nev').value,
-        neptun: document.getElementById('modosit-neptun').value,
-        email: document.getElementById('modosit-email').value,
-        csoportok: Array.from(document.querySelectorAll('#modosit-csoport-lista input[type="checkbox"]:checked')
-    ).map(cb => cb.value),
-    };
+    nev: document.getElementById('modosit-nev').value,
+    neptun: document.getElementById('modosit-neptun').value,
+    email: document.getElementById('modosit-email').value,
+    szak: document.getElementById('modosit-szak').value,
+    evfolyam: document.getElementById('modosit-evfolyam').value,
+    csoportok: Array.from(document.querySelectorAll('#modosit-csoport-lista input[type="checkbox"]:checked')).map(cb => cb.value),
+};
+
 
     try {
         const res = await fetch(`/api/felhasznalok/${modositandoFelhasznaloId}`, {
