@@ -1318,3 +1318,218 @@ body.login-oldal {
   font-weight: bold;
 }
 
+
+/* ───────────────
+   TÁBLÁZAT FEJLÉC
+   ─────────────── */
+#topic-table thead {
+  background-color: #1f2745; /* sötétkék háttér */
+}
+
+#topic-table th {
+  color: #ffffff;            /* fehér szöveg */
+  font-weight: bold;
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #ddd;
+}
+
+/* A táblázat sorainak egységesítése */
+#topic-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+
+/* ─────────────────────────────── */
+/* GOMB STÍLUSOK – egységes megjelenés */
+/* ─────────────────────────────── */
+.jelentkezes-btn,
+.delete-btn {
+  display: inline-block;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Jelentkezés – zöld szín */
+.jelentkezes-btn {
+  background-color: #4CAF50;
+}
+
+.jelentkezes-btn:hover {
+  background-color: #43a047;
+  transform: translateY(-1px);
+}
+
+/* Törlés – ugyanaz a stílus, csak piros színnel */
+.delete-btn {
+  background-color: #e53935;
+}
+
+.delete-btn:hover {
+  background-color: #c62828;
+  transform: translateY(-1px);
+}
+
+/* ─────────────────────────────── */
+/* MÓDOSÍTÁS GOMB STÍLUS */
+/* ─────────────────────────────── */
+.modosit-btn,
+.mentes-btn,
+.megse-btn {
+  display: inline-block;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Módosítás – kék */
+.modosit-btn {
+  background-color: #1976d2;
+}
+.modosit-btn:hover {
+  background-color: #1565c0;
+  transform: translateY(-1px);
+}
+
+/* Mentés – zöld */
+.mentes-btn {
+  background-color: #4CAF50;
+}
+.mentes-btn:hover {
+  background-color: #43a047;
+  transform: translateY(-1px);
+}
+
+/* Mégse – szürke */
+.megse-btn {
+  background-color: #757575;
+}
+.megse-btn:hover {
+  background-color: #616161;
+  transform: translateY(-1px);
+}
+
+.topic-details-panel {
+  background-color: #f8f9fa;
+  padding: 10px 15px;
+  border-left: 3px solid #1f2745;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.topic-details-row.hidden {
+  display: none;
+}
+
+.clickable-title {
+  cursor: pointer;
+  font-weight: bold;
+  color: #1f2745;
+}
+
+.clickable-title:hover {
+  text-decoration: underline;
+}
+
+
+/* ─────────────────────────────── */
+/* GOMBOK EGY VONALBAN – egységes elrendezés */
+/* ─────────────────────────────── */
+#topic-table td:last-child {
+  white-space: nowrap;       /* Ne törjön új sorba */
+}
+
+#topic-table td:last-child button {
+  display: inline-block;
+  margin: 0 3px;             /* Kis távolság gombok között */
+  font-size: 13px;           /* Kicsit kisebb betűméret */
+  padding: 6px 10px;         /* Finomabb méret */
+  vertical-align: middle;    /* Egy sorba igazítás */
+}
+
+#topic-table td:last-child button:hover {
+  transform: translateY(-1px);
+}
+
+
+.modal-form {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  width: 400px;
+  z-index: 1000;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group input, .form-group textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+
+#edit-modal.modal-form {
+  width: 800px;
+  max-width: 90%;
+  padding: 30px 40px;
+  box-sizing: border-box;
+  align-items: stretch;      /* ne húzza középre az inputokat */
+}
+
+#edit-modal .form-group {
+  width: 100%;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+#edit-modal label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #242a43;
+}
+
+#edit-modal input,
+#edit-modal textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+#edit-modal textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
+#edit-modal .gombok-kozeppontban {
+  justify-content: center;
+  margin-top: 15px;
+}
+

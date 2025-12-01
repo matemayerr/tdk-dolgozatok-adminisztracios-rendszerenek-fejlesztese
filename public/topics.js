@@ -5,10 +5,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const tableBody   = document.querySelector('#topic-table tbody');
   const supervisorSelect = document.getElementById('topic-supervisor');
 
-  const modal            = document.getElementById('jelentkezes-modal');
-  const hallgatoValaszto = document.getElementById('hallgato-valaszto');
-  const modalMentes      = document.getElementById('jelentkezes-mentes');
-  const modalBezar       = document.getElementById('jelentkezes-bezar');
 
   let selectedTopicId = null;
 
@@ -18,36 +14,92 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const res = await fetch('/api/topics');
       if (!res.ok) throw new Error('Hibás válasz /api/topics');
-      const topics = await res.json();
+      let topics = await res.json();
+
+      // 🔹 Lekérjük az aktuális felhasználót
+const userData = JSON.parse(localStorage.getItem('felhasznalo'));
+
+// 🔹 Ha hallgató, lekérjük a már beadott dolgozatait
+let dolgozatok = [];
+if (userData?.csoportok?.includes("hallgato")) {
+  try {
+    const resDolgozat = await fetch('/api/dolgozatok');
+    if (resDolgozat.ok) {
+      dolgozatok = await resDolgozat.json();
+    }
+  } catch (e) {
+    console.warn("Dolgozatok lekérése nem sikerült:", e);
+  }
+
+  // 🔹 Szűrjük ki azokat a témákat, amire a hallgató már jelentkezett
+  const jelentkezettCimek = dolgozatok
+    .filter(d => d.hallgato_ids?.includes(userData.neptun))
+    .map(d => d.cím);
+
+  topics = topics.filter(t => !jelentkezettCimek.includes(t.cim));
+}
+
 
       tableBody.innerHTML = '';
-      topics.forEach(t => {
-        const tr = document.createElement('tr');
-        const cim = t.cim || '';
-        const tvNev = t.temavezetoNev || t.temavezeto?.nev || '';
-        const tvNep = t.temavezetoNeptun || t.temavezeto?.neptun || '';
-        const ossz = t.osszefoglalo || t.osszefoglal || '';
+topics.forEach(t => {
+  const tr = document.createElement('tr');
+  const cim = t.cim || '';
+  const tvNev = t.temavezetoNev || t.temavezeto?.nev || '';
+  const tanszek = t.tanszek || '–';
+  const kar = t.kar || '–';
+  const ossz = t.osszefoglalo || t.osszefoglal || '';
 
-        tr.innerHTML = `
-          <td>${cim}</td>
-          <td>${tvNev}</td>
-          <td>${tvNep}</td>
-          <td>${ossz}</td>
-          <td>
-            <button class="jelentkezes-btn" data-id="${t._id}">Jelentkezés</button>
-            <button class="delete-btn" data-id="${t._id}">Törlés</button>
-          </td>
-        `;
-        tableBody.appendChild(tr);
-      });
+  tr.innerHTML = `
+    <td class="clickable-title" data-id="${t._id}">${cim}</td>
+    <td>${tvNev}</td>
+    <td>${tanszek}</td>
+    <td>${kar}</td>
+    <td>
+      <button class="jelentkezes-btn" data-id="${t._id}">Jelentkezés</button>
+      <button class="modosit-btn" data-id="${t._id}">Módosítás</button>
+      <button class="delete-btn" data-id="${t._id}">Törlés</button>
+    </td>
+  `;
+  tableBody.appendChild(tr);
+
+  // Lenyitható összefoglaló sor hozzáadása
+  const detailsRow = document.createElement('tr');
+  detailsRow.classList.add('topic-details-row', 'hidden');
+  detailsRow.innerHTML = `
+    <td colspan="5">
+      <div class="topic-details-panel">
+        <p><strong>Összefoglaló:</strong></p>
+        <p>${ossz || '(nincs megadva)'}</p>
+      </div>
+    </td>
+  `;
+  tableBody.appendChild(detailsRow);
+});
+
+// Címre kattintva lenyitja az összefoglalót
+document.querySelectorAll('.clickable-title').forEach(cell => {
+  cell.addEventListener('click', () => {
+    const detailsRow = cell.closest('tr').nextElementSibling;
+    if (!detailsRow) return;
+    detailsRow.classList.toggle('hidden');
+  });
+});
+
 
       // gombok
-      document.querySelectorAll('.jelentkezes-btn').forEach(b =>
-        b.addEventListener('click', () => openJelentkezesModal(b.dataset.id))
-      );
-      document.querySelectorAll('.delete-btn').forEach(b =>
-        b.addEventListener('click', () => torolTema(b.dataset.id))
-      );
+document.querySelectorAll('.jelentkezes-btn').forEach(b =>
+  b.addEventListener('click', () => jelentkezesTema(b.dataset.id))
+);
+
+document.querySelectorAll('.modosit-btn').forEach(b =>
+  b.addEventListener('click', () => modositTema(b.dataset.id))
+);
+
+
+document.querySelectorAll('.delete-btn').forEach(b =>
+  b.addEventListener('click', () => torolTema(b.dataset.id))
+);
+
     } catch (err) {
       console.error('Hiba a témák betöltésekor:', err);
       tableBody.innerHTML = '<tr><td colspan="5">(Hiba a témák betöltésekor)</td></tr>';
@@ -108,113 +160,50 @@ topicForm.addEventListener('submit', async (e) => {
 });
 ;
 
-  // ───────────────────────────────── 4) JELENTKEZÉS MODAL – HALLGATÓK BETÖLTÉSE
-async function openJelentkezesModal(topicId) {
-  selectedTopicId = topicId;
-  const modal = document.getElementById("jelentkezes-modal");
-  const homaly = document.getElementById("jelentkezes-homalyositas");
-  const hallgatoValaszto = document.getElementById("hallgato-valaszto");
-
-  modal.style.display = "flex";
-  homaly.style.display = "block";
-  hallgatoValaszto.innerHTML = "Betöltés…";
-
-  try {
-    const res = await fetch("/api/felhasznalok");
-    if (!res.ok) throw new Error("Hibás válasz /api/felhasznalok");
-    const users = await res.json();
-
-    const hallgatok = users.filter(
-      (u) => Array.isArray(u.csoportok) && u.csoportok.includes("hallgato")
-    );
-
-    if (hallgatok.length === 0) {
-      hallgatoValaszto.innerHTML = "<em>Nincs elérhető hallgató.</em>";
-      return;
-    }
-
-    // ➤ hallgatói lista modern elrendezésben
-    hallgatoValaszto.innerHTML = `
-      <div id="hallgato-lista" 
-        style="max-height:350px; overflow-y:auto; background:#f9f9f9; border-radius:6px; padding:6px; border:1px solid #ddd;"></div>
-    `;
-
-    const listaElem = document.getElementById("hallgato-lista");
-
-    function renderList(szuro = "") {
-      const filtered = hallgatok.filter(h =>
-        h.nev.toLowerCase().includes(szuro.toLowerCase())
-      );
-      listaElem.innerHTML = filtered.map(h => `
-        <div class="hallgato-sor" 
-          style="display:flex; justify-content:space-between; align-items:center;
-                 padding:6px 8px; margin-bottom:5px; background:#fff; border-radius:6px;
-                 border:1px solid #ddd;">
-          <span>${h.nev || "Névtelen"} (${h.neptun || "-"})</span>
-          <input type="checkbox" value="${h.neptun || ""}">
-        </div>
-      `).join("");
-    }
-
-    renderList();
-
-    document.getElementById("hallgato-kereso").addEventListener("input", e => {
-      renderList(e.target.value);
-    });
-
-  } catch (err) {
-    console.error("Hiba a hallgatók betöltésekor:", err);
-    hallgatoValaszto.innerHTML = "<em>Hiba a betöltéskor.</em>";
-  }
-}
-
-// Kereső a hallgatólistában
-document.getElementById('hallgato-kereso')?.addEventListener('input', (e) => {
-  const szuro = e.target.value.toLowerCase();
-  document.querySelectorAll('#hallgato-valaszto label').forEach(label => {
-    const szoveg = label.textContent.toLowerCase();
-    label.style.display = szoveg.includes(szuro) ? '' : 'none';
-  });
-});
-
-
-// === Bezárás ===
-document.getElementById("jelentkezes-bezar").addEventListener("click", () => {
-  document.getElementById("jelentkezes-modal").style.display = "none";
-  document.getElementById("jelentkezes-homalyositas").style.display = "none";
-});
-
-// === Mentés ===
-document.getElementById("jelentkezes-mentes").addEventListener("click", async () => {
-  const hallgatoValaszto = document.getElementById("hallgato-valaszto");
-  const kivalasztott = Array.from(
-    hallgatoValaszto.querySelectorAll("input[type='checkbox']:checked")
-  )
-    .map((cb) => cb.value)
-    .filter((v) => v);
-
-  if (kivalasztott.length === 0) {
-    alert("Válassz legalább egy hallgatót!");
+  // ───────────────────────────────── 4) EGYSZERŰ JELENTKEZÉS (MODAL NÉLKÜL)
+async function jelentkezesTema(topicId) {
+  const userData = JSON.parse(localStorage.getItem('felhasznalo'));
+  if (!userData || !userData.neptun || !userData.csoportok?.includes("hallgato")) {
+    alert("Csak bejelentkezett hallgató jelentkezhet témára!");
     return;
   }
 
   try {
-    const res = await fetch(`/api/topics/${selectedTopicId}/jelentkezes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hallgato_ids: kivalasztott }),
+    // Lekérjük a kiválasztott téma adatait
+    const resTopic = await fetch(`/api/topics`);
+    const topics = await resTopic.json();
+    const selected = topics.find(t => t._id === topicId);
+    if (!selected) {
+      alert("A téma nem található.");
+      return;
+    }
+
+    // Létrehozzuk a dolgozat bejegyzést
+    const dolgozat = {
+      cím: selected.cim,
+      leiras: selected.osszefoglalo,
+      hallgato_ids: [userData.neptun],
+      temavezeto_ids: [selected.temavezetoNeptun],
+      allapot: "jelentkezett"
+    };
+
+    const res = await fetch('/api/dolgozatok', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dolgozat)
     });
 
-    if (!res.ok) throw new Error("Jelentkezési hiba");
+    if (!res.ok) throw new Error('Sikertelen jelentkezés');
+    alert("Sikeresen jelentkeztél a témára!");
 
-    alert("Jelentkezés sikeresen mentve!");
-    document.getElementById("jelentkezes-modal").style.display = "none";
-    document.getElementById("jelentkezes-homalyositas").style.display = "none";
+    // 🔹 Frissítjük a listát, hogy eltűnjön a jelentkezett téma
+    await loadTopics();
+    
   } catch (err) {
     console.error("Hiba a jelentkezés során:", err);
     alert("Hiba történt a jelentkezés során.");
   }
-});
+}
 
 
   // ───────────────────────────────── 5) TÉMA TÖRLÉSE
@@ -230,51 +219,121 @@ document.getElementById("jelentkezes-mentes").addEventListener("click", async ()
     }
   }
 
-    // === 6. Jelentkezés mentése (új dolgozat létrehozása) ===
-  modalMentes.addEventListener("click", () => {
-    const selectedHallgatoIds = Array.from(
-      hallgatoValaszto.querySelectorAll("input[type='checkbox']:checked")
-    ).map(cb => cb.value);
+  // ───────────────────────────────── 6) TÉMA MÓDOSÍTÁS
+let currentEditId = null;
 
-    if (selectedHallgatoIds.length === 0) {
-      alert("Válassz legalább egy hallgatót!");
-      return;
-    }
+// 🔹 Legördülő témavezetők listájának feltöltése
+async function loadTemavezetoSelect() {
+  try {
+    const res = await fetch('/api/temavezetok');
+    if (!res.ok) throw new Error('Nem sikerült lekérni a témavezetőket');
+    const temavezetoLista = await res.json();
 
-    const selectedTopic = topics.find(t => t._id === selectedTopicId);
-    if (!selectedTopic) {
-      alert("Hiba: téma nem található!");
-      return;
-    }
+    const select = document.getElementById('edit-supervisor');
+    select.innerHTML = '';
 
-    // Hallgatók teljes adatainak beépítése (név + neptun)
-    const selectedHallgatok = hallgatok
-      .filter(h => selectedHallgatoIds.includes(h._id))
-      .map(h => ({ nev: h.nev, neptun: h.neptun }));
+    temavezetoLista.forEach(tv => {
+      const opt = document.createElement('option');
+      opt.value = tv.nev;
+      opt.textContent = `${tv.nev} (${tv.neptun})`;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Hiba a témavezetők betöltésekor:', err);
+  }
+}
 
-    // Témavezető adatainak objektumba szervezése
-    const temavezetoObj = {
-      nev: selectedTopic.temavezeto,
-      neptun: selectedTopic.neptun || "",
-    };
 
-fetch("/api/dolgozatok", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    cím: selectedTopic.cim,
-    leiras: selectedTopic.osszefoglalo,
-    hallgato_ids: selectedHallgatok.map(h => h.neptun),
-    temavezeto_ids: [selectedTopic.neptun],
-  }),
-})
-  .then(res => res.json())
-  .then(() => {
-    alert("Jelentkezés sikeresen mentve!");
-    modal.style.display = "none";
-  })
-  .catch(err => console.error("Jelentkezés mentési hiba:", err));
-  }); // 🔹 ezzel zárjuk le a modalMentes.addEventListener blokkot
+ await loadTemavezetoSelect();
+
+function modositTema(id) {
+
+  currentEditId = id;
+  const row = document.querySelector(`button[data-id="${id}"]`).closest('tr');
+  const cells = row.querySelectorAll('td');
+
+  // Kitöltjük a modal mezőit a táblázat adataival
+  document.getElementById('edit-title').value = cells[0].innerText.trim();
+  document.getElementById('edit-supervisor').value = cells[1].innerText.trim();
+  document.getElementById('edit-department').value = cells[2].innerText.trim();
+  document.getElementById('edit-faculty').value = cells[3].innerText.trim();
+
+  // Az összefoglalót a részletekből olvassuk ki
+  const summaryRow = row.nextElementSibling;
+  if (summaryRow && summaryRow.querySelector('.topic-details-panel')) {
+    document.getElementById('edit-summary').value =
+      summaryRow.querySelector('.topic-details-panel p:nth-child(2)').innerText.trim();
+  }
+
+  // Modal megjelenítése
+  document.getElementById('edit-modal').style.display = 'block';
+  document.getElementById('uj-topic-homalyositas').style.display = 'block';
+}
+
+// Mentés gomb esemény
+document.getElementById('save-edit-btn').addEventListener('click', async () => {
+  const cim = document.getElementById('edit-title').value.trim();
+  const temavezetoNev = document.getElementById('edit-supervisor').value.trim();
+  const tanszek = document.getElementById('edit-department').value.trim();
+  const kar = document.getElementById('edit-faculty').value.trim();
+  const osszefoglalo = document.getElementById('edit-summary').value.trim();
+
+  if (!cim || !temavezetoNev || !osszefoglalo) {
+    alert('A cím, témavezető és összefoglaló mező kötelező!');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/topics/${currentEditId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cim, temavezetoNev, tanszek, kar, osszefoglalo })
+    });
+
+    if (!res.ok) throw new Error('Hiba a módosítás mentésekor.');
+    alert('Téma sikeresen módosítva.');
+    document.getElementById('edit-modal').style.display = 'none';
+    document.getElementById('uj-topic-homalyositas').style.display = 'none';
+    loadTopics();
+  } catch (err) {
+    console.error('Hiba a mentés során:', err);
+    alert('Nem sikerült a mentés.');
+  }
+});
+
+// Mégse gomb
+document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+  document.getElementById('edit-modal').style.display = 'none';
+  document.getElementById('uj-topic-homalyositas').style.display = 'none';
+});
+
+
+
+// ───────────────────────────────── 7) MÓDOSÍTÁS MENTÉSE
+async function mentModositast(id) {
+  const cim = document.getElementById(`edit-cim-${id}`).value.trim();
+  const ossz = document.getElementById(`edit-ossz-${id}`).value.trim();
+
+  if (!cim || !ossz) {
+    alert('Minden mezőt ki kell tölteni!');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/topics/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cim, osszefoglalo: ossz })
+    });
+
+    if (!res.ok) throw new Error('Hiba a módosítás mentésekor.');
+    alert('Téma sikeresen módosítva.');
+    loadTopics();
+  } catch (err) {
+    console.error('Hiba a módosítás mentésekor:', err);
+    alert('Hiba történt a mentés során.');
+  }
+}
 
 
 // ───────────────────────────────── INDULÓ BETÖLTÉS

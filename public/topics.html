@@ -56,43 +56,65 @@
   </div>
 </form>
 
+<!-- Modal téma módosításához -->
+<div id="edit-modal" class="modal-form" style="display:none;">
+  <h3>Téma módosítása</h3>
+  <div class="form-group">
+    <label for="edit-title">Téma címe:</label>
+    <input type="text" id="edit-title" required>
+  </div>
 
+  <div class="form-group">
+    <label for="edit-supervisor">Témavezető:</label>
+    <select id="edit-supervisor" required>
+  <option value="">Válassz témavezetőt...</option>
+</select>
 
-    <h3>Elérhető témajavaslatok</h3>
-    <table id="topic-table" width="100%">
-      <thead>
-        <tr>
-          <th>Cím</th>
-          <th>Témavezető</th>
-          <th>Neptun-kód</th>
-          <th>Összefoglaló</th>
-          <th>Művelet</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  </div>
 
-<!-- Modal a hallgatók kiválasztásához -->
-<div id="jelentkezes-homalyositas" class="blur-layer" style="display:none;"></div>
+  <div class="form-group">
+    <label for="edit-department">Tanszék:</label>
+    <input type="text" id="edit-department">
+  </div>
 
-<div id="jelentkezes-modal" class="modal-form" style="display:none;">
-  <h3>Hallgatók kiválasztása</h3>
-  <!-- Hallgató kereső + lista -->
-<input type="text" id="hallgato-kereso" placeholder="Hallgató keresése..." class="lista-kereso">
+  <div class="form-group">
+    <label for="edit-faculty">Kar:</label>
+    <input type="text" id="edit-faculty">
+  </div>
 
-<div id="hallgato-valaszto" class="hallgato-lista"></div>
-
+  <div class="form-group">
+    <label for="edit-summary">Összefoglaló:</label>
+    <textarea id="edit-summary" rows="5"></textarea>
+  </div>
 
   <div class="gombok-kozeppontban">
-    <button id="jelentkezes-mentes" style="background-color: green; color: white;">Jelentkezés mentése</button>
-    <button id="jelentkezes-bezar" style="background-color: gray; color: white;">Mégse</button>
+    <button id="save-edit-btn" style="background-color:green;color:white;">Mentés</button>
+    <button id="cancel-edit-btn" style="background-color:gray;color:white;">Mégse</button>
   </div>
 </div>
 
 
 
+    <h3>Elérhető témajavaslatok</h3>
+<table id="topic-table" width="100%">
+  <thead>
+    <tr>
+      <th>Cím</th>
+      <th>Témavezető</th>
+      <th>Tanszék</th>
+      <th>Kar</th>
+      <th>Művelet</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+
+
   </section>
 </main>
+
+
 
 <script src="topics.js" defer></script>
 <script src="auth.js" defer></script>

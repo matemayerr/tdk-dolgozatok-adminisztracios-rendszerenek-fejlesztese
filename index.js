@@ -867,7 +867,8 @@ app.delete('/api/topics/:id', async (req, res) => {
 // 🔹 Témavezetők listázása (MongoDB-ből)
 app.get('/api/temavezetok', async (req, res) => {
   try {
-    const temavezetok = await Felhasznalo.find({ csoportok: { $in: ['temavezeto'] } });
+    const temavezetok = await Felhasznalo.find({ csoportok: { $in: ['temavezeto'] } })
+  .select('nev neptun email kar tanszek');
     res.json(temavezetok);
   } catch (err) {
     console.error('Hiba a témavezetők lekérésekor:', err);
@@ -898,6 +899,30 @@ app.post('/api/topics/:id/jelentkezes', async (req, res) => {
   } catch (err) {
     console.error('Hiba a jelentkezés során:', err);
     res.status(500).json({ error: 'Szerverhiba a jelentkezés mentésekor' });
+  }
+});
+
+
+// 🔹 Téma módosítása
+app.put('/api/topics/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cim, temavezetoNev, tanszek, kar, osszefoglalo } = req.body;
+
+    const updatedTopic = await TemaJavaslat.findByIdAndUpdate(
+      id,
+      { cim, temavezetoNev, tanszek, kar, osszefoglalo },
+      { new: true }
+    );
+
+    if (!updatedTopic) {
+      return res.status(404).json({ error: 'Téma nem található' });
+    }
+
+    res.json({ message: 'Téma sikeresen módosítva', tema: updatedTopic });
+  } catch (err) {
+    console.error('Hiba a téma módosításakor:', err);
+    res.status(500).json({ error: 'Szerverhiba a módosítás során' });
   }
 });
 
