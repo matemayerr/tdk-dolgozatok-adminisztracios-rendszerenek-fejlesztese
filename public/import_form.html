@@ -29,7 +29,7 @@
 
     textarea {
       width: 100%;
-      height: 80px;
+      height: 300px;
       resize: vertical;
     }
 
@@ -125,7 +125,7 @@
   <h2>Pontozólap a dolgozat bírálatához</h2>
 
   <hr>
-  <p>Az értékelő lap feltöltéséhez kérem kattintson a Browse gombra!</p>
+  <p id="feltoltes-utmutato">Az értékelő lap feltöltéséhez kérem kattintson a Browse gombra!</p>
   <p><input type="file" id="upload" accept=".xlsx, .xls" </p>
   <br>
 
@@ -463,6 +463,16 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 });
 
+
+const urlParams = new URLSearchParams(window.location.search);
+  const readonly = urlParams.get('readonly') === 'true';
+
+  if (readonly) {
+    const feltoltesUtmutato = document.getElementById('feltoltes-utmutato');
+    if (feltoltesUtmutato) {
+      feltoltesUtmutato.style.display = 'none';
+    }
+  }
 
 </script>
 
