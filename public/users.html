@@ -63,8 +63,43 @@
     <button type="button" id="felhasznalo-megse-gomb">Mégse</button>
 </form>
 
+
 <!-- Homályos réteg -->
 <div id="felhasznalo-homaly" class="blur-layer" style="display: none;"></div>
+
+<!-- Felhasználó módosítás modal -->
+<div id="modosit-felhasznalo-modal" class="modal-form" style="display: none;">
+    <h3>Felhasználó módosítása:</h3>
+
+    <label for="modosit-nev">Név:</label>
+    <input type="text" id="modosit-nev" placeholder="Név">
+
+    <label for="modosit-neptun">Neptun-kód:</label>
+    <input type="text" id="modosit-neptun" placeholder="Neptun kód">
+
+    <label for="modosit-email">E-mail cím:</label>
+    <input type="email" id="modosit-email" placeholder="E-mail">
+
+    <div class="user-dropdown">
+        <button type="button" class="dropdown-btn">Csoport kiválasztása ▾</button>
+        <div class="dropdown-content" id="modosit-csoport-lista">
+            <label><input type="checkbox" value="hallgato"> Hallgató</label>
+            <label><input type="checkbox" value="temavezeto"> Témavezető</label>
+            <label><input type="checkbox" value="biralo"> Bíráló</label>
+            <label><input type="checkbox" value="zsuri"> Zsűri</label>
+            <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
+        </div>
+    </div>
+
+    <div class="gombok-kozeppontban">
+        <button id="modosit-mentes">Mentés</button>
+        <button id="modosit-megse">Mégse</button>
+    </div>
+</div>
+
+
+<!-- Homályosító -->
+<div id="modosit-homalyositas" class="blur-layer" style="display: none;"></div>
 
 
             <!-- Cím és kereső ikon egy sorban -->

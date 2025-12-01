@@ -41,7 +41,7 @@ const Felhasznalo = mongoose.model('felhasznalos', new mongoose.Schema({
     neptun: { type: String, required: true, unique: true },
     email: { type: String, required: true },
     csoportok: { type: [String], required: true }, // Tömb több csoporthoz
-    password: { type: String, required: true }
+    password: { type: String, required: false }
 }));
 
 
@@ -160,7 +160,7 @@ Egy új dolgozat került feltöltésre a rendszerbe, amely értékelésre vár.
 
 Dolgozat címe: ${dolgozat.cím}
 Hallgató Neptun kódja: ${dolgozat.hallgato_id}
-
+POST /api/felhasznalok
 Üdvözlettel,
 TDK Adminisztrációs Rendszer`
     };
@@ -265,36 +265,38 @@ app.delete('/api/dolgozatok/:id', async (req, res) => {
 // Felhasználó CRUD műveletek
 
 // Új felhasználó hozzáadása
- app.post('/api/felhasznalok', async (req, res) => {
-    const { nev, neptun, email, csoportok } = req.body;
+app.post('/api/felhasznalok', async (req, res) => {
+    const { nev, neptun, email, csoportok, jelszo } = req.body;
 
-    if (!nev || !neptun || !email || !csoportok || !Array.isArray(csoportok)) {
-        return res.status(400).json({ error: "Minden mező kitöltése kötelező! A csoportokat tömbként kell megadni." });
+    if (!nev || !neptun || !email || !Array.isArray(csoportok)) {
+        return res.status(400).json({ error: 'Hiányzó adatok' });
     }
 
     try {
-        const letezoFelhasznalo = await Felhasznalo.findOne({ neptun });
-        if (letezoFelhasznalo) {
-            return res.status(400).json({ error: "Ez a Neptun-kód már létezik!" });
+        const ujFelhasznalo = {
+            nev,
+            neptun,
+            email,
+            csoportok,
+        };
+
+        if (jelszo) {
+            const salt = await bcrypt.genSalt(10);
+            ujFelhasznalo.jelszo = await bcrypt.hash(jelszo, salt);
         }
 
-        const hashJelszo = await bcrypt.hash("Temp1234", 10); // Alapértelmezett jelszó
-
-        const felhasznalo = new Felhasznalo({ 
-            nev, 
-            neptun, 
-            email, 
-            csoportok, 
-            password: hashJelszo
-        });
-
-        await felhasznalo.save();
-        res.status(201).json(felhasznalo);
-    } catch (error) {
-        console.error("Hiba történt a felhasználó mentésekor:", error);
-        res.status(500).json({ error: 'Hiba történt a felhasználó mentésekor' });
+        const ujFelhasznaloMentett = new Felhasznalo(ujFelhasznalo);
+        await ujFelhasznaloMentett.save();
+        res.status(201).json(ujFelhasznaloMentett);
+    } catch (err) {
+        if (err.code === 11000 && err.keyPattern?.email) {
+            return res.status(400).json({ error: 'Ez az e-mail cím már létezik a rendszerben.' });
+        }
+        console.error('Hiba a felhasználó létrehozásakor:', err);
+        res.status(500).json({ error: 'Szerverhiba a felhasználó létrehozásakor' });
     }
 });
+
 
 app.get('/api/felhasznalok/csoportok', async (req, res) => {
     try {

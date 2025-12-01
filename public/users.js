@@ -32,8 +32,18 @@ document.addEventListener('DOMContentLoaded', function () {
         renderTable();
         form.reset();
     } else {
-        console.error('Hiba történt a felhasználó hozzáadása során');
+        try {
+            const hibauzenet = await response.json();
+            if (hibauzenet.error) {
+                alert(`Hiba: ${hibauzenet.error}`);
+            } else {
+                alert('Ismeretlen hiba történt a felhasználó hozzáadása során.');
+            }
+        } catch (e) {
+            alert('Hiba történt a válasz feldolgozása során.');
+        }
     }
+    
 });
 
     // 🔹 Felhasználók betöltése
@@ -61,8 +71,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${felhasznalo.email}</td>
                 <td>${felhasznalo.csoportok.join(', ')}</td>
                 <td>
-                    <button onclick="editFelhasznalo('${felhasznalo._id}')">Módosítás</button>
-                    <button onclick="deleteFelhasznalo('${felhasznalo._id}')">Törlés</button>
+                <button onclick="modositFelhasznalo('${felhasznalo._id}')">Módosítás</button>
+                <button onclick="deleteFelhasznalo('${felhasznalo._id}')">Törlés</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -219,6 +229,79 @@ window.toggleSearch = function () {
         searchFelhasznalok();
     }
 };
+
+// felhasznalo modositasa
+let modositandoFelhasznaloId = null;
+
+window.modositFelhasznalo = function(id) {
+    const felhasznalo = felhasznalok.find(f => f._id === id);
+    if (!felhasznalo) return;
+
+    modositandoFelhasznaloId = id;
+    document.getElementById('modosit-nev').value = felhasznalo.nev;
+    document.getElementById('modosit-neptun').value = felhasznalo.neptun;
+    document.getElementById('modosit-email').value = felhasznalo.email;
+
+    document.querySelectorAll('#modosit-csoport-lista input[type="checkbox"]')
+    .forEach(checkbox => {
+        checkbox.checked = felhasznalo.csoportok.includes(checkbox.value);
+    });
+
+
+    document.getElementById('modosit-felhasznalo-modal').style.display = 'block';
+    document.getElementById('modosit-homalyositas').style.display = 'block';
+};
+
+document.getElementById('modosit-megse').addEventListener('click', () => {
+    document.getElementById('modosit-felhasznalo-modal').style.display = 'none';
+    document.getElementById('modosit-homalyositas').style.display = 'none';
+});
+
+document.getElementById('modosit-mentes').addEventListener('click', async () => {
+    const updated = {
+        nev: document.getElementById('modosit-nev').value,
+        neptun: document.getElementById('modosit-neptun').value,
+        email: document.getElementById('modosit-email').value,
+        csoportok: Array.from(document.querySelectorAll('#modosit-csoport-lista input[type="checkbox"]:checked')
+    ).map(cb => cb.value),
+    };
+
+    try {
+        const res = await fetch(`/api/felhasznalok/${modositandoFelhasznaloId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updated)
+        });
+
+        if (res.ok) {
+            const updatedFelhasznalo = await res.json();
+            const index = felhasznalok.findIndex(f => f._id === modositandoFelhasznaloId);
+            felhasznalok[index] = updatedFelhasznalo;
+            renderTable();
+            document.getElementById('modosit-felhasznalo-modal').style.display = 'none';
+            document.getElementById('modosit-homalyositas').style.display = 'none';
+        } else {
+            alert('Hiba a módosítás során');
+        }
+    } catch (err) {
+        console.error('Szerverhiba a módosítás során:', err);
+    }
+});
+
+// Lenyíló menü működése a módosítás modalban
+const modositDropdownBtn = document.querySelector('#modosit-felhasznalo-modal .dropdown-btn');
+const modositDropdownContent = document.querySelector('#modosit-felhasznalo-modal .dropdown-content');
+
+modositDropdownBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    modositDropdownContent.style.display =
+        modositDropdownContent.style.display === 'block' ? 'none' : 'block';
+});
+
+modositDropdownContent?.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
 
 
     loadFelhasznalok();
