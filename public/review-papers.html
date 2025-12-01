@@ -7,57 +7,77 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <h1>TDK Adminisztrációs Rendszer</h1>
-        <nav>
-            <ul>
-                <li><a href="index.html">Főoldal</a></li>
-                <li><a href="users.html">Felhasználók kezelése</a></li>
-                <li class="dropdown">
-                    <a href="#" class="dropbtn">Dolgozatok kezelése</a>
-                    <div class="dropdown-content">
-                        <a href="papers.html">Új dolgozatok hozzáadása</a>
-                        <a href="completed-papers.html">Dolgozatok feltöltése</a>
-                        <a href="review-papers.html">Dolgozatok értékelése</a>
-                    </div>
-                </li>
-                        <li><a href="#" id="logout-link" style="display: none;">Kijelentkezés</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <main>
-        <section>
-         <p>
-            <div class="header-with-search">
-                <h2>Dolgozatok értékelése:</h2>
-                <div class="search-container">
-                    <span class="search-icon" onclick="toggleSearchInput()">🔍</span>
-                    <input type="text" id="search-input" placeholder="Keresés..." oninput="searchDolgozatok()" style="display: none;">
+<header>
+    <h1>TDK Adminisztrációs Rendszer</h1>
+    <nav>
+        <ul>
+            <li><a href="index.html">Főoldal</a></li>
+            <li><a href="users.html">Felhasználók kezelése</a></li>
+            <li class="dropdown">
+                <a href="#" class="dropbtn">Dolgozatok kezelése</a>
+                <div class="dropdown-content">
+                    <a href="papers.html">Új dolgozatok hozzáadása</a>
+                    <a href="completed-papers.html">Dolgozatok feltöltése</a>
+                    <a href="review-papers.html">Dolgozatok értékelése</a>
                 </div>
-            </div>
-            
-            <table id="ertekeles-table">
-                <thead>
-                    <tr>
-                        <th>Cím</th>
-                        <th>Hallgató Neptun-kód</th>
-                        <th>Témavezető Neptun-kód</th>
-                        <th>Állapot</th>
-                        <th>Érdemjegy</th>
-                        <th>Műveletek</th>
-                    </tr>
-                </thead>
-                <tbody id="ertekeles-tbody">
-                    <!-- Dolgozatok listája ide kerül -->
-                </tbody>
-            </table>
-            <div id="pagination-container"></div>
-        </section>
-    </main>
+            </li>
+            <li><a href="#" id="logout-link" style="display: none;">Kijelentkezés</a></li>
+        </ul>
+    </nav>
+</header>
 
-    <script src="review-papers.js"></script>
-    <script src="auth.js"></script>
+<main>
+    <section>
+        <div class="header-with-search">
+            <h2>Dolgozatok értékelése:</h2>
+            <div class="search-container">
+                <span class="search-icon" onclick="toggleSearchInput()">🔍</span>
+                <input type="text" id="search-input" placeholder="Keresés..." oninput="searchDolgozatok()" style="display: none;">
+            </div>
+        </div>
+
+        <table id="ertekeles-table">
+            <thead>
+                <tr>
+                    <th>Cím</th>
+                    <th>Hallgató</th>
+                    <th>Témavezető</th>
+                    <th>Állapot</th>
+                    <th>Érdemjegy</th>
+                    <th>Műveletek</th>
+                </tr>
+            </thead>
+            <tbody id="ertekeles-tbody"></tbody>
+        </table>
+        <div id="pagination-container"></div>
+    </section>
+</main>
+
+<!-- Lebegő értékelő modál -->
+<div id="ertekeles-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3 id="modal-title">Értékelés hozzáadása</h3>
+        <label>Érdemjegy:</label>
+        <select id="modal-pontszam">
+            <option value="">Válassz</option>
+            <option>Elégtelen</option>
+            <option>Elégséges</option>
+            <option>Közepes</option>
+            <option>Jó</option>
+            <option>Jeles</option>
+        </select>
+
+        <label>Szöveges értékelés:</label>
+        <textarea id="modal-szoveg" rows="6" style="width: 100%; resize: vertical;"></textarea>
+
+        <button id="modal-mentes">Mentés</button>
+        <button id="modal-modositas" style="display: none;">Módosítás</button>
+        <button id="modal-bezar">Mégse</button>
+    </div>
+</div>
+
+<script src="review-papers.js"></script>
+<script src="auth.js"></script>
 </body>
 </html>
 
