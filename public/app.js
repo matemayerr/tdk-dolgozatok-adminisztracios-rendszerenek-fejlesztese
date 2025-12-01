@@ -126,7 +126,7 @@ detailTr.innerHTML = `
     <td colspan="3">
         <div class="dolgozat-details-panel" id="panel-${dolgozat._id}">
             <p class="dolgozat-leiras">
-  <span class="leiras-cimke">Leírás:</span><br>
+  <span class="leiras-cimke">Tartalmi összefoglaló:</span><br>
   <span class="leiras-szoveg">${dolgozat.leiras || '—'}</span>
 </p>
             <p><strong>Hallgató(k):</strong> ${

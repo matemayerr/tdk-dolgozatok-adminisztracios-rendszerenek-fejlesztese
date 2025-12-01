@@ -1,21 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const openRegister = document.getElementById("open-register-modal");
-    const closeRegister = document.getElementById("close-register-modal");
-    const loginContainer = document.getElementById("login-container");
-    const registerContainer = document.getElementById("register-container");
+  const openRegister = document.getElementById("open-register-modal");
+  const closeRegister = document.getElementById("close-register-modal");
+  const registerContainer = document.getElementById("register-container");
   
-    if (openRegister && closeRegister && loginContainer && registerContainer) {
-      openRegister.addEventListener("click", (e) => {
-        e.preventDefault();
-        loginContainer.style.display = "none";
-        registerContainer.style.display = "block";
-      });
+  if (openRegister && closeRegister && registerContainer) {
+    openRegister.addEventListener("click", (e) => {
+      e.preventDefault();
+      registerContainer.style.display = "block";
+      document.getElementById("register-blur").style.display = "block";
+    });
   
-      closeRegister.addEventListener("click", () => {
-        registerContainer.style.display = "none";
-        loginContainer.style.display = "block";
-      });
-    }
+    closeRegister.addEventListener("click", () => {
+      registerContainer.style.display = "none";
+      document.getElementById("register-blur").style.display = "none";
+    });
+  }
+  
   
     //Regisztráció kezelése
     const registerForm = document.getElementById('register-form');
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
           const data = await res.json();
           if (res.ok) {
-            feedback.textContent = "Ha létezik a fiók, küldtünk egy jelszó-visszaállító linket.";
+            feedback.textContent = "Küldtünk egy jelszó-visszaállító linket.";
             feedback.style.color = "green";
           } else {
             feedback.textContent = data.error || "Hiba történt.";

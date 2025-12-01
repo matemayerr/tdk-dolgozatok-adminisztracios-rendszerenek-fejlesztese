@@ -27,6 +27,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         const nev = document.getElementById("nev").value;
         const jelszo = document.getElementById("jelszo").value;
         const jelszo2 = document.getElementById("jelszo2").value;
+        const neptun = document.getElementById("neptun")?.value || "";
+        const kar = document.getElementById("kar")?.value || "";
+
 
         if (jelszo !== jelszo2) {
             hibaUzenet.textContent = "A jelszavak nem egyeznek!";
@@ -37,7 +40,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const response = await fetch("/api/regisztracio-befejezes", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token, nev, jelszo })
+                body: JSON.stringify({ token, nev, jelszo, neptun, kar })
             });
 
             const result = await response.json();

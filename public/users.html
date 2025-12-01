@@ -17,9 +17,9 @@
         <li class="dropdown">
             <a href="#" class="dropbtn">Dolgozatok kezelése</a>
             <div class="dropdown-content">
-                <a href="papers.html">Új dolgozatok hozzáadása</a>
-                <a href="completed-papers.html">Dolgozatok feltöltése</a>
-                <a href="review-papers.html">Dolgozatok értékelése</a>
+                <a href="papers.html">Jelentkezés új dolgozattal</a>
+                <a href="completed-papers.html">Dolgozat feltöltése</a>
+                <a href="review-papers.html">Dolgozat értékelése</a>
             </div>
         </li>
         <li><a href="#" id="logout-link" style="display: none;">Kijelentkezés</a></li>
@@ -41,11 +41,25 @@
   <input type="text" id="felhasznalo-nev" placeholder="Név" required>
 </div>
 <div class="form-group">
-  <input type="text" id="felhasznalo-neptun" placeholder="Neptun kód" required>
+    <input type="text" id="felhasznalo-neptun" placeholder="Neptun kód (opcionális)">
 </div>
 <div class="form-group">
-  <input type="email" id="felhasznalo-email" placeholder="Email cím" required>
+  <input type="email" id="felhasznalo-email" placeholder="E-mail" required>
 </div>
+
+<div class="form-group">
+    <input type="password" id="felhasznalo-jelszo" placeholder="Jelszó" required>
+  </div>
+  <div class="form-group">
+    <input type="password" id="felhasznalo-jelszo-ismet" placeholder="Jelszó újra" required>
+  </div>
+
+<div class="form-group">
+    <label for="felhasznalo-kar">Kar (opcionális):</label>
+    <select id="felhasznalo-kar">
+      <option value="">-- Válassz kart --</option>
+    </select>
+  </div>
 
 
     <div class="user-dropdown">
@@ -56,6 +70,9 @@
             <label><input type="checkbox" value="biralo"> Bíráló</label>
             <label><input type="checkbox" value="zsuri"> Zsűri</label>
             <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
+            <label><input type="checkbox" value="kariadmin"> Kari adminisztrátor</label>
+            <label><input type="checkbox" value="egyetemiadmin"> Egyetemi adminisztrátor</label>
+
         </div>
     </div>
 
@@ -80,6 +97,13 @@
     <label for="modosit-email">E-mail cím:</label>
     <input type="email" id="modosit-email" placeholder="E-mail">
 
+    <div class="form-group">
+        <label for="felhasznalo-kar">Kar (opcionális):</label>
+        <select id="modosit-kar">
+            <option value="">-- Válassz kart --</option>
+          </select>
+      </div>
+      
     <div class="user-dropdown">
         <button type="button" class="dropdown-btn">Csoport(ok) kiválasztása ▾</button>
         <div class="dropdown-content" id="modosit-csoport-lista">
@@ -88,6 +112,8 @@
             <label><input type="checkbox" value="biralo"> Bíráló</label>
             <label><input type="checkbox" value="zsuri"> Zsűri</label>
             <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
+            <label><input type="checkbox" value="kariadmin"> Kari adminisztrátor</label>
+            <label><input type="checkbox" value="egyetemiadmin"> Egyetemi adminisztrátor</label>
         </div>
     </div>
 
@@ -101,6 +127,7 @@
 <!-- Homályosító -->
 <div id="modosit-homalyositas" class="blur-layer" style="display: none;"></div>
 
+            
 
             <!-- Cím és kereső ikon egy sorban -->
             <div class="header-with-search">
@@ -111,12 +138,26 @@
                 </div>
             </div>
 
+            <label for="rows-per-page">Sorok száma:</label>
+<select id="rows-per-page">
+  <option value="25">25</option>
+  <option value="50">50</option>
+  <option value="100">100</option>
+  <option value="200">200</option>
+  <option value="500">500</option>
+  <option value="1000">1000</option>
+  <option value="2000">2000</option>
+  <option value="all">Összes</option>
+</select>
+
+
             <table>
                 <thead>
                     <tr>
                         <th>Név</th>
                         <th>Neptun-kód</th>
                         <th>E-mail cím</th>
+                        <th>Kar</th>
                         <th>Csoport(ok)</th>
                         <th>Műveletek</th>
                     </tr>

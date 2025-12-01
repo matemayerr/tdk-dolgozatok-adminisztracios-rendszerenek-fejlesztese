@@ -41,13 +41,12 @@ const bcrypt = require('bcrypt');
 // Felhasznalo modell
 const Felhasznalo = mongoose.model('felhasznalos', new mongoose.Schema({
     nev: { type: String, required: true },
-    neptun: { type: String, required: false, unique: false }, // opcionális
+    neptun: { type: String, required: false },
     email: { type: String, required: true },
     csoportok: { type: [String], required: true },
-    password: { type: String, required: false }
+    kar: { type: String, required: false },
+    jelszo: { type: String, required: false }
 }));
-
-
 
 // Ellenörzöm a Neptun-kod és jelszo helyesseget, majd egy JWT tokent adok vissza
 const jwt = require('jsonwebtoken');
@@ -74,12 +73,12 @@ app.post('/api/login', async (req, res) => {
         }
 
         // Ellenőrizzük, hogy a felhasználónak van-e mentett jelszava
-        if (!felhasznalo.password) {
+        if (!felhasznalo.jelszo) {
             console.error("A felhasználónak nincs jelszava az adatbázisban!");
             return res.status(500).json({ error: 'Nincs jelszó mentve az adatbázisban!' });
         }
 
-        const isMatch = await bcrypt.compare(jelszo, felhasznalo.password);
+        const isMatch = await bcrypt.compare(jelszo, felhasznalo.jelszo);
         if (!isMatch) {
             console.error("Helytelen jelszó:", jelszo);
             return res.status(400).json({ error: 'Hibás E-mail cím vagy jelszó' });
@@ -270,9 +269,9 @@ app.delete('/api/dolgozatok/:id', async (req, res) => {
 
 // Új felhasználó hozzáadása
 app.post('/api/felhasznalok', async (req, res) => {
-    const { nev, neptun, email, csoportok, jelszo } = req.body;
+    const { nev, neptun, email, csoportok, kar, jelszo } = req.body;
 
-    if (!nev || !neptun || !email || !Array.isArray(csoportok)) {
+    if (!nev || !email || !Array.isArray(csoportok)) {
         return res.status(400).json({ error: 'Hiányzó adatok' });
     }
 
@@ -282,9 +281,10 @@ app.post('/api/felhasznalok', async (req, res) => {
             neptun,
             email,
             csoportok,
+            kar
         };
 
-        if (jelszo) {
+        if (jelszo && jelszo.trim() !== '') {
             const salt = await bcrypt.genSalt(10);
             ujFelhasznalo.jelszo = await bcrypt.hash(jelszo, salt);
         }
@@ -487,7 +487,7 @@ app.post('/api/regisztracio', async (req, res) => {
             nev,
             neptun,
             email,
-            password: hash,
+            jelszo: hash,
             csoportok: ['hallgato']
         });
 
@@ -562,7 +562,7 @@ app.post('/api/reset-jelszo', async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       const hash = await bcrypt.hash(jelszo, salt);
   
-      await Felhasznalo.findByIdAndUpdate(felhasznaloId, { password: hash });
+      await Felhasznalo.findByIdAndUpdate(felhasznaloId, { jelszo: hash });
       delete resetTokens[token];
   
       res.status(200).json({ message: "Jelszó frissítve." });
@@ -614,7 +614,7 @@ app.get('/api/regisztracios-email', (req, res) => {
 });
 
 app.post('/api/regisztracio-befejezes', async (req, res) => {
-    const { token, nev, jelszo } = req.body;
+    const { token, nev, jelszo, neptun, kar } = req.body;
     const email = regisztraciosTokenek[token];
 
     if (!email) {
@@ -628,6 +628,8 @@ app.post('/api/regisztracio-befejezes', async (req, res) => {
         const ujFelhasznalo = new Felhasznalo({
             nev,
             email,
+            neptun: neptun || "",      // opcionális
+            kar: kar || "",            // opcionális
             jelszo: hash,
             csoportok: ['hallgato']
         });
@@ -641,6 +643,7 @@ app.post('/api/regisztracio-befejezes', async (req, res) => {
         res.status(500).json({ error: 'Szerverhiba' });
     }
 });
+
 
 
 

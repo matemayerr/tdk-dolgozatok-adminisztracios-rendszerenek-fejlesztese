@@ -11,18 +11,37 @@
         <form id="complete-registration-form">
             <label for="nev">Név:</label>
             <input type="text" id="nev" required>
-
+        
             <label for="email">E-mail cím:</label>
             <input type="email" id="email" disabled>
-
+        
+            <label for="neptun">Neptun-kód (nem kötelező):</label>
+            <input type="text" id="neptun" placeholder="Pl. AB1234">
+        
+            <label for="kar">Kar (nem kötelező):</label>
+            <select id="kar">
+                <option value="">-- Kar kiválasztása --</option>
+                <option value="AK">Apáczai Csere János Pedagógiai, Humán- és Társadalomtudományi Kar</option>
+                <option value="AKMK">Albert Kázmér Mosonmagyaróvári Kar</option>
+                <option value="AHJK">Audi Hungaria Járműmérnöki Kar</option>
+                <option value="ÉÉKK">Építész-, Építő- és Közlekedésmérnöki Kar</option>
+                <option value="ÁJK">Deák Ferenc Állam- és Jogtudományi Kar</option>
+                <option value="ESK">Egészség- és Sporttudományi Kar</option>
+                <option value="GIVK">Gépészmérnöki, Informatikai és Villamosmérnöki Kar</option>
+                <option value="KGGK">Kautz Gyula Gazdaságtudományi Kar</option>
+                <option value="MÉK">Mezőgazdaság- és Élelmiszertudományi Kar</option>
+                <option value="MK">Művészeti Kar</option>
+            </select>
+        
             <label for="jelszo">Jelszó:</label>
             <input type="password" id="jelszo" required>
-
+        
             <label for="jelszo2">Jelszó újra:</label>
             <input type="password" id="jelszo2" required>
-
+        
             <button type="submit">Regisztráció</button>
         </form>
+        
         <p id="hiba-uzenet" style="color: red;"></p>
     </div>
 

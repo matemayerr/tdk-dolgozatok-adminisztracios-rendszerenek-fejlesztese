@@ -23,31 +23,36 @@
             <p>Még nincs fiókod? <a href="#" id="open-register-modal">Regisztráció</a></p>
             <p id="login-error" style="color: red; display: none;">Hibás Neptun-kód vagy jelszó!</p>
             <p style="text-align:left;">
-              <a href="#" id="forgot-password-link">Elfelejtettem a jelszavam</a>
+              <a href="#" id="forgot-password-link">Elfelejtette a jelszavát?</a>
             </p>
           </div>
         </section>
 
 
             <!-- Regisztrációs modal -->
-            <div id="register-container" class="form-container" style="display: none;">
-              <h3>Regisztráció</h3>
-              <input type="email" id="reg-email" placeholder="E-mail címed">
-              <div class="gombok-kozeppontban">
-                <button id="reg-link-gomb">Regisztrációs link kérése</button>
-                <button id="close-register-modal" type="button">Mégse</button>
-              </div>
-            </div>
-            
-            
+<!-- Regisztrációs modal -->
+<div id="register-container" class="modal-form" style="display: none;">
+  <h3>Regisztráció</h3>
+  <input type="email" id="reg-email" placeholder="E-mail">
+  <div class="gombok-egymas-alatt">
+    <button id="reg-link-gomb">Regisztrációs link küldés</button>
+    <button id="close-register-modal" type="button">Mégse</button>
+  </div>
+  <p id="register-feedback" style="color:red; display:none;"></p>
+</div>
+<div id="register-blur" class="modal-blur" style="display: none;"></div>
 
+
+
+            
+ <!-- Elfelejtett jelszó modal -->
   <div id="forgot-password-modal" class="modal-form" style="display:none;">
-    <h3>Jelszó visszaállítása</h3>
+    <h3>Jelszó visszaállítás</h3>
     <input type="email" id="reset-email" placeholder="E-mail" required>
-    <div class="gombok-kozeppontban">
-      <button id="send-reset-link">Elküldés</button>
+    <div class="gombok-egymas-alatt">
+      <button id="send-reset-link">Új jelszót kérek</button>
       <button id="close-reset-modal">Mégse</button>
-    </div>
+    </div>  
     <p id="reset-feedback" style="color:red; display:none;"></p>
   </div>
   <div id="reset-blur" class="blur-layer" style="display: none;"></div>  

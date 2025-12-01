@@ -46,6 +46,7 @@ button {
 
 button:hover {
     background-color: #555;
+    color: white;
 }
 
 ul {
@@ -142,7 +143,7 @@ nav ul li:last-child {
 .modal-form .dropdown-btn,
 .modal-form .form-group,
 .modal-form button {
-  width: 300px;
+  width: 250px;
   margin: 8px auto;           /* ➜ középre helyezés és térköz */
   display: block;
   text-align: center;
@@ -563,7 +564,6 @@ nav ul li a.active {
 .uj-felhasznalo-form .form-group input,
 .uj-felhasznalo-form button,
 .uj-felhasznalo-form .dropdown-btn {
-    width: 300px;
     box-sizing: border-box;
     margin: 8px auto;
 }
@@ -587,6 +587,10 @@ nav ul li a.active {
 #felhasznalo-hozzaadas-gomb:hover,
 #felhasznalo-megse-gomb:hover {
     background-color: #555;
+}
+
+#felhasznalo-kar{
+    width: 250px
 }
 
 .leiras-cimke {
@@ -744,12 +748,23 @@ body.login-oldal {
     overflow: hidden;
 }
 
-#register-container {
-    max-width: 700px;
-    padding: 10px;
-    margin-top: -120px;
-    margin-left: 220px;
-  }
+#register-container.modal-form {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    z-index: 101;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 322px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    align-items: center;
+    justify-content: center;
+}
 
   .user-dropdown .dropdown-content.scrollable-list {
     max-height: 200px; /* beállíthatod igény szerint */
@@ -779,6 +794,7 @@ body.login-oldal {
 
   
   #login-form button {
+    border: 2px solid green; /* Zöld szegély */
     background-color: green;
     color: white;
     font-weight: bold;
@@ -790,3 +806,40 @@ body.login-oldal {
     background-color: white;
     color: green;
 }
+
+.gombok-egymas-alatt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.gombok-egymas-alatt button {
+    max-width: 200px;
+}
+ 
+
+#send-reset-link {
+    border: 2px solid green; /* Zöld szegély */
+    background-color: green;
+    color: white;
+}
+
+#send-reset-link:hover {
+    border: 2px solid green; /* Zöld szegély */
+    background-color: white;
+    color: green;
+}
+
+#reg-link-gomb {
+    border: 2px solid green; /* Zöld szegély */
+    background-color: green;
+    color: white;
+}
+
+#reg-link-gomb:hover {
+    border: 2px solid green; /* Zöld szegély */
+    background-color: white;
+    color: green;
+}
+

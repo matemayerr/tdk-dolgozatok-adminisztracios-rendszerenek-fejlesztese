@@ -7,22 +7,76 @@ document.addEventListener('DOMContentLoaded', function () {
     let felhasznalok = [];
     let filteredFelhasznalok = [];
     let currentPage = 1;
-    const rowsPerPage = 10;
+    //const rowsPerPage = 10;
+    let sorokSzama = 25; // Alapértelmezett érték
+
+    
+
+    //A karok tömb definiálása
+    const karok = [
+        { nev: "Apáczai Csere János Pedagógiai, Humán- és Társadalomtudományi Kar", rovidites: "AK" },
+        { nev: "Albert Kázmér Mosonmagyaróvári Kar", rovidites: "AKMK" },
+        { nev: "Audi Hungaria Járműmérnöki Kar", rovidites: "AHJK" },
+        { nev: "Építész-, Építő- és Közlekedésmérnöki Kar", rovidites: "ÉÉKK" },
+        { nev: "Deák Ferenc Állam- és Jogtudományi Kar", rovidites: "ÁJK" },
+        { nev: "Egészség- és Sporttudományi Kar", rovidites: "ESK" },
+        { nev: "Gépészmérnöki, Informatikai és Villamosmérnöki Kar", rovidites: "GIVK" },
+        { nev: "Kautz Gyula Gazdaságtudományi Kar", rovidites: "KGGK" },
+        { nev: "Mezőgazdaság- és Élelmiszertudományi Kar", rovidites: "MÉK" },
+        { nev: "Művészeti Kar", rovidites: "MK" }
+      ];
+      
+      //A kar feltöltése
+      const karSelect = document.getElementById('felhasznalo-kar');
+karok.forEach(kar => {
+    const option = document.createElement('option');
+    option.value = kar.rovidites;
+    option.textContent = `${kar.rovidites} - ${kar.nev}`;
+    karSelect.appendChild(option);
+});
+
+// A kar módosítása
+const modositKarSelect = document.getElementById('modosit-kar');
+karok.forEach(kar => {
+    const option = document.createElement('option');
+    option.value = kar.rovidites;
+    option.textContent = `${kar.rovidites} - ${kar.nev}`;
+    modositKarSelect.appendChild(option);
+});
+
+// 🔹 Sorok száma vezérlés
+const rowsPerPageSelect = document.getElementById('rows-per-page');
+rowsPerPageSelect.addEventListener('change', () => {
+    const value = rowsPerPageSelect.value;
+    sorokSzama = value === 'all' ? filteredFelhasznalok.length : parseInt(value);
+    currentPage = 1; // Mindig az első oldalra ugrunk
+    renderTable();
+});
+
 
     // 🔹 Új felhasználó hozzáadása több csoporttal
     form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const nev = document.getElementById('felhasznalo-nev').value;
+    const jelszo = document.getElementById('felhasznalo-jelszo').value;
+const jelszoIsmet = document.getElementById('felhasznalo-jelszo-ismet').value;
+
+if (!jelszo || !jelszoIsmet || jelszo !== jelszoIsmet) {
+    alert('A jelszavak nem egyeznek, vagy hiányoznak.');
+    return;
+}
+
     const neptun = document.getElementById('felhasznalo-neptun').value;
     const email = document.getElementById('felhasznalo-email').value;
     const checkboxes = document.querySelectorAll('#felhasznalo-csoport input[type="checkbox"]:checked');
     const csoportok = Array.from(checkboxes).map(checkbox => checkbox.value);
+    const kar = document.getElementById('felhasznalo-kar').value;
 
     const response = await fetch('/api/felhasznalok', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nev, neptun, email, csoportok })
+        body: JSON.stringify({ nev, neptun, email, csoportok, kar, jelszo })
     });
 
     if (response.ok) {
@@ -57,8 +111,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // 🔹 Táblázat frissítése
     function renderTable() {
         tbody.innerHTML = '';
-        const startIndex = (currentPage - 1) * rowsPerPage;
-        const endIndex = startIndex + rowsPerPage;
+        const startIndex = (currentPage - 1) * sorokSzama;
+        const endIndex = startIndex + sorokSzama;
         const felhasznalokToDisplay = filteredFelhasznalok.slice(startIndex, endIndex);
 
         felhasznalokToDisplay.forEach(felhasznalo => {
@@ -69,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${felhasznalo.nev}</td>
                 <td>${felhasznalo.neptun}</td>
                 <td>${felhasznalo.email}</td>
+                <td>${felhasznalo.kar || ''}</td>
                 <td>${felhasznalo.csoportok.join(', ')}</td>
                 <td>
                 <button onclick="modositFelhasznalo('${felhasznalo._id}')">Módosítás</button>
@@ -83,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderPagination() {
         paginationDiv.innerHTML = '';
-        const pageCount = Math.ceil(filteredFelhasznalok.length / rowsPerPage);
+        const pageCount = Math.ceil(filteredFelhasznalok.length / sorokSzama);
 
         for (let i = 1; i <= pageCount; i++) {
             const pageButton = document.createElement('button');
@@ -116,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const felhasznalo = felhasznalok.find(f => f._id === id);
 
     // Biztosítjuk, hogy mindig tömbként kezeljük a csoportokat
-    const csoportLista = ['hallgato', 'temavezeto', 'biralo', 'zsuri', 'rendszergazda'];
+    const csoportLista = ['hallgato', 'temavezeto', 'biralo', 'zsuri', 'rendszergazda', 'kariadmin', 'egyetemiadmin'];
     const userCsoportok = Array.isArray(felhasznalo.csoportok) ? felhasznalo.csoportok : [];
 
     tr.innerHTML = `
