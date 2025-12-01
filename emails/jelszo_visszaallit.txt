@@ -1,0 +1,13 @@
+Tisztelt Felhasználó!
+
+Jelszó-visszaállítási kérelmet kaptunk ehhez a fiókhoz.
+
+Kattintson az alábbi linkre a jelszó módosításához:
+
+{{link}}
+
+Ha nem Ön kérte a visszaállítást, hagyja figyelmen kívül ezt az e-mailt.
+
+Üdvözlettel,
+TDK Adminisztrációs Rendszer
+

@@ -1,0 +1,11 @@
+Tisztelt Felhasználó!
+
+Kérjük, erősítse meg a regisztrációját az alábbi linkre kattintva:
+
+{{link}}
+
+Ha nem Ön kezdeményezte a regisztrációt, kérjük, hagyja figyelmen kívül ezt az e-mailt.
+
+Üdvözlettel,
+TDK Adminisztrációs Rendszer
+

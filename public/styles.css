@@ -865,3 +865,18 @@ body.login-oldal {
     background-color: darkred;
 }
 
+
+.hidden {
+    display: none;
+  }
+  
+  .toggle-btn {
+    background-color: #eee;
+    border: 1px solid #ccc;
+    padding: 4px 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  
+

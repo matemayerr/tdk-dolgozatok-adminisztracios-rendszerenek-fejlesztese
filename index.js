@@ -48,6 +48,22 @@ const Felhasznalo = mongoose.model('felhasznalos', new mongoose.Schema({
     jelszo: { type: String, required: false }
 }));
 
+
+//e-mail sablonbeolvasó függvény
+const fs = require('fs');
+
+function betoltEmailSablon(fajlNev, helyettesites = {}) {
+    const sablonPath = path.join(__dirname, 'emails', fajlNev);
+    let szoveg = fs.readFileSync(sablonPath, 'utf-8');
+    for (const kulcs in helyettesites) {
+        const regex = new RegExp(`{{${kulcs}}}`, 'g');
+        szoveg = szoveg.replace(regex, helyettesites[kulcs]);
+    }
+    return szoveg;
+}
+
+
+
 // Ellenörzöm a Neptun-kod és jelszo helyesseget, majd egy JWT tokent adok vissza
 const jwt = require('jsonwebtoken');
 const secretKey = 'titkosKulcs123'; // Titkos kulcs a tokenhez (ezt .env-be kellene tenni)
@@ -157,17 +173,12 @@ async function kuldErtesitesBiralonak(biraloEmail, dolgozat) {
         from: 'm48625729@gmail.com',
         to: biraloEmail,
         subject: 'Új dolgozat érkezett értékelésre',
-        text: `Tisztelt Bíráló!
-
-Egy új dolgozat került feltöltésre a rendszerbe, amely értékelésre vár.
-
-Dolgozat címe: ${dolgozat.cím}
-Hallgató Neptun kódja: ${dolgozat.hallgato_id}
-POST /api/felhasznalok
-Üdvözlettel,
-TDK Adminisztrációs Rendszer`
+        text: betoltEmailSablon('ertesites_biralonak.txt', {
+            cim: dolgozat.cím,
+            hallgatok: dolgozat.hallgato_ids.join(', ')
+        })
     };
-
+        
     try {
         await transporter.sendMail(mailOptions);
         console.log('Értesítés sikeresen elküldve a bírálónak.');
@@ -219,9 +230,9 @@ app.get('/api/dolgozatok/kesz', async (req, res) => {
 
   // Új dolgozat hozzáadása
 app.post('/api/dolgozatok', async (req, res) => {
-    const { cím, hallgato_ids, temavezeto_id, allapot, leiras } = req.body;
+    const { cím, hallgato_ids, temavezeto_ids, allapot, leiras } = req.body;
     try {
-        const dolgozat = new Dolgozat({ cím, hallgato_ids, temavezeto_id, allapot, leiras });
+        const dolgozat = new Dolgozat({ cím, hallgato_ids, temavezeto_ids, allapot, leiras });
         await dolgozat.save();
         res.status(201).json(dolgozat);
     } catch (error) {
@@ -234,11 +245,11 @@ app.post('/api/dolgozatok', async (req, res) => {
 // Dolgozat módosítása
 app.put('/api/dolgozatok/:id', async (req, res) => {
     const { id } = req.params;
-    const { cím, hallgato_id, temavezeto_id, allapot, elutasitas_oka } = req.body;
+    const { cím, hallgato_ids, temavezeto_ids, allapot, elutasitas_oka } = req.body;
 
     try {
         const updatedDolgozat = await Dolgozat.findByIdAndUpdate(id, {
-            cím, hallgato_id, temavezeto_id, allapot, elutasitas_oka
+            cím, hallgato_ids, temavezeto_ids, allapot, elutasitas_oka
         }, { new: true });
 
         if (!updatedDolgozat) {
@@ -449,16 +460,12 @@ async function kuldErtesitesHallgatonakEsTemavezetonek(cimzettEmail, dolgozat, s
         from: 'm48625729@gmail.com',
         to: cimzettEmail,
         subject: 'Dolgozat értékelése befejeződött',
-        text: `Tisztelt ${szerep}!
-
-A dolgozat értékelése befejeződött.
-
-Dolgozat címe: ${dolgozat.cím}
-Érdemjegy: ${dolgozat.pontszam}
-
-Üdvözlettel,
-TDK Adminisztrációs Rendszer`
-    };
+        text: betoltEmailSablon('ertesites_ertekelesrol.txt', {
+            cim: dolgozat.cím,
+            pontszam: dolgozat.pontszam,
+            szerep
+        }) 
+    };       
 
     try {
         await transporter.sendMail(mailOptions);
@@ -529,17 +536,14 @@ app.post('/api/reset-jelszo-kerelem', async (req, res) => {
     const resetLink = `http://localhost:3000/reset.html?token=${token}`;
 
     try {
-        await transporter.sendMail({
+        transporter.sendMail({
             from: 'TDK rendszer <m48625729@gmail.com>',
             to: email,
             subject: 'Jelszó visszaállítás',
-            html: `
-                <p>Kedves felhasználó!</p>
-                <p>Ha Ön kérte a jelszó visszaállítását, kattintson az alábbi linkre:</p>
-                <a href="${resetLink}">${resetLink}</a>
-                <p>Ha nem Ön kérte, kérjük hagyja figyelmen kívül ezt az e-mailt.</p>
-            `
-        });
+            text: betoltEmailSablon('jelszo_visszaallit.txt', {
+                link: resetLink
+            })
+        });          
 
         res.status(200).json({ message: 'Email elküldve, ha a fiók létezik.' });
     } catch (error) {
@@ -589,13 +593,14 @@ app.post('/api/emailes-regisztracio', async (req, res) => {
 
     const link = `http://localhost:3000/complete-registration.html?token=${token}`;
 
-    await transporter.sendMail({
+    transporter.sendMail({
         from: 'TDK rendszer <m48625729@gmail.com>',
         to: email,
         subject: 'TDK Regisztráció',
-        html: `<p>Kattints az alábbi linkre a regisztráció folytatásához:</p>
-               <a href="${link}">${link}</a>`
-    });
+        text: betoltEmailSablon('regisztracio_megerosites.txt', {
+            link
+        })
+    });       
 
     res.status(200).json({ message: 'Regisztrációs link elküldve.' });
 });
@@ -644,7 +649,64 @@ app.post('/api/regisztracio-befejezes', async (req, res) => {
     }
 });
 
+//Statisztikai lekérdezések
 
+// 1. Összes dolgozat kilistázása kapcsolt nevekkel
+app.get('/api/stats/dolgozatok', async (req, res) => {
+  try {
+    const dolgozatok = await Dolgozat.find();
+    const felhasznalok = await Felhasznalo.find();
+
+    const felhasznaloMap = {};
+    felhasznalok.forEach(f => felhasznaloMap[f.neptun] = f.nev);
+
+    const adat = dolgozatok.map(d => ({
+      cím: d.cím,
+      hallgatok: d.hallgato_ids.map(id => felhasznaloMap[id] || id),
+      temavezeto: d.temavezeto_ids.map(id => felhasznaloMap[id] || id),
+      allapot: d.allapot
+    }));
+
+    res.json(adat);
+  } catch (e) {
+    console.error('Hiba /api/stats/dolgozatok:', e);
+    res.status(500).json({ error: 'Szerverhiba statisztikánál' });
+  }
+});
+
+// 2. Dolgozatok száma minden hallgató és témavezető esetén
+app.get('/api/stats/szemelyek', async (req, res) => {
+    try {
+      const felhasznalok = await Felhasznalo.find();
+      const dolgozatok = await Dolgozat.find();
+  
+      const stat = felhasznalok.map(f => {
+        const hallgatoDolgozatok = dolgozatok.filter(d => d.hallgato_ids.includes(f.neptun));
+        const temaDolgozatok = dolgozatok.filter(d => d.temavezeto_ids.includes(f.neptun));
+  
+        const osszes = [...new Set([...hallgatoDolgozatok, ...temaDolgozatok])];
+        const cimek = osszes.map(d => d.cím);
+  
+        const szerepkor = [];
+        if (hallgatoDolgozatok.length > 0) szerepkor.push('hallgató');
+        if (temaDolgozatok.length > 0) szerepkor.push('témavezető');
+  
+        return {
+          nev: f.nev,
+          neptun: f.neptun,
+          szerep: szerepkor.join(', '),
+          db: osszes.length,
+          dolgozatCimek: cimek
+        };
+      }).filter(f => f.db > 0);
+  
+      res.json(stat);
+    } catch (e) {
+      console.error('Hiba /api/stats/szemelyek:', e);
+      res.status(500).json({ error: 'Szerverhiba statisztikánál' });
+    }
+  });
+  
 
 
 // Szerver indítása megadott porton

@@ -1,0 +1,10 @@
+Tisztelt {{szerep}}!
+
+A dolgozat értékelése befejeződött.
+
+Dolgozat címe: {{cim}}
+Érdemjegy: {{pontszam}}
+
+Üdvözlettel,
+TDK Adminisztrációs Rendszer
+

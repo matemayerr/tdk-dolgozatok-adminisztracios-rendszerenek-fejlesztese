@@ -1,0 +1,10 @@
+Tisztelt Bíráló!
+
+Egy új dolgozat került feltöltésre a rendszerbe, amely értékelésre vár.
+
+Dolgozat címe: {{cim}}
+Hallgató(k): {{hallgatok}}
+
+Üdvözlettel,
+TDK Adminisztrációs Rendszer
+

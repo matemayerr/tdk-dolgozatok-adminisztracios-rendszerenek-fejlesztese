@@ -159,7 +159,7 @@ detailTr.innerHTML = `
         ? dolgozat.hallgato_ids.map(id => `${felhasznalokNevek[id] || 'Ismeretlen'} (${id})`).join(', ')
         : '—'
 }</p>
-<p><strong>Témavezető:</strong> ${
+<p><strong>Témavezető(k):</strong> ${
     dolgozat.temavezeto_ids
     ? dolgozat.temavezeto_ids.map(id => `${felhasznalokNevek[id] || 'Ismeretlen'} (${id})`).join(', ')
     : '—'
@@ -210,10 +210,11 @@ if (dolgozatForm) {
 
         };
 
-        if (!formData.cím || !formData.temavezeto_id || formData.hallgato_ids.length === 0) {
+        if (!formData.cím || !formData.leiras || formData.temavezeto_ids.length === 0 || formData.hallgato_ids.length === 0) {
             alert('Kérlek, töltsd ki az összes mezőt!');
             return;
         }
+        
 
         try {
             const response = await fetch('/api/dolgozatok', {
@@ -292,20 +293,21 @@ if (dolgozatForm) {
         const leiras = document.getElementById('modosit-dolgozat-leiras').value;
         const allapot = document.getElementById('modosit-allapot').value;
         const hallgato_ids = Array.from(document.querySelectorAll('#modosit-hallgato-lista input[type="checkbox"]:checked')).map(cb => cb.value);
-        const temavezetoInputok = document.querySelectorAll('#temavezeto-lista input[type="checkbox"]:checked');
-    
-        if (!cim || !leiras || !hallgato_ids.length || !temavezetoInput) {
+        const temavezeto_ids = Array.from(document.querySelectorAll('#modosit-temavezeto-lista input[type="checkbox"]:checked')).map(cb => cb.value);
+
+        if (!cim || !leiras || !hallgato_ids.length || !temavezeto_ids.length) {
             alert('Minden mező kitöltése kötelező!');
             return;
         }
-    
+        
         const formData = {
             cím: cim,
             leiras: leiras,
             hallgato_ids,
-            temavezeto_id: temavezetoInput.value,
+            temavezeto_ids,
             allapot
         };
+
     
         try {
             const response = await fetch(`/api/dolgozatok/${aktualisModositandoId}`, {
