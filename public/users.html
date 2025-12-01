@@ -45,33 +45,40 @@
       <label>Név</label>
       <input type="text" id="felhasznalo-nev" placeholder="Teljes név" required>
     </div>
+
     <div>
       <label>Neptun-kód</label>
       <input type="text" id="felhasznalo-neptun" placeholder="Pl. ABC123">
     </div>
+
     <div>
       <label>E-mail</label>
       <input type="email" id="felhasznalo-email" placeholder="felhasznalo@uni.sze.hu" required>
     </div>
+
+      <div class="form-group">
+    <label>Jelszó</label>
+    <input type="password" id="felhasznalo-jelszo" placeholder="********" required>
+  </div>
+
     <div>
       <label>Kar</label>
       <select id="felhasznalo-kar">
         <option value="">-- Válassz kart --</option>
       </select>
     </div>
+
     <div>
       <label>Szak</label>
-      <input type="text" id="felhasznalo-szak" placeholder="Pl. Mérnökinformatikus BSc">
+      <select id="felhasznalo-szak">
+  <option value="">-- Válassz szakot --</option>
+</select>
     </div>
+    
     <div>
       <label>Évfolyam</label>
       <input type="text" id="felhasznalo-evfolyam" placeholder="Pl. 2025">
     </div>
-  </div>
-
-  <div class="form-group">
-    <label>Jelszó</label>
-    <input type="password" id="felhasznalo-jelszo" placeholder="********" required>
   </div>
 
   <div class="form-group">
@@ -185,9 +192,9 @@
                         <th>Név</th>
                         <th>Neptun-kód</th>
                         <th>E-mail cím</th>
+                        <th>Kar</th>
                         <th>Szak</th>
                         <th>Évfolyam</th>
-                        <th>Kar</th>
                         <th>Csoport(ok)</th>
                         <th>Műveletek</th>
                     </tr>

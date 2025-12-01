@@ -60,12 +60,12 @@ rowsPerPageSelect.addEventListener('change', () => {
 
     const nev = document.getElementById('felhasznalo-nev').value;
     const jelszo = document.getElementById('felhasznalo-jelszo').value;
-const jelszoIsmet = document.getElementById('felhasznalo-jelszo-ismet').value;
 
-if (!jelszo || !jelszoIsmet || jelszo !== jelszoIsmet) {
-    alert('A jelszavak nem egyeznek, vagy hiányoznak.');
+if (!jelszo) {
+    alert('Add meg a jelszót!');
     return;
 }
+
 
     const neptun = document.getElementById('felhasznalo-neptun').value;
     const email = document.getElementById('felhasznalo-email').value;
@@ -123,11 +123,13 @@ if (!jelszo || !jelszoIsmet || jelszo !== jelszoIsmet) {
             tr.dataset.id = felhasznalo._id;
 
             tr.innerHTML = `
-                <td>${felhasznalo.nev}</td>
-                <td>${felhasznalo.neptun}</td>
-                <td>${felhasznalo.email}</td>
+                <td>${felhasznalo.nev || ''}</td>
+                <td>${felhasznalo.neptun || ''}</td>
+                <td>${felhasznalo.email || ''}</td>
                 <td>${felhasznalo.kar || ''}</td>
-                <td>${felhasznalo.csoportok.join(', ')}</td>
+                <td>${felhasznalo.szak || ''}</td>
+                <td>${felhasznalo.evfolyam || ''}</td>
+                <td>${(felhasznalo.csoportok || []).join(', ')}</td>
                 <td>
                 <button onclick="modositFelhasznalo('${felhasznalo._id}')">Módosítás</button>
                 <button onclick="deleteFelhasznalo('${felhasznalo._id}')">Törlés</button>
@@ -396,5 +398,49 @@ window.searchFelhasznalok = function () {
 };
 
     loadFelhasznalok();
+
+    // 🔹 Egyetemi struktúra betöltése (karok + szakok)
+async function betoltSzakok() {
+  try {
+    const res = await fetch('/api/university-structure');
+    const strukturak = await res.json();
+
+    const karSelect = document.getElementById('felhasznalo-kar');
+    const szakSelect = document.getElementById('felhasznalo-szak');
+
+    // Alaphelyzet
+    karSelect.innerHTML = '<option value="">-- Válassz kart --</option>';
+    szakSelect.innerHTML = '<option value="">-- Válassz szakot --</option>';
+
+    // 🔸 Feltöltjük a karokat a listába
+    strukturak.forEach(kar => {
+      const option = document.createElement('option');
+      option.value = kar.nev;
+      option.textContent = kar.nev;
+      karSelect.appendChild(option);
+    });
+
+    // 🔸 Ha kiválasztanak egy kart, frissítjük a szakok listát
+    karSelect.addEventListener('change', e => {
+      szakSelect.innerHTML = '<option value="">-- Válassz szakot --</option>';
+      const selectedKar = strukturak.find(k => k.nev === e.target.value);
+      if (selectedKar && selectedKar.szakok && selectedKar.szakok.length > 0) {
+        selectedKar.szakok.forEach(szak => {
+          const option = document.createElement('option');
+          option.value = szak.nev;
+          option.textContent = `${szak.nev} (${szak.tipus})`;
+          szakSelect.appendChild(option);
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Hiba a szakok betöltésekor:', error);
+  }
+}
+
+// Automatikusan futtatjuk az oldal betöltésekor
+betoltSzakok();
+
+
 });
 

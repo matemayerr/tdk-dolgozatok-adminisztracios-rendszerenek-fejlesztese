@@ -45,8 +45,9 @@ topics.forEach(t => {
   const tr = document.createElement('tr');
   const cim = t.cim || '';
   const tvNev = t.temavezetoNev || t.temavezeto?.nev || '';
-  const tanszek = t.tanszek || '–';
-  const kar = t.kar || '–';
+  const tanszek = (t.tanszek && t.tanszek.trim() !== '') ? t.tanszek : '–';
+  const kar = t.kar?.nev || t.kar || '–';
+
   const ossz = t.osszefoglalo || t.osszefoglal || '';
 
   tr.innerHTML = `
@@ -124,7 +125,7 @@ topicForm.addEventListener('submit', async (e) => {
   const cim          = document.getElementById('topic-title').value.trim();
   const osszefoglalo = document.getElementById('topic-description').value.trim();
 
-  // 🔹 Lekérjük az aktuális bejelentkezett felhasználót a localStorage-ből (auth.js-ben eltárolt)
+  // 🔹 Lekérjük a bejelentkezett felhasználót
   const userData = JSON.parse(localStorage.getItem('felhasznalo'));
   if (!userData || !userData.nev || !userData.neptun) {
     alert('Hiba: bejelentkezett felhasználó adatai nem elérhetők.');
@@ -133,6 +134,12 @@ topicForm.addEventListener('submit', async (e) => {
 
   const temavezetoNev = userData.nev;
   const temavezetoNeptun = userData.neptun;
+  const kar = typeof userData.kar === 'object' ? userData.kar.nev : userData.kar || '';
+  const tanszek = userData.tanszek && userData.tanszek.trim() !== '' 
+  ? userData.tanszek 
+  : '–';
+
+
 
   if (!cim || !osszefoglalo) {
     alert('Minden mezőt ki kell tölteni!');
@@ -143,7 +150,7 @@ topicForm.addEventListener('submit', async (e) => {
     const res = await fetch('/api/topics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cim, osszefoglalo, temavezetoNev, temavezetoNeptun })
+      body: JSON.stringify({ cim, osszefoglalo, temavezetoNev, temavezetoNeptun, kar, tanszek }) // 🔹 bővített JSON
     });
 
     if (!res.ok) throw new Error('Mentési hiba /api/topics');
@@ -158,7 +165,7 @@ topicForm.addEventListener('submit', async (e) => {
     alert('Hiba történt a téma mentésekor.');
   }
 });
-;
+
 
   // ───────────────────────────────── 4) EGYSZERŰ JELENTKEZÉS (MODAL NÉLKÜL)
 async function jelentkezesTema(topicId) {

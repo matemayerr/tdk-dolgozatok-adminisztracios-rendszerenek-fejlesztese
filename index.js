@@ -760,22 +760,22 @@ app.get('/api/papers', async (req, res) => {
       if (f.neptun) felhasznaloMap[f.neptun] = f;
     });
 
-    const eredmeny = dolgozatok.map(d => ({
-      _id: d._id,
-      cim: d["cím"],
-      allapot: d.allapot,
-      ertekeles: d.ertekeles || {},   // 🔹 FONTOS
-      szerzok: (d.hallgato_ids || []).map(neptun => ({
-        nev: felhasznaloMap[neptun]?.nev || '',
-        neptun: neptun,
-        szak: felhasznaloMap[neptun]?.szak || '',
-        evfolyam: felhasznaloMap[neptun]?.evfolyam || ''
-      })),
-      temavezeto: (d.temavezeto_ids || []).map(neptun => ({
-        nev: felhasznaloMap[neptun]?.nev || '',
-        neptun: neptun
-      }))
-    }));
+const eredmeny = dolgozatok.map(d => ({
+  _id: d._id,
+  cim: d["cím"],
+  allapot: d.allapot,
+  szerzok: (d.hallgato_ids || []).map(neptun => ({
+    nev: felhasznaloMap[neptun]?.nev || '',
+    szak: felhasznaloMap[neptun]?.szak || '',
+    evfolyam: felhasznaloMap[neptun]?.evfolyam || ''
+  })),
+  temavezeto: (d.temavezeto_ids || []).map(neptun => ({
+    nev: felhasznaloMap[neptun]?.nev || '',
+    neptun: neptun,
+    kar: felhasznaloMap[neptun]?.kar || ''
+  }))
+}));
+
 
     res.json(eredmeny);
   } catch (error) {
@@ -826,7 +826,10 @@ const TemaJavaslat = mongoose.model('temajavaslat', new mongoose.Schema({
   osszefoglalo: { type: String, required: true },
   temavezetoNev: { type: String, required: true },
   temavezetoNeptun: { type: String, required: false },
+  kar: { type: String, required: false },
+  tanszek: { type: String, required: false }
 }));
+
 
 // 🔹 Témaajánlatok lekérése
 app.get('/api/topics', async (req, res) => {
@@ -841,9 +844,18 @@ app.get('/api/topics', async (req, res) => {
 
 // 🔹 Új témajavaslat mentése
 app.post('/api/topics', async (req, res) => {
-  const { cim, osszefoglalo, temavezetoNev, temavezetoNeptun } = req.body;
+  const { cim, osszefoglalo, temavezetoNev, temavezetoNeptun, kar, tanszek } = req.body;
+
   try {
-    const ujTema = new TemaJavaslat({ cim, osszefoglalo, temavezetoNev, temavezetoNeptun });
+    const ujTema = new TemaJavaslat({
+      cim,
+      osszefoglalo,
+      temavezetoNev,
+      temavezetoNeptun,
+      kar,
+      tanszek
+    });
+
     await ujTema.save();
     res.status(201).json({ message: 'Téma sikeresen mentve', tema: ujTema });
   } catch (err) {
@@ -851,6 +863,7 @@ app.post('/api/topics', async (req, res) => {
     res.status(500).json({ error: 'Hiba téma mentésekor' });
   }
 });
+
 
 // 🔹 Téma törlése
 app.delete('/api/topics/:id', async (req, res) => {
@@ -1111,12 +1124,25 @@ app.get('/api/stats/szemelyek', async (req, res) => {
     }
   });
   
+const UniversityStructure = require('./models/universityStructure.js');
+
+// 🔹 Egyetemi struktúra lekérdezése
+app.get('/api/university-structure', async (req, res) => {
+  try {
+    const strukturak = await UniversityStructure.find();
+    res.json(strukturak);
+  } catch (err) {
+    console.error('Hiba a struktúra lekérésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a struktúra lekérésekor' });
+  }
+});
+
+
 
 
 app.get('/dolgozatok/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'review-thesis.html'));
 });
-
 
 // Szerver indítása megadott porton
 app.listen(port, () => {
