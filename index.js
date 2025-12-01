@@ -339,11 +339,11 @@ app.post('/api/dolgozatok', async (req, res) => {
 // Dolgozat módosítása
 app.put('/api/dolgozatok/:id', async (req, res) => {
     const { id } = req.params;
-    const { cím, hallgato_ids, temavezeto_ids, allapot, elutasitas_oka } = req.body;
+    const { cím, hallgato_ids, temavezeto_ids, elutasitas_oka } = req.body;
 
     try {
         const updatedDolgozat = await Dolgozat.findByIdAndUpdate(id, {
-            cím, hallgato_ids, temavezeto_ids, allapot, elutasitas_oka
+            cím, hallgato_ids, temavezeto_ids, elutasitas_oka
         }, { new: true });
 
         if (!updatedDolgozat) {

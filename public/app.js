@@ -39,12 +39,12 @@ async function betoltFelhasznalok() {
         // Témavezetők betöltése (ez marad)
         const temavezetoLista = document.getElementById('temavezeto-lista');
         if (temavezetoLista) {
-            temavezetoLista.innerHTML = temavezetok.map(t => `
-                <label>
-                    <input type="checkbox" value="${t.neptun}">
-                    ${t.nev} (${t.neptun})
-                </label>
-            `).join('');
+        temavezetoLista.innerHTML = temavezetok.map(t => `
+            <label>
+            <span>${t.nev} (${t.neptun})</span>
+            <input type="checkbox" value="${t.neptun}">
+            </label>
+        `).join('');
         }
 
     } catch (error) {
@@ -257,7 +257,6 @@ if (dolgozatForm) {
     // Inputmezők feltöltése
     document.getElementById('modosit-dolgozat-cim').value = dolgozat.cim || dolgozat.cím || '';
     document.getElementById('modosit-dolgozat-leiras').value = dolgozat.leiras || '';
-    document.getElementById('modosit-allapot').value = dolgozat.allapot || 'benyújtva';
 
     // Felhasználók lekérése
     const response = await fetch('/api/felhasznalok');
@@ -277,27 +276,61 @@ if (dolgozatForm) {
     // Hallgatók listája (előre kipipálva)
     const hallgatoLista = document.getElementById('modosit-hallgato-lista');
     hallgatoLista.innerHTML = hallgatok.map(h => `
-        <label>
-            <input type="checkbox" value="${h.neptun}"
-                ${dolgozatHallgatoNeptunok.includes(h.neptun) ? 'checked' : ''}>
-            ${h.nev} (${h.neptun})
-        </label>
-    `).join('');
+    <label>
+        <span>${h.nev} (${h.neptun})</span>
+        <input 
+        type="checkbox" 
+        value="${h.neptun}"
+        ${dolgozatHallgatoNeptunok.includes(h.neptun) ? 'checked' : ''}
+        >
+    </label>
+`).join('');
 
-    // Témavezetők listája (előre kipipálva)
-    const temavezetoLista = document.getElementById('modosit-temavezeto-lista');
-    temavezetoLista.innerHTML = temavezetok.map(t => `
+        // Témavezetők listája (előre kipipálva)
+    // Témavezetők listája (előre kipipálva, kártyás dizájn)
+        const temavezetoLista = document.getElementById('modosit-temavezeto-lista');
+        temavezetoLista.innerHTML = temavezetok.map(t => `
         <label>
-            <input type="checkbox" value="${t.neptun}"
-                ${dolgozatTemavezetoNeptunok.includes(t.neptun) ? 'checked' : ''}>
-            ${t.nev} (${t.neptun})
+            <span>${t.nev} (${t.neptun})</span>
+            <input 
+            type="checkbox" 
+            value="${t.neptun}"
+            ${dolgozatTemavezetoNeptunok.includes(t.neptun) ? 'checked' : ''}
+            >
         </label>
-    `).join('');
+        `).join('');
+
+
+    // Kivonatok előtöltése
+    const modHallKivonat = document.getElementById('modosit-hallgato-kivonat');
+    if (modHallKivonat) {
+        if (dolgozatHallgatoNeptunok.length === 0) {
+            modHallKivonat.textContent = 'Nincs kiválasztott hallgató.';
+        } else {
+            const hallgatoNevek = hallgatok
+                .filter(h => dolgozatHallgatoNeptunok.includes(h.neptun))
+                .map(h => `${h.nev} (${h.neptun})`);
+            modHallKivonat.textContent = hallgatoNevek.join(', ');
+        }
+    }
+
+    const modTemKivonat = document.getElementById('modosit-temavezeto-kivonat');
+    if (modTemKivonat) {
+        if (dolgozatTemavezetoNeptunok.length === 0) {
+            modTemKivonat.textContent = 'Nincs kiválasztott témavezető.';
+        } else {
+            const temavezetoNevek = temavezetok
+                .filter(t => dolgozatTemavezetoNeptunok.includes(t.neptun))
+                .map(t => `${t.nev} (${t.neptun})`);
+            modTemKivonat.textContent = temavezetoNevek.join(', ');
+        }
+    }
 
     // Modal megjelenítése
     document.getElementById('modosit-dolgozat-form').style.display = 'block';
     document.getElementById('homalyositas').style.display = 'block';
 };
+
 
     
 
@@ -311,7 +344,6 @@ if (dolgozatForm) {
     document.getElementById('modosit-mentes-gomb').addEventListener('click', async () => {
         const cim = document.getElementById('modosit-dolgozat-cim').value;
         const leiras = document.getElementById('modosit-dolgozat-leiras').value;
-        const allapot = document.getElementById('modosit-allapot').value;
         const hallgato_ids = Array.from(document.querySelectorAll('#modosit-hallgato-lista input[type="checkbox"]:checked')).map(cb => cb.value);
         const temavezeto_ids = Array.from(document.querySelectorAll('#modosit-temavezeto-lista input[type="checkbox"]:checked')).map(cb => cb.value);
 
@@ -325,7 +357,6 @@ if (dolgozatForm) {
             leiras: leiras,
             hallgato_ids,
             temavezeto_ids,
-            allapot
         };
 
     
@@ -335,11 +366,11 @@ if (dolgozatForm) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-    
+
             if (response.ok) {
-                document.getElementById('modosit-dolgozat-modal').style.display = 'none';
-                document.getElementById('modosit-homalyositas').style.display = 'none';
-                listazDolgozatok(); // újralistázás
+                document.getElementById('modosit-dolgozat-form').style.display = 'none';
+                document.getElementById('homalyositas').style.display = 'none';
+                await listazDolgozatok(); // újralistázás
             } else {
                 console.error('Hiba történt a mentésnél.');
             }
@@ -540,5 +571,110 @@ window.toggleDetails = function (dolgozatId) {
     }
 
 
+    // ─────────────────────────────
+    // MÓDOSÍTÁS: HALLGATÓ MODAL
+    // ─────────────────────────────
+    const modHallModal = document.getElementById('modosit-hallgato-modal');
+    const modHallOpenBtn = document.getElementById('modosit-hallgato-open-modal');
+    const modHallMentesBtn = document.getElementById('modosit-hallgato-mentes-gomb');
+    const modHallMegseBtn = document.getElementById('modosit-hallgato-megse-gomb');
+    const modHallKivonat = document.getElementById('modosit-hallgato-kivonat');
+    const modHallKereso = document.getElementById('modosit-hallgato-kereso');
+
+    if (modHallOpenBtn && modHallModal) {
+        modHallOpenBtn.addEventListener('click', () => {
+            modHallModal.style.display = 'block';
+            if (homalyositas) homalyositas.style.display = 'block';
+        });
+    }
+
+    if (modHallMegseBtn && modHallModal) {
+        modHallMegseBtn.addEventListener('click', () => {
+            modHallModal.style.display = 'none';
+            if (homalyositas) homalyositas.style.display = 'none';
+        });
+    }
+
+    if (modHallMentesBtn && modHallModal) {
+        modHallMentesBtn.addEventListener('click', () => {
+            const selected = Array.from(
+                document.querySelectorAll('#modosit-hallgato-lista input[type="checkbox"]:checked')
+            );
+
+            if (!modHallKivonat) return;
+
+            if (selected.length === 0) {
+                modHallKivonat.textContent = 'Nincs kiválasztott hallgató.';
+            } else {
+                const nevek = selected.map(cb => cb.parentElement.textContent.trim());
+                modHallKivonat.textContent = nevek.join(', ');
+            }
+
+            modHallModal.style.display = 'none';
+            if (homalyositas) homalyositas.style.display = 'none';
+        });
+    }
+
+    if (modHallKereso) {
+        modHallKereso.addEventListener('input', function () {
+            const keres = this.value.toLowerCase();
+            document.querySelectorAll('#modosit-hallgato-lista label').forEach(label => {
+                label.style.display = label.textContent.toLowerCase().includes(keres) ? '' : 'none';
+            });
+        });
+    }
+
+    // ─────────────────────────────
+    // MÓDOSÍTÁS: TÉMAVEZETŐ MODAL
+    // ─────────────────────────────
+    const modTemModal = document.getElementById('modosit-temavezeto-modal');
+    const modTemOpenBtn = document.getElementById('modosit-temavezeto-open-modal');
+    const modTemMentesBtn = document.getElementById('modosit-temavezeto-mentes-gomb');
+    const modTemMegseBtn = document.getElementById('modosit-temavezeto-megse-gomb');
+    const modTemKivonat = document.getElementById('modosit-temavezeto-kivonat');
+    const modTemKereso = document.getElementById('modosit-temavezeto-kereso');
+
+    if (modTemOpenBtn && modTemModal) {
+        modTemOpenBtn.addEventListener('click', () => {
+            modTemModal.style.display = 'block';
+            if (homalyositas) homalyositas.style.display = 'block';
+        });
+    }
+
+    if (modTemMegseBtn && modTemModal) {
+        modTemMegseBtn.addEventListener('click', () => {
+            modTemModal.style.display = 'none';
+            if (homalyositas) homalyositas.style.display = 'none';
+        });
+    }
+
+    if (modTemMentesBtn && modTemModal) {
+        modTemMentesBtn.addEventListener('click', () => {
+            const selected = Array.from(
+                document.querySelectorAll('#modosit-temavezeto-lista input[type="checkbox"]:checked')
+            );
+
+            if (!modTemKivonat) return;
+
+            if (selected.length === 0) {
+                modTemKivonat.textContent = 'Nincs kiválasztott témavezető.';
+            } else {
+                const nevek = selected.map(cb => cb.parentElement.textContent.trim());
+                modTemKivonat.textContent = nevek.join(', ');
+            }
+
+            modTemModal.style.display = 'none';
+            if (homalyositas) homalyositas.style.display = 'none';
+        });
+    }
+
+    if (modTemKereso) {
+        modTemKereso.addEventListener('input', function () {
+            const keres = this.value.toLowerCase();
+            document.querySelectorAll('#modosit-temavezeto-lista label').forEach(label => {
+                label.style.display = label.textContent.toLowerCase().includes(keres) ? '' : 'none';
+            });
+        });
+    }
 
 

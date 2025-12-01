@@ -88,9 +88,10 @@ document.querySelectorAll('.clickable-title').forEach(cell => {
 
 
       // gombok
-document.querySelectorAll('.jelentkezes-btn').forEach(b =>
+document.querySelectorAll('#topic-table .jelentkezes-btn').forEach(b =>
   b.addEventListener('click', () => jelentkezesTema(b.dataset.id))
 );
+
 
 document.querySelectorAll('.modosit-btn').forEach(b =>
   b.addEventListener('click', () => modositTema(b.dataset.id))

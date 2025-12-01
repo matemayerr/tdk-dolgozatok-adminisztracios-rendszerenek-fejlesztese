@@ -17,7 +17,7 @@
         <div class="dropdown-content">
           <a href="papers.html">Jelentkezés új dolgozattal</a>
           <a href="completed-papers.html">Dolgozat feltöltése</a>
-          <a href="review-papers.html">Dolgozat értékelése</a>
+          <a href="review-papers.html">Dolgozat bírálata<</a>
         </div>
       </li>
 
@@ -38,9 +38,12 @@
 
 <main>
   <section>
-    <h2>Témaajánlók kezelése</h2>
+    <h2>TDK témaajánlatok</h2>
 
-    <button id="new-topic-btn">Új témajavaslat hozzáadása</button>
+    <button id="new-topic-btn" class="jelentkezes-btn uj-topic-gomb">
+  Új témajavaslat hozzáadása
+</button>
+
 
    <!-- Homályosító réteg -->
 <div id="uj-topic-homalyositas" class="blur-layer" style="display:none;"></div>
@@ -63,8 +66,8 @@
 
 
   <div class="gombok-kozeppontban">
-    <button type="submit" id="topic-save" style="background-color: green; color: white;">Mentés</button>
-    <button type="button" id="topic-cancel" style="background-color: gray; color: white;">Mégse</button>
+    <button type="submit" id="topic-save" class="mentes-btn">Mentés</button>
+    <button type="button" id="topic-cancel" class="megse-btn">Mégse</button>
   </div>
 </form>
 

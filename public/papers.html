@@ -20,7 +20,7 @@
         <div class="dropdown-content">
           <a href="papers.html">Jelentkezés új dolgozattal</a>
           <a href="completed-papers.html">Dolgozat feltöltése</a>
-          <a href="review-papers.html">Dolgozat értékelése</a>
+          <a href="review-papers.html">Dolgozat bírálata</a>
         </div>
       </li>
 
@@ -43,11 +43,15 @@
             <section>
                 
                 <!-- Új dolgozat felvétele -->
-    <button id="uj-dolgozat-gomb">Új dolgozat hozzáadása</button>
-    <button id="topics-button" onclick="window.location.href='topics.html'">
-    Témaajánlók
-    </button>
-    </button>
+                <button id="uj-dolgozat-gomb" class="jelentkezes-btn">
+                    Új dolgozat hozzáadása
+                </button>
+
+                <button id="topics-button" class="megse-btn"
+                        onclick="window.location.href='topics.html'">
+                    Témaajánlók
+                </button>
+
     
 
 
@@ -75,10 +79,25 @@
             </div>
         </div>
 
+                    <div class="gombok-kozeppontban">
+            <button
+                type="submit"
+                id="hozzaadas-gomb"
+                class="mentes-btn"
+            >
+                Dolgozat hozzáadás
+            </button>
 
-        
-        <button type="submit" id="hozzaadas-gomb">Hozzáadás</button>
-        <button type="button" id="megse-gomb">Mégse</button>
+            <button
+                type="button"
+                id="megse-gomb"
+                class="megse-btn"
+            >
+                Mégse
+            </button>
+            </div>
+
+
     </form>
 
 
@@ -89,7 +108,7 @@
                 <!-- "Felvett dolgozatok" és kereső ikon egy sorban -->
                 <div class="header-with-search">
 
-                    <h2>Felvett dolgozatok:</h2>
+                    <h2>Felvett dolgozatok</h2>
                     <div class="search-container">
                         <span class="search-icon" onclick="toggleDolgozatSearch()">🔍</span>
                         <input type="text" id="dolgozat-search-input" placeholder="Keresés..." oninput="searchDolgozatok()" style="display: none;">
@@ -127,29 +146,65 @@
 
         <!-- Módosító űrlap -->
         <form id="modosit-dolgozat-form" class="modal-form uj-dolgozat-form">
-        <input type="text" id="modosit-dolgozat-cim" placeholder="Dolgozat címe">
-        <textarea id="modosit-dolgozat-leiras" placeholder="Tartalmi összefoglaló"></textarea>
 
-        <div class="user-dropdown">
-            <button type="button" class="dropdown-btn">Hallgató(k) kiválasztása ▾</button>
-            <div class="dropdown-content" id="modosit-hallgato-lista"></div>
+    <div class="form-group">
+        <label for="modosit-dolgozat-cim"><strong>Dolgozat címe</strong></label>
+        <input
+            type="text"
+            id="modosit-dolgozat-cim"
+            placeholder="Add meg a dolgozat címét"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="modosit-dolgozat-leiras"><strong>Tartalmi összefoglaló</strong></label>
+        <textarea
+            id="modosit-dolgozat-leiras"
+            placeholder="Írd le röviden a dolgozat tartalmi összefoglalóját"
+        ></textarea>
+    </div>
+
+
+        <!-- Hallgató(k) kiválasztása – MODAL gomb + kivonat -->
+        <div class="form-group">
+            <button type="button" id="modosit-hallgato-open-modal" class="btn btn-primary">
+                Hallgató(k) kiválasztása
+            </button>
+            <div id="modosit-hallgato-kivonat" style="margin-top:6px;font-size:14px;color:#555;">
+                Nincs kiválasztott hallgató.
+            </div>
         </div>
 
-        <div class="user-dropdown">
-            <button type="button" class="dropdown-btn">Témavezető kiválasztása ▾</button>
-            <div class="dropdown-content" id="modosit-temavezeto-lista"></div>
+        <!-- Témavezető(k) kiválasztása – MODAL gomb + kivonat -->
+        <div class="form-group">
+            <button type="button" id="modosit-temavezeto-open-modal" class="btn btn-primary">
+                Témavezető(k) kiválasztása
+            </button>
+            <div id="modosit-temavezeto-kivonat" style="margin-top:6px;font-size:14px;color:#555;">
+                Nincs kiválasztott témavezető.
+            </div>
         </div>
 
-        <label for="modosit-allapot" style="font-weight: bold;">Állapot:</label>
-        <select id="modosit-allapot">
-            <option value="bírálás alatt">Bírálás alatt</option>
-            <option value="elfogadva">Elfogadva</option>
-            <option value="elutasítva">Elutasítva</option>
-        </select>
-        
 
-        <button type="submit" id="modosit-mentes-gomb">Mentés</button>
-        <button type="button" id="modosit-megse-gomb">Mégse</button>
+
+        <div class="gombok-kozeppontban">
+    <button
+        type="button"
+        id="modosit-mentes-gomb"
+        class="mentes-btn"
+    >
+        Dolgozat módosítás
+    </button>
+
+    <button
+        type="button"
+        id="modosit-megse-gomb"
+        class="megse-btn"
+    >
+        Mégse
+    </button>
+</div>
+
     </form>
 
     <!-- Témavezető választó MODAL -->
@@ -163,13 +218,52 @@
         placeholder="Keresés"
     >
 
-    <div id="temavezeto-lista" class="scrollable-list"></div>
+    <div id="temavezeto-lista" class="hallgato-lista"></div>
 
     <div class="gombok-kozeppontban">
-        <button type="button" id="temavezeto-mentes-gomb" class="mentes-btn">OK</button>
+        <button type="button" id="temavezeto-mentes-gomb" class="mentes-btn">Mentés</button>
         <button type="button" id="temavezeto-megse-gomb" class="megse-btn">Mégse</button>
     </div>
 </div>
+
+<!-- Hallgató választó MODAL (dolgozat módosításakor) -->
+<div id="modosit-hallgato-modal" class="modal-form" style="display:none;">
+    <h3>Hallgató(k) kiválasztása</h3>
+
+    <input
+        type="text"
+        id="modosit-hallgato-kereso"
+        class="lista-kereso"
+        placeholder="Keresés"
+    >
+
+    <div id="modosit-hallgato-lista" class="hallgato-lista"></div>
+
+    <div class="gombok-kozeppontban">
+        <button type="button" id="modosit-hallgato-mentes-gomb" class="mentes-btn">Mentés</button>
+        <button type="button" id="modosit-hallgato-megse-gomb" class="megse-btn">Mégse</button>
+    </div>
+</div>
+
+<!-- Témavezető választó MODAL (dolgozat módosításakor) -->
+<div id="modosit-temavezeto-modal" class="modal-form" style="display:none;">
+    <h3>Témavezető(k) kiválasztása</h3>
+
+    <input
+        type="text"
+        id="modosit-temavezeto-kereso"
+        class="lista-kereso"
+        placeholder="Keresés"
+    >
+
+    <div id="modosit-temavezeto-lista" class="hallgato-lista"></div>
+
+    <div class="gombok-kozeppontban">
+        <button type="button" id="modosit-temavezeto-mentes-gomb" class="mentes-btn">Mentés</button>
+        <button type="button" id="modosit-temavezeto-megse-gomb" class="megse-btn">Mégse</button>
+    </div>
+</div>
+
 
 
 
