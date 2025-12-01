@@ -1,154 +1,168 @@
-<!DOCTYPE html>
-<html lang="hu">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dolgozatok kezelése</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <!DOCTYPE html>
+    <html lang="hu">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dolgozatok kezelése</title>
+        <link rel="stylesheet" href="styles.css">
+        <link rel="icon" href="favicon.ico" type="image/x-icon">
 
-</head>
-<body>
-    <header>
-        <h1>TDK Adminisztrációs Rendszer</h1>
-        <nav>
-            <ul>
-              <li><a href="index.html">Főoldal</a></li>
-              <li><a href="users.html">Felhasználók kezelése</a></li>
-              <li class="dropdown">
-                <a href="#" class="dropbtn">Dolgozatok kezelése</a>
-                <div class="dropdown-content">
-                  <a href="papers.html">Jelentkezés új dolgozattal</a>
-                  <a href="completed-papers.html">Dolgozat feltöltése</a>
-                  <a href="review-papers.html">Dolgozat értékelése</a>
-                </div>
-              </li>
-              <li><a href="statistics.html">Statisztikák</a></li>
-              <li><a href="#" id="logout-link">Kijelentkezés</a></li>
-            </ul>
-          </nav>
-    </header>
+    </head>
+    <body>
+        <header>
+            <h1>TDK Adminisztrációs Rendszer</h1>
+            <nav>
+                <ul>
+                <li><a href="index.html">Főoldal</a></li>
+                <li><a href="users.html">Felhasználók kezelése</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropbtn">Dolgozatok kezelése</a>
+                    <div class="dropdown-content">
+                    <a href="papers.html">Jelentkezés új dolgozattal</a>
+                    <a href="completed-papers.html">Dolgozat feltöltése</a>
+                    <a href="review-papers.html">Dolgozat értékelése</a>
+                    </div>
+                </li>
+                <li><a href="statistics.html">Statisztikák</a></li>
+                <li><a href="#" id="logout-link">Kijelentkezés</a></li>
+                </ul>
+            </nav>
+        </header>
 
-    <main>
-        <section>
-            
-            <!-- Új dolgozat felvétele -->
-<button id="uj-dolgozat-gomb">Új dolgozat hozzáadása</button>
-<button id="topics-button" onclick="window.location.href='topics.html'">
-  Témaajánlók
-</button>
-<button id="sections-button" onclick="window.location.href='sections.html'">
-  Szekciók
-</button>
-
-
-
-
-<!-- A form rejtve, kattintásra jelenik meg -->
-<form id="uj-dolgozat-form" class="modal-form uj-dolgozat-form" style="display: none;">
-    <input type="text" id="dolgozat-cim" placeholder="Dolgozat címe">
-    <textarea id="dolgozat-leiras" placeholder="Tartalmi összefoglaló"></textarea>
-
-<!-- Hallgatók -->
-<div class="user-dropdown">
-    <button type="button" class="dropdown-btn">Hallgató(k) kiválasztása ▾</button>
-    <div class="dropdown-content scrollable-list">
-        <input type="text" id="hallgato-kereso" placeholder="Keresés"lista-kereso">
-        <div id="hallgato-lista"></div>
-    </div>
-</div>
-
-<!-- Témavezetők -->
-<div class="user-dropdown">
-    <button type="button" class="dropdown-btn">Témavezető kiválasztása ▾</button>
-    <div class="dropdown-content scrollable-list">
-        <input type="text" id="temavezeto-kereso" placeholder="Keresés"lista-kereso">
-        <div id="temavezeto-lista"></div>
-    </div>
-</div>
-
-    <div class="dropdown-content" id="temavezeto-lista"></div>
-  </div>
-    
-    <button type="submit" id="hozzaadas-gomb">Hozzáadás</button>
-    <button type="button" id="megse-gomb">Mégse</button>
-</form>
+        <main>
+            <section>
+                
+                <!-- Új dolgozat felvétele -->
+    <button id="uj-dolgozat-gomb">Új dolgozat hozzáadása</button>
+    <button id="topics-button" onclick="window.location.href='topics.html'">
+    Témaajánlók
+    </button>
+    <button id="sections-button" onclick="window.location.href='sections.html'">
+    Szekciók
+    </button>
+    <button class="btn btn-outline-info ms-2" onclick="openSemesterModal()">Jelenlegi félév</button>
 
 
-<!-- Homályosító réteg -->
-<div id="homalyositas" class="blur-layer" style="display: none;"></div>
 
 
-            <!-- "Felvett dolgozatok" és kereső ikon egy sorban -->
-            <div class="header-with-search">
 
-                <h2>Felvett dolgozatok:</h2>
-                <div class="search-container">
-                    <span class="search-icon" onclick="toggleDolgozatSearch()">🔍</span>
-                    <input type="text" id="dolgozat-search-input" placeholder="Keresés..." oninput="searchDolgozatok()" style="display: none;">
-                </div>
-            </div>
+    <!-- A form rejtve, kattintásra jelenik meg -->
+    <form id="uj-dolgozat-form" class="modal-form uj-dolgozat-form" style="display: none;">
+        <input type="text" id="dolgozat-cim" placeholder="Dolgozat címe">
+        <textarea id="dolgozat-leiras" placeholder="Tartalmi összefoglaló"></textarea>
 
-            <!-- Sorok száma kiválasztása -->
-            <div class="row-selector">
-                <label for="sorok-szama-dolgozat">Sorok száma:</label>
-                <select id="sorok-szama-dolgozat" onchange="frissitDolgozatokSorlimit()">
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="200">200</option>
-                    <option value="500">500</option>
-                    <option value="1000">1000</option>
-                    <option value="2000">2000</option>
-                    <option value="osszes">Összes</option>
-                </select>
-            </div>
-
-
-            <table id="felvett-dolgozatok-table">
-                <thead>
-                    <tr>
-                        <th>Cím</th>
-                        <th>Állapot</th>
-                        <th>Műveletek</th>
-                    </tr>
-                </thead>
-                <tbody id="dolgozat-tbody"></tbody>
-            </table>
-            <div id="dolgozat-pagination"></div>
-        </section>
-
-    <!-- Módosító űrlap -->
-    <form id="modosit-dolgozat-form" class="modal-form uj-dolgozat-form">
-    <input type="text" id="modosit-dolgozat-cim" placeholder="Dolgozat címe">
-    <textarea id="modosit-dolgozat-leiras" placeholder="Tartalmi összefoglaló"></textarea>
-
+    <!-- Hallgatók -->
     <div class="user-dropdown">
         <button type="button" class="dropdown-btn">Hallgató(k) kiválasztása ▾</button>
-        <div class="dropdown-content" id="modosit-hallgato-lista"></div>
+        <div class="dropdown-content scrollable-list">
+            <input type="text" id="hallgato-kereso" placeholder="Keresés"lista-kereso">
+            <div id="hallgato-lista"></div>
+        </div>
     </div>
 
+    <!-- Témavezetők -->
     <div class="user-dropdown">
         <button type="button" class="dropdown-btn">Témavezető kiválasztása ▾</button>
-        <div class="dropdown-content" id="modosit-temavezeto-lista"></div>
+        <div class="dropdown-content scrollable-list">
+            <input type="text" id="temavezeto-kereso" placeholder="Keresés"lista-kereso">
+            <div id="temavezeto-lista"></div>
+        </div>
     </div>
 
-    <label for="modosit-allapot" style="font-weight: bold;">Állapot:</label>
-    <select id="modosit-allapot">
-        <option value="bírálás alatt">Bírálás alatt</option>
-        <option value="elfogadva">Elfogadva</option>
-        <option value="elutasítva">Elutasítva</option>
-    </select>
-    
+        <div class="dropdown-content" id="temavezeto-lista"></div>
+    </div>
+        
+        <button type="submit" id="hozzaadas-gomb">Hozzáadás</button>
+        <button type="button" id="megse-gomb">Mégse</button>
+    </form>
 
-    <button type="submit" id="modosit-mentes-gomb">Mentés</button>
-    <button type="button" id="modosit-megse-gomb">Mégse</button>
-</form>
 
-    </main>
+    <!-- Homályosító réteg -->
+    <div id="homalyositas" class="blur-layer" style="display: none;"></div>
 
-    <script src="app.js"></script>
-    <script src="auth.js"></script>
-</body>
-</html>
+
+                <!-- "Felvett dolgozatok" és kereső ikon egy sorban -->
+                <div class="header-with-search">
+
+                    <h2>Felvett dolgozatok:</h2>
+                    <div class="search-container">
+                        <span class="search-icon" onclick="toggleDolgozatSearch()">🔍</span>
+                        <input type="text" id="dolgozat-search-input" placeholder="Keresés..." oninput="searchDolgozatok()" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Sorok száma kiválasztása -->
+                <div class="row-selector">
+                    <label for="sorok-szama-dolgozat">Sorok száma:</label>
+                    <select id="sorok-szama-dolgozat" onchange="frissitDolgozatokSorlimit()">
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                        <option value="500">500</option>
+                        <option value="1000">1000</option>
+                        <option value="2000">2000</option>
+                        <option value="osszes">Összes</option>
+                    </select>
+                </div>
+
+
+                <table id="felvett-dolgozatok-table">
+                    <thead>
+                        <tr>
+                            <th>Cím</th>
+                            <th>Állapot</th>
+                            <th>Műveletek</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dolgozat-tbody"></tbody>
+                </table>
+                <div id="dolgozat-pagination"></div>
+            </section>
+
+        <!-- Módosító űrlap -->
+        <form id="modosit-dolgozat-form" class="modal-form uj-dolgozat-form">
+        <input type="text" id="modosit-dolgozat-cim" placeholder="Dolgozat címe">
+        <textarea id="modosit-dolgozat-leiras" placeholder="Tartalmi összefoglaló"></textarea>
+
+        <div class="user-dropdown">
+            <button type="button" class="dropdown-btn">Hallgató(k) kiválasztása ▾</button>
+            <div class="dropdown-content" id="modosit-hallgato-lista"></div>
+        </div>
+
+        <div class="user-dropdown">
+            <button type="button" class="dropdown-btn">Témavezető kiválasztása ▾</button>
+            <div class="dropdown-content" id="modosit-temavezeto-lista"></div>
+        </div>
+
+        <label for="modosit-allapot" style="font-weight: bold;">Állapot:</label>
+        <select id="modosit-allapot">
+            <option value="bírálás alatt">Bírálás alatt</option>
+            <option value="elfogadva">Elfogadva</option>
+            <option value="elutasítva">Elutasítva</option>
+        </select>
+        
+
+        <button type="submit" id="modosit-mentes-gomb">Mentés</button>
+        <button type="button" id="modosit-megse-gomb">Mégse</button>
+    </form>
+
+    <div id="semester-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2>Jelenlegi félév beállítása</h2>
+        <form id="semester-form">
+        <input type="text" id="semester-input" placeholder="pl. 2025/26/1">
+        <button type="submit" class="btn btn-primary">Mentés</button>
+        </form>
+        <button onclick="closeSemesterModal()" class="btn btn-secondary mt-2">Mégse</button>
+    </div>
+    </div>
+
+
+        </main>
+
+        <script src="app.js"></script>
+        <script src="auth.js"></script>
+    </body>
+    </html>
 

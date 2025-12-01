@@ -31,19 +31,27 @@
 
 <div class="container mt-4">
   <h2 class="mb-3">Szekciók kezelése</h2>
+   <h3>Aktuális félév: <span id="aktualis-felev">Betöltés...</span></h3>
 
   <form id="section-form" class="d-flex gap-2 mb-4">
-    <input type="text" id="section-name" class="form-control" placeholder="Új szekció neve">
-    <button type="submit" class="btn btn-primary">Hozzáadás</button>
-  </form>
+  <input type="text" id="section-name" placeholder="Szekció neve" class="form-control">
+  <select id="szekcio-kar" class="form-control">
+    <option value="">Válassz kart</option>
+  </select>
+  <button type="submit" class="btn btn-primary">Hozzáadás</button>
+</form>
+
 
   <table id="sections-table">
     <thead>
-      <tr>
-        <th>Név</th>
-        <th>Műveletek</th>
-      </tr>
-    </thead>
+  <tr>
+    <th>Szekció név</th>
+    <th>Kar</th>
+    <th>Félév</th>
+    <th>Műveletek</th>
+  </tr>
+</thead>
+
     <tbody id="sections-table-body"></tbody>
   </table>
 </div>

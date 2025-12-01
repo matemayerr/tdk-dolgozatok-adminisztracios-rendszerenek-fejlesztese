@@ -12,28 +12,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
     
 
-    //A karok tömb definiálása
-    const karok = [
-        { nev: "Apáczai Csere János Pedagógiai, Humán- és Társadalomtudományi Kar", rovidites: "AK" },
-        { nev: "Albert Kázmér Mosonmagyaróvári Kar", rovidites: "AKMK" },
-        { nev: "Audi Hungaria Járműmérnöki Kar", rovidites: "AHJK" },
-        { nev: "Építész-, Építő- és Közlekedésmérnöki Kar", rovidites: "ÉÉKK" },
-        { nev: "Deák Ferenc Állam- és Jogtudományi Kar", rovidites: "ÁJK" },
-        { nev: "Egészség- és Sporttudományi Kar", rovidites: "ESK" },
-        { nev: "Gépészmérnöki, Informatikai és Villamosmérnöki Kar", rovidites: "GIVK" },
-        { nev: "Kautz Gyula Gazdaságtudományi Kar", rovidites: "KGGK" },
-        { nev: "Mezőgazdaság- és Élelmiszertudományi Kar", rovidites: "MÉK" },
-        { nev: "Művészeti Kar", rovidites: "MK" }
-      ];
       
       //A kar feltöltése
-      const karSelect = document.getElementById('felhasznalo-kar');
-karok.forEach(kar => {
-    const option = document.createElement('option');
-    option.value = kar.rovidites;
-    option.textContent = `${kar.rovidites} - ${kar.nev}`;
-    karSelect.appendChild(option);
-});
+      async function betoltKarokat() {
+    try {
+        const response = await fetch('/api/karok');
+        const karok = await response.json();
+
+        const karSelect = document.getElementById('felhasznalo-kar');
+        const modositKarSelect = document.getElementById('modosit-kar');
+
+        karok.forEach(kar => {
+            const option = document.createElement('option');
+            option.value = kar.rovidites;
+            option.textContent = `${kar.rovidites} - ${kar.nev}`;
+            karSelect.appendChild(option);
+
+            const modositOption = document.createElement('option');
+            modositOption.value = kar.rovidites;
+            modositOption.textContent = `${kar.rovidites} - ${kar.nev}`;
+            modositKarSelect.appendChild(modositOption);
+        });
+    } catch (err) {
+        console.error('Hiba a karok betöltésekor:', err);
+    }
+}
+
 
 // A kar módosítása
 const modositKarSelect = document.getElementById('modosit-kar');

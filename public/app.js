@@ -75,7 +75,7 @@ document.getElementById('temavezeto-kereso').addEventListener('input', function 
     // Dolgozatok lekérdezése
     async function listazDolgozatok() {
         try {
-            const response = await fetch('/api/dolgozatok');
+            const response = await fetch('/api/papers');
             dolgozatok = await response.json();
             megjelenitDolgozatok();
         } catch (err) {
@@ -99,38 +99,37 @@ async function megjelenitDolgozatok() {
         console.error("Nem sikerült lekérni a felhasználókat", error);
     }
 
+
     // Szűrés a keresőszöveg alapján
-    const filteredDolgozatok = dolgozatok.filter(dolgozat => {
-        const cim = dolgozat.cím?.toLowerCase() || '';
-        const allapot = dolgozat.allapot?.toLowerCase() || '';
-        const temavezetoNev = felhasznalokNevek[dolgozat.temavezeto_id]?.toLowerCase() || '';
-        const hallgatokNevek = (dolgozat.hallgato_ids || [])
-            .map(id => (felhasznalokNevek[id]?.toLowerCase() || '')).join(' ');
+const filteredDolgozatok = dolgozatok.filter(dolgozat => {
+    const cim = (dolgozat.cim || dolgozat.cím || '').toLowerCase();
+    const allapot = dolgozat.allapot?.toLowerCase() || '';
+    const temavezetoNev = (dolgozat.temavezeto || [])
+        .map(t => (t.nev || '').toLowerCase()).join(' ');
+    const hallgatokNevek = (dolgozat.szerzok || [])
+        .map(s => (s.nev || '').toLowerCase()).join(' ');
 
-        return cim.includes(searchText)
-            || allapot.includes(searchText)
-            || temavezetoNev.includes(searchText)
-            || hallgatokNevek.includes(searchText);
-    });
-
-    
-    
+    return cim.includes(searchText)
+        || allapot.includes(searchText)
+        || temavezetoNev.includes(searchText)
+        || hallgatokNevek.includes(searchText);
+});
 
     const start = (currentPage - 1) * itemsPerPage;
     const paginatedDolgozatok = filteredDolgozatok.slice(start, start + itemsPerPage);
     
     dolgozatTbody.innerHTML = '';
     paginatedDolgozatok.forEach(dolgozat => {
-        const roviditettCim = dolgozat.cím
+        const roviditettCim = dolgozat.cim || dolgozat.cím
         
-        /* .length > 110 ? dolgozat.cím.substring(0, 110) + '...' : dolgozat.cím; */
+        /* .length > 110 ? dolgozat.cim.substring(0, 110) + '...' : dolgozat.cim; */
         
         const tr = document.createElement('tr');
         tr.dataset.id = dolgozat._id;
         tr.innerHTML = `
         <td class="clickable-title" onclick="toggleDetails('${dolgozat._id}')">
     <div class="cim-es-ikon">
-        <span class="cim-szoveg" title="${dolgozat.cím}">${roviditettCim}</span>
+        <span class="cim-szoveg" title="${dolgozat.cim || dolgozat.cím}">${roviditettCim}</span>
         <span class="toggle-icon" id="toggle-icon-${dolgozat._id}">▼</span>
     </div>
 </td>
@@ -148,22 +147,21 @@ const detailTr = document.createElement('tr');
 detailTr.classList.add('dolgozat-details-row');
 detailTr.id = `details-${dolgozat._id}`;
 detailTr.innerHTML = `
-    <td colspan="3">
+    <td colspan="3" style="display: none;" id="details-${dolgozat._id}">
         <div class="dolgozat-details-panel" id="panel-${dolgozat._id}">
+
             <p class="dolgozat-leiras">
   <span class="leiras-cimke">Tartalmi összefoglaló:</span><br>
   <span class="leiras-szoveg">${dolgozat.leiras || '—'}</span>
 </p>
-            <p><strong>Hallgató(k):</strong> ${
-    dolgozat.hallgato_ids
-        ? dolgozat.hallgato_ids.map(id => `${felhasznalokNevek[id] || 'Ismeretlen'} (${id})`).join(', ')
-        : '—'
+            <p><strong>Hallgatók:</strong> ${
+  (dolgozat.szerzok || []).map(s => `${s.nev} (${s.neptun})`).join(', ') || '—'
 }</p>
-<p><strong>Témavezető(k):</strong> ${
-    dolgozat.temavezeto_ids
-    ? dolgozat.temavezeto_ids.map(id => `${felhasznalokNevek[id] || 'Ismeretlen'} (${id})`).join(', ')
-    : '—'
+<p><strong>Témavezetők:</strong> ${
+  (dolgozat.temavezeto || []).map(t => `${t.nev} (${t.neptun})`).join(', ') || '—'
 }</p>
+
+
 
         </div>
     </td>
@@ -202,7 +200,7 @@ if (dolgozatForm) {
     
 
         const formData = {
-            cím: document.getElementById('dolgozat-cim').value,
+            cim: document.getElementById('dolgozat-cim').value,
             leiras: document.getElementById('dolgozat-leiras').value,
             hallgato_ids: selectedHallgatok,
             temavezeto_ids: selectedTemavezetok,
@@ -248,7 +246,7 @@ if (dolgozatForm) {
         const dolgozat = dolgozatok.find(d => d._id === id);
     
         // Inputmezők feltöltése
-        document.getElementById('modosit-dolgozat-cim').value = dolgozat.cím || '';
+        document.getElementById('modosit-dolgozat-cim').value = dolgozat.cim || dolgozat.cím || '';
         document.getElementById('modosit-dolgozat-leiras').value = dolgozat.leiras || '';
         document.getElementById('modosit-allapot').value = dolgozat.allapot || 'benyújtva';
     
@@ -433,11 +431,47 @@ document.addEventListener('click', () => {
 });
 
 window.toggleDetails = function (dolgozatId) {
-    const panel = document.getElementById(`panel-${dolgozatId}`);
-    const icon = document.getElementById(`toggle-icon-${dolgozatId}`);
-    if (panel && icon) {
-        const isOpen = panel.classList.toggle('open');
-        icon.textContent = isOpen ? '▲' : '▼';
-    }
+  const detailRow = document.getElementById(`details-${dolgozatId}`);
+  const icon = document.getElementById(`toggle-icon-${dolgozatId}`);
+
+  if (!detailRow) return;
+  const isVisible = detailRow.style.display === 'table-row';
+  detailRow.style.display = isVisible ? 'none' : 'table-row';
+  if (icon) icon.textContent = isVisible ? '▼' : '▲';
 };
+
+
+//aktuális félév
+function openSemesterModal() {
+  document.getElementById('semester-modal').style.display = 'block';
+
+  fetch('/api/settings/current-semester')
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('semester-input').value = data.ertek || '';
+    });
+}
+
+function closeSemesterModal() {
+  document.getElementById('semester-modal').style.display = 'none';
+}
+
+document.getElementById('semester-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const ertek = document.getElementById('semester-input').value.trim();
+  if (!ertek) return alert('Kérlek, adj meg egy félévet.');
+
+  fetch('/api/settings/current-semester', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ertek })
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert('Félév sikeresen frissítve.');
+      closeSemesterModal();
+    });
+});
+
+
 

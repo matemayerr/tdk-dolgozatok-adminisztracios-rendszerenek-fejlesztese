@@ -1779,3 +1779,13 @@ body.login-oldal {
   box-sizing: border-box;
 }
 
+/* --- JAVÍTÁS: dolgozat részletek megjelenítése --- */
+.dolgozat-details-panel {
+    overflow: visible !important;
+    max-height: none !important;
+    display: block !important;
+    background-color: #f9f9f9;
+    padding: 10px;
+}
+
+

@@ -9,6 +9,7 @@ const resetTokens = {}; // egyszerű token tárolás memóriában (indítás ut�
 const Paper = require('./models/Paper');
 
 
+
 // Alkalmazás és port inicializálása
 const app = express();
 const port = 3000;
@@ -34,15 +35,19 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
   ertekelesFilePath: { type: String },
   elutasitas_oka: { type: String },
   szovegesErtekeles: { type: String },
-  ertekeles: { type: Object, default: {} }   // 🔹 EZ HIÁNYZOTT
+  ertekeles: { type: Object, default: {} },
+
+  // 🔹 Ez hiányzott eddig:
+  szekcioId: { type: mongoose.Schema.Types.ObjectId, ref: 'Section', default: null }
 }));
+
 
 
 
 const bcrypt = require('bcrypt');
 
 // Felhasznalo modell
-const Felhasznalo = mongoose.model('felhasznalos', new mongoose.Schema({
+const Felhasznalo = mongoose.model('Felhasznalos', new mongoose.Schema({
     nev: { type: String, required: true },
     neptun: { type: String, required: false },
     email: { type: String, required: true },
@@ -220,13 +225,39 @@ app.get('/uploads/:filename', (req, res) => {
 
 // Minden dolgozat lekérdezése
 app.get('/api/dolgozatok', async (req, res) => {
-    try {
-        const dolgozatok = await Dolgozat.find();
-        res.json(dolgozatok);
-    } catch (error) {
-        res.status(500).json({ error: 'Hiba történt a dolgozatok lekérésekor' });
-    }
+  try {
+    const dolgozatok = await Dolgozat.find().lean();
+    const felhasznalok = await Felhasznalo.find().lean();
+
+    // Neptun → felhasználó map
+    const felhasznaloMap = {};
+    felhasznalok.forEach(f => {
+      if (f.neptun) felhasznaloMap[f.neptun] = f;
+    });
+
+    const eredmeny = dolgozatok.map(d => ({
+      _id: d._id,
+      cim: d.cím || d.cim || '',
+      allapot: d.allapot,
+      leiras: d.leiras || '',
+      szekcioId: d.szekcioId ? String(d.szekcioId) : null,
+      szerzok: (d.hallgato_ids || []).map(neptun => ({
+        nev: felhasznaloMap[neptun]?.nev || '',
+        neptun: neptun
+      })),
+      temavezeto: (d.temavezeto_ids || []).map(neptun => ({
+        nev: felhasznaloMap[neptun]?.nev || '',
+        neptun: neptun
+      }))
+    }));
+
+    res.json(eredmeny);
+  } catch (error) {
+    console.error('Hiba a dolgozatok lekérésekor:', error);
+    res.status(500).json({ error: 'Szerverhiba a dolgozatok lekérésekor' });
+  }
 });
+
 
 // Feltöltéshez elérhető dolgozatok lekérdezése
 app.get('/api/dolgozatok/feltoltheto', async (req, res) => {
@@ -801,42 +832,48 @@ app.get('/api/papers/:id', async (req, res) => {
 
 
 
+// 🔹 Dolgozatok lekérése, szekciókhoz és listákhoz is használható formátumban
 app.get('/api/papers', async (req, res) => {
   try {
     const dolgozatok = await Dolgozat.find().lean();
     const felhasznalok = await Felhasznalo.find().lean();
 
-    // Neptun → felhasználó map
     const felhasznaloMap = {};
     felhasznalok.forEach(f => {
       if (f.neptun) felhasznaloMap[f.neptun] = f;
     });
 
-const eredmeny = dolgozatok.map(d => ({
-  _id: d._id,
-  cim: d["cím"],
-  allapot: d.allapot,
-  ertekeles: d.ertekeles || {},
-  szerzok: (d.hallgato_ids || []).map(neptun => ({
-    nev: felhasznaloMap[neptun]?.nev || '',
-    szak: felhasznaloMap[neptun]?.szak || '',
-    evfolyam: felhasznaloMap[neptun]?.evfolyam || ''
-  })),
-  temavezeto: (d.temavezeto_ids || []).map(neptun => ({
-    nev: felhasznaloMap[neptun]?.nev || '',
-    neptun: neptun,
-    kar: felhasznaloMap[neptun]?.kar || ''
-  }))
-}));
+    const eredmeny = dolgozatok.map(d => ({
+      _id: d._id,
+      cim: d.cím || d.cim || 'Névtelen dolgozat',
+      allapot: d.allapot || 'ismeretlen',
+      leiras: d.leiras || '',
+      szekcioId: d.szekcioId ? String(d.szekcioId) : null,
+      ertekeles: d.ertekeles || {},
 
+      // Hallgatók (szerzők)
+      szerzok: (d.hallgato_ids || []).map(neptun => ({
+        nev: felhasznaloMap[neptun]?.nev || 'Ismeretlen hallgató',
+        neptun,
+        szak: felhasznaloMap[neptun]?.szak || '',
+        evfolyam: felhasznaloMap[neptun]?.evfolyam || ''
+      })),
 
+      // Témavezetők
+      temavezeto: (d.temavezeto_ids || []).map(neptun => ({
+        nev: felhasznaloMap[neptun]?.nev || 'Ismeretlen témavezető',
+        neptun,
+        kar: felhasznaloMap[neptun]?.kar || ''
+      }))
+    }));
 
     res.json(eredmeny);
   } catch (error) {
-    console.error('Hiba a dolgozatok betöltésekor:', error);
-    res.status(500).json({ error: 'Hiba történt a dolgozatok lekérdezésekor' });
+    console.error('❌ Hiba a dolgozatok lekérésekor:', error);
+    res.status(500).json({ error: 'Szerverhiba a dolgozatok lekérésekor' });
   }
 });
+
 
 
 
@@ -1200,6 +1237,18 @@ app.get('/dolgozatok/:id', (req, res) => {
 
 
 
+
+const SectionSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  felev: { type: String, required: true },
+  kar: { type: String }, // pl. GIVK
+  elnokId: { type: mongoose.Schema.Types.ObjectId, ref: 'Felhasznalos' },
+  titkarId: { type: mongoose.Schema.Types.ObjectId, ref: 'Felhasznalos' },
+  zsuriIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Felhasznalos' }]
+});
+
+const Section = mongoose.model('Section', SectionSchema);
+
 // -----------------------------
 // Sections API végpontok
 // -----------------------------
@@ -1207,30 +1256,59 @@ app.get('/dolgozatok/:id', (req, res) => {
 // Összes szekció lekérése
 app.get('/api/sections', async (req, res) => {
   try {
-    const sections = await mongoose.connection.collection('sections').find().toArray();
-    res.json(sections);
+    const karok = await UniversityStructure.find({}).lean();  // karok: [{ nev, rovidites }]
+    const sections = await Section.find().populate('elnokId titkarId zsuriIds').lean();
+
+    // A rövidítések alapján megkeressük a teljes nevet
+    const enrichedSections = sections.map(section => {
+      const karObj = karok.find(k => k.rovidites === section.kar);
+      return {
+        ...section,
+        kar: karObj ? karObj.nev : section.kar || '-'  // teljes név vagy fallback
+      };
+    });
+
+    res.json(enrichedSections);
   } catch (err) {
     console.error('Hiba a szekciók lekérdezésekor:', err);
-    res.status(500).json({ error: 'Szerverhiba a szekciók lekérdezésénél' });
+    res.status(500).json({ error: 'Szerverhiba a lekérdezésnél' });
   }
 });
 
+
+
 // Új szekció létrehozása
 app.post('/api/sections', async (req, res) => {
-  const { name } = req.body;
+  const { name, kar, elnokId, titkarId, zsuriTagIds } = req.body;
 
   if (!name || name.trim() === '') {
     return res.status(400).json({ error: 'A szekció neve kötelező' });
   }
 
   try {
-    const result = await mongoose.connection.collection('sections').insertOne({ name: name.trim() });
+    const setting = await mongoose.connection.collection('settings').findOne({ _id: 'aktualis-felev' });
+    const felev = setting?.ertek || 'Ismeretlen';
+
+    const sectionData = {
+      name: name.trim(),
+      felev,
+      kar: kar || '',
+      elnokId: elnokId || null,
+      titkarId: titkarId || null,
+      zsuriIds: zsuriTagIds || []
+    };
+
+    const result = await mongoose.connection.collection('sections').insertOne(sectionData);
+
     res.status(201).json({ message: 'Szekció létrehozva', id: result.insertedId });
   } catch (err) {
     console.error('Hiba a szekció létrehozásakor:', err);
     res.status(500).json({ error: 'Szerverhiba a létrehozás során' });
   }
 });
+
+
+
 
 // Szekció nevének módosítása
 app.put('/api/sections/:id', async (req, res) => {
@@ -1281,6 +1359,81 @@ app.post('/api/sections/:id/add-papers', async (req, res) => {
   } catch (err) {
     console.error('Hiba a dolgozatok szekcióhoz rendelésekor:', err);
     res.status(500).json({ error: 'Szerverhiba' });
+  }
+});
+
+
+const SzekcioSchema = new mongoose.Schema({
+  name: String,
+  felev: String
+});
+
+
+//Aktuális félév
+const SettingSchema = new mongoose.Schema({
+  _id: String,
+  ertek: String
+});
+
+const Setting = mongoose.model('Setting', SettingSchema);
+
+// GET aktuális félév
+app.get('/api/settings/current-semester', async (req, res) => {
+  const setting = await Setting.findById('aktualis-felev');
+  if (setting) {
+    res.json({ ertek: setting.ertek });
+  } else {
+    res.json({ ertek: 'Nincs beállítva' });
+  }
+});
+
+// PUT új félév beállítása
+app.put('/api/settings/current-semester', async (req, res) => {
+  const { ertek } = req.body;
+  if (!ertek) return res.status(400).json({ error: 'Hiányzó érték' });
+
+  const updated = await Setting.findByIdAndUpdate(
+    'aktualis-felev',
+    { ertek },
+    { upsert: true, new: true }
+  );
+  res.json({ message: 'Félév frissítve', updated });
+});
+
+//aktuális félév szekció.
+app.post('/api/szekciok', async (req, res) => {
+  try {
+    const current = await Setting.findById('aktualis-felev');
+    const felev = current ? current.ertek : 'Ismeretlen';
+
+    const ujSzekcio = new Szekcio({
+      name: req.body.name,
+      felev: felev
+    });
+    await ujSzekcio.save();
+
+    res.json({ message: 'Szekció hozzáadva', szekcio: ujSzekcio });
+  } catch (err) {
+    console.error('Hiba szekció mentéskor:', err);
+    res.status(500).json({ error: 'Szerverhiba' });
+  }
+});
+
+
+
+// Feltételezve, hogy a karokat a UniversityStructure kollekcióban tárolod
+
+const universityStructureSchema = new mongoose.Schema({
+  nev: String,
+  rovidites: String
+});
+
+app.get('/api/karok', async (req, res) => {
+  try {
+    const karok = await UniversityStructure.find({});
+    res.json(karok);
+  } catch (err) {
+    res.status(500).json({ error: 'Hiba a karok lekérdezésekor' });
   }
 });
 
