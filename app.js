@@ -7,21 +7,19 @@ document.addEventListener('DOMContentLoaded', function () {
         dolgozatForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const formData = new FormData();
-            formData.append('cím', document.getElementById('dolgozat-cim').value);
-            formData.append('hallgato_id', document.getElementById('dolgozat-hallgato-id').value);
-            formData.append('temavezeto_id', document.getElementById('dolgozat-temavezeto-id').value);
-            formData.append('allapot', document.getElementById('dolgozat-allapot').value);
-
-            // Ellenőrizzük, hogy a fájl valóban létezik
-            const fileInput = document.getElementById('dolgozat-file');
-            if (fileInput && fileInput.files.length > 0) {
-                formData.append('dolgozatFile', fileInput.files[0]);
-            }
+            const formData = {
+                cím: document.getElementById('dolgozat-cim').value,
+                hallgato_id: document.getElementById('dolgozat-hallgato-id').value,
+                temavezeto_id: document.getElementById('dolgozat-temavezeto-id').value,
+                allapot: document.getElementById('dolgozat-allapot').value
+            };
 
             const response = await fetch('/api/dolgozatok/feltoltes', {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
             });
 
             if (response.ok) {
@@ -40,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const response = await fetch('/api/dolgozatok');
             const dolgozatok = await response.json();
 
+            dolgozatTbody.innerHTML = ''; // Ürítjük a táblázatot
             dolgozatok.forEach(dolgozat => {
                 addDolgozatToTable(dolgozat);
             });
@@ -85,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Dolgozat módosítása
     function editDolgozat(tr, dolgozat) {
         const cells = tr.querySelectorAll('td');
+        const originalData = { ...dolgozat }; // Az eredeti dolgozat adatok elmentése
         cells[0].innerHTML = `<input type="text" value="${dolgozat.cím}">`;
         cells[1].innerHTML = `<input type="text" value="${dolgozat.hallgato_id}">`;
         cells[2].innerHTML = `<input type="text" value="${dolgozat.temavezeto_id}">`;
@@ -100,6 +100,10 @@ document.addEventListener('DOMContentLoaded', function () {
         saveBtn.textContent = 'Mentés';
         cells[4].innerHTML = ''; // Törlés és módosítás gomb eltávolítása
         cells[4].appendChild(saveBtn);
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Mégse';
+        cells[4].appendChild(cancelBtn);
 
         saveBtn.addEventListener('click', async () => {
             const updatedDolgozat = {
@@ -127,13 +131,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 `;
 
                 // Újra hozzárendeljük az eseményeket
-                const newDeleteBtn = cells[4].querySelector('.delete-btn');
-                const newEditBtn = cells[4].querySelector('.edit-btn');
-                newDeleteBtn.addEventListener('click', () => deleteDolgozat(tr, dolgozat._id));
-                newEditBtn.addEventListener('click', () => editDolgozat(tr, updatedDolgozat));
+                tr.querySelector('.delete-btn').addEventListener('click', () => deleteDolgozat(tr, dolgozat._id));
+                tr.querySelector('.edit-btn').addEventListener('click', () => editDolgozat(tr, updatedDolgozat));
             } else {
                 console.error('Hiba történt a dolgozat módosítása során');
             }
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            // Ha a felhasználó megszakítja a szerkesztést, visszaállítjuk az eredeti adatokat
+            cells[0].textContent = originalData.cím;
+            cells[1].textContent = originalData.hallgato_id;
+            cells[2].textContent = originalData.temavezeto_id;
+            cells[3].textContent = originalData.allapot;
+            cells[4].innerHTML = `
+                <button class="delete-btn" data-id="${originalData._id}">Törlés</button>
+                <button class="edit-btn" data-id="${originalData._id}">Módosítás</button>
+            `;
+
+            // Események újbóli hozzárendelése
+            tr.querySelector('.delete-btn').addEventListener('click', () => deleteDolgozat(tr, originalData._id));
+            tr.querySelector('.edit-btn').addEventListener('click', () => editDolgozat(tr, originalData));
         });
     }
 

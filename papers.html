@@ -28,17 +28,18 @@
     <main>
         <section>
             <p><h2>Új dolgozat hozzáadása</h2>
-            <form id="dolgozat-form">
-                <input type="text" id="dolgozat-cim" placeholder="Cím" required>
-                <input type="text" id="dolgozat-hallgato-id" placeholder="Hallgató ID" required>
-                <input type="text" id="dolgozat-temavezeto-id" placeholder="Témavezető ID" required>
-                <select id="dolgozat-allapot" required>
-                    <option value="benyújtva">Benyújtva</option>
-                    <option value="bírálás alatt">Bírálás alatt</option>
-                    <option value="elfogadva">Elfogadva</option>
-                </select>
-                <button type="submit">Dolgozat hozzáadása</button>
-            </form>
+            <form id="dolgozat-form" enctype="multipart/form-data">
+    <input type="text" id="dolgozat-cim" name="cím" placeholder="Cím" required> <!-- Fontos a name="cím" -->
+    <input type="text" id="dolgozat-hallgato-id" name="hallgato_id" placeholder="Hallgató ID" required>
+    <input type="text" id="dolgozat-temavezeto-id" name="temavezeto_id" placeholder="Témavezető ID" required>
+    <select id="dolgozat-allapot" name="allapot" required>
+        <option value="benyújtva">Benyújtva</option>
+        <option value="bírálás alatt">Bírálás alatt</option>
+        <option value="elfogadva">Elfogadva</option>
+    </select>
+    <button type="submit">Dolgozat hozzáadása</button>
+</form>
+
 
             <h2>Felvett dolgozatok</h2>
             <table id="dolgozatok-table">

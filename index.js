@@ -1,8 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
-const multer = require('multer');
-const fs = require('fs');
 
 const app = express();
 const port = 3000;
@@ -19,50 +17,35 @@ mongoose.connect('mongodb://localhost:27017/tdk_adatbazis', {
 
 // Statikus fájlok kiszolgálása (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname)));
-app.use(express.json());
+app.use(express.json()); // JSON adatokat kezel
 
-// Mongoose modellek
+// Mongoose modell
 const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
-    cím: { type: String, required: true },    // Biztosítjuk, hogy a cím kötelező
+    cím: { type: String, required: true },    // Kötelező mező a cím
     hallgato_id: { type: String, required: true },
     temavezeto_id: { type: String, required: true },
-    allapot: { type: String, required: true },
-    filePath: String // Fájl útvonal tárolása
+    allapot: { type: String, required: true }
 }));
 
-// Fájlok feltöltési beállításai
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads');
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
-const upload = multer({ storage });
-
-// Dolgozat hozzáadása (fájllal együtt)
-app.post('/api/dolgozatok/feltoltes', upload.single('dolgozatFile'), async (req, res) => {
+// Új dolgozat hozzáadása
+app.post('/api/dolgozatok/feltoltes', async (req, res) => {
     const { cím, hallgato_id, temavezeto_id, allapot } = req.body;
 
-    // Ellenőrizzük, hogy a szükséges mezők kitöltöttek-e
+    // Ellenőrizzük, hogy minden mező ki van-e töltve
     if (!cím || !hallgato_id || !temavezeto_id || !allapot) {
         return res.status(400).json({ error: 'Minden mezőt ki kell tölteni!' });
     }
-
-    const filePath = req.file ? req.file.path : null;
 
     const dolgozat = new Dolgozat({
         cím,
         hallgato_id,
         temavezeto_id,
-        allapot,
-        filePath
+        allapot
     });
 
     try {
         await dolgozat.save();
-        res.status(201).json(dolgozat);
+        res.status(201).json(dolgozat); // Dolgozat sikeres mentése
     } catch (error) {
         res.status(500).json({ error: 'Hiba történt a dolgozat mentésekor' });
     }
@@ -82,7 +65,7 @@ app.get('/api/dolgozatok', async (req, res) => {
 app.put('/api/dolgozatok/:id', async (req, res) => {
     const { cím, hallgato_id, temavezeto_id, allapot } = req.body;
 
-    // Ellenőrizzük, hogy a szükséges mezők kitöltöttek-e
+    // Ellenőrizzük, hogy minden mező ki van-e töltve
     if (!cím || !hallgato_id || !temavezeto_id || !allapot) {
         return res.status(400).json({ error: 'Minden mezőt ki kell tölteni!' });
     }
@@ -93,7 +76,7 @@ app.put('/api/dolgozatok/:id', async (req, res) => {
             hallgato_id,
             temavezeto_id,
             allapot
-        }, { new: true });
+        }, { new: true }); // Visszaadjuk a frissített dokumentumot
 
         if (!updatedDolgozat) {
             return res.status(404).json({ error: 'Dolgozat nem található' });
@@ -112,17 +95,11 @@ app.delete('/api/dolgozatok/:id', async (req, res) => {
         if (!dolgozat) {
             return res.status(404).json({ error: 'Dolgozat nem található' });
         }
-        if (dolgozat.filePath) {
-            fs.unlinkSync(dolgozat.filePath);
-        }
         res.json({ message: 'Dolgozat sikeresen törölve' });
     } catch (error) {
         res.status(500).json({ error: 'Hiba történt a dolgozat törlésekor' });
     }
 });
-
-// Fájlok letöltése
-app.use('/uploads', express.static('uploads'));
 
 // Szerver indítása
 app.listen(port, () => {
