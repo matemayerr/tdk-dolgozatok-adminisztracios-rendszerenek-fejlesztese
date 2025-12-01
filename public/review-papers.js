@@ -53,49 +53,76 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Modál megnyitása
-window.nyisdErtekeles = function (id) {
+
+     window.nyisdErtekeles = function (id) {
     aktualisDolgozatId = id;
     const dolgozat = dolgozatok.find(d => d._id === id);
 
-    // Frissítsd mindig az értékeket!
+    // Alaphelyzet: inputmezők láthatóak
     modalPontszam.value = dolgozat.pontszam || '';
     modalSzoveg.value = dolgozat.szovegesErtekeles || '';
+    modalPontszam.style.display = 'block';
+    modalSzoveg.style.display = 'block';
+    modalSzoveg.disabled = false;
+    modalMentes.style.display = 'inline-block';
+    modalTitle.textContent = 'Értékelés hozzáadása';
 
-    const modositGomb = document.getElementById('modositGomb');
-    if (modositGomb) modositGomb.remove();  // Esetleges régi gomb eltávolítása
+    document.getElementById('megtekintesSzoveg')?.remove();
+    document.getElementById('modositGomb')?.remove();
+    
 
-    if (dolgozat.pontszam) {
-        // Megtekintés mód
-        modalTitle.textContent = 'Értékelés megtekintése';
+
+    // Ha már létezik értékelés → csak szöveg, Módosítás + Mégse
+    if (dolgozat.pontszam && dolgozat.szovegesErtekeles) {
         modalPontszam.style.display = 'none';
-        modalSzoveg.disabled = true;
+        modalSzoveg.style.display = 'none';
         modalMentes.style.display = 'none';
+        modalTitle.textContent = 'Értékelés megtekintése';
+        modalBezár.style.display = 'none';
 
-        const modosit = document.createElement('button');
-        modosit.id = 'modositGomb';
-        modosit.textContent = 'Módosítás';
-        modosit.addEventListener('click', () => {
-            // Átvált módosító módba
-            modalTitle.textContent = 'Értékelés módosítása';
+         // Eltüntetjük a label-eket
+    document.querySelector('label[for="modal-pontszam"]').style.display = 'none';
+    document.querySelector('label[for="modal-szoveg"]').style.display = 'none';
+
+        const megtekintesSzoveg = document.createElement('div');
+        megtekintesSzoveg.id = 'megtekintesSzoveg';
+        megtekintesSzoveg.style.marginTop = '10px';
+        megtekintesSzoveg.style.backgroundColor = '#f4f4f4';
+        megtekintesSzoveg.style.padding = '10px';
+        megtekintesSzoveg.style.borderRadius = '5px';
+        megtekintesSzoveg.innerHTML = `
+    <p style="margin-bottom: 20px;">${dolgozat.szovegesErtekeles}</p>
+    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button id="modositGomb">Módosítás</button>
+        <button id="megtekintesMegseGomb">Mégse</button>
+    </div>
+`;
+
+        modal.querySelector('.modal-content').appendChild(megtekintesSzoveg);
+
+        document.getElementById('modositGomb').addEventListener('click', () => {
+            megtekintesSzoveg.remove();
             modalPontszam.style.display = 'block';
+            modalSzoveg.style.display = 'block';
             modalSzoveg.disabled = false;
             modalMentes.style.display = 'inline-block';
-            modosit.remove();
+            modalTitle.textContent = 'Értékelés módosítása'
+            modalBezár.style.display = 'inline-block';
+          
+            // Label-eket újra láthatóvá tesszük
+        document.querySelector('label[for="modal-pontszam"]').style.display = 'block';
+        document.querySelector('label[for="modal-szoveg"]').style.display = 'block';
         });
 
-        modal.querySelector('.modal-content').appendChild(modosit);
-    } else {
-        // Új értékelés mód
-        modalTitle.textContent = 'Értékelés hozzáadása';
-        modalPontszam.style.display = 'block';
-        modalSzoveg.disabled = false;
-        modalMentes.style.display = 'inline-block';
+        document.getElementById('megtekintesMegseGomb').addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
     }
 
     modal.style.display = 'block';
 };
-
-
+   
+    
     // Értékelés mentése
     modalMentes.addEventListener('click', async () => {
         const pontszam = modalPontszam.value;
@@ -114,6 +141,7 @@ window.nyisdErtekeles = function (id) {
             });
 
             modal.style.display = 'none';
+        document.getElementById('megtekintesSzoveg')?.remove();
             listazErtekelesDolgozatok(); // Frissítjük a listát
         } catch (err) {
             console.error('Hiba az értékelés mentése során:', err);

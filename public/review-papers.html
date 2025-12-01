@@ -57,22 +57,24 @@
 <div id="ertekeles-modal" class="modal" style="display: none;">
     <div class="modal-content">
         <h3 id="modal-title">Értékelés hozzáadása</h3>
-        <label>Érdemjegy:</label>
+        <label for="modal-pontszam">Érdemjegy:</label>
         <select id="modal-pontszam">
             <option value="">Válassz</option>
-            <option>Elégtelen</option>
-            <option>Elégséges</option>
-            <option>Közepes</option>
-            <option>Jó</option>
-            <option>Jeles</option>
+            <option value="Elégtelen">Elégtelen</option>
+            <option value="Elégséges">Elégséges</option>
+            <option value="Közepes">Közepes</option>
+            <option value="Jó">Jó</option>
+            <option value="Jeles">Jeles</option>
         </select>
 
-        <label>Szöveges értékelés:</label>
+        <label for="modal-szoveg">Szöveges értékelés:</label>
         <textarea id="modal-szoveg" rows="6" style="width: 100%; resize: vertical;"></textarea>
 
-        <button id="modal-mentes">Mentés</button>
-        <button id="modal-modositas" style="display: none;">Módosítás</button>
-        <button id="modal-bezar">Mégse</button>
+        <div class="modal-buttons">
+            <button id="modal-mentes">Mentés</button>
+            <button id="modal-modositas" style="display: none;">Módosítás</button>
+            <button id="modal-bezar">Mégse</button>
+        </div>
     </div>
 </div>
 

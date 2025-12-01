@@ -29,7 +29,7 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     pontszam: { type: String, default: '' },
     ertekelesFilePath: { type: String },
     elutasitas_oka: { type: String },
-    ertekelesSzoveg: { type: String }
+    szovegesErtekeles: { type: String }
 }));
 
 
@@ -128,7 +128,7 @@ const transporter = nodemailer.createTransport({
 // Szöveges értékelés és jegy mentése
 app.post('/api/dolgozatok/ertekeles/:id', async (req, res) => {
     const { id } = req.params;
-    const { pontszam, ertekelesSzoveg } = req.body;
+    const { pontszam, szovegesErtekeles } = req.body;
 
     try {
         const dolgozat = await Dolgozat.findById(id);
@@ -137,7 +137,7 @@ app.post('/api/dolgozatok/ertekeles/:id', async (req, res) => {
         }
 
         dolgozat.pontszam = pontszam;
-        dolgozat.ertekelesSzoveg = ertekelesSzoveg;
+        dolgozat.szovegesErtekeles = szovegesErtekeles;
         dolgozat.allapot = 'értékelve';
         await dolgozat.save();
 
@@ -147,7 +147,6 @@ app.post('/api/dolgozatok/ertekeles/:id', async (req, res) => {
         res.status(500).json({ error: 'Hiba történt az értékelés mentése során' });
     }
 });
-
 
 // Értesítés küldése bírálónak e-mailben
 async function kuldErtesitesBiralonak(biraloEmail, dolgozat) {
@@ -214,7 +213,6 @@ app.get('/api/dolgozatok/kesz', async (req, res) => {
         res.status(500).json({ error: 'Hiba történt a kész dolgozatok lekérésekor' });
     }
 });
-
 
   // Új dolgozat hozzáadása
 app.post('/api/dolgozatok', async (req, res) => {
@@ -438,30 +436,6 @@ app.post('/api/dolgozatok/ertekeles-feltoltes/:id', upload.single('file'), async
         res.status(500).json({ error: 'Hiba történt az értékelés mentése során' });
     }
 });
-
-// Szöveges értékelés és jegy mentése
-app.post('/api/dolgozatok/ertekeles/:id', async (req, res) => {
-    const { id } = req.params;
-    const { pontszam, ertekelesSzoveg } = req.body;
-
-    try {
-        const dolgozat = await Dolgozat.findById(id);
-        if (!dolgozat) {
-            return res.status(404).json({ error: 'Dolgozat nem található' });
-        }
-
-        dolgozat.pontszam = pontszam;
-        dolgozat.ertekelesSzoveg = ertekelesSzoveg;
-        dolgozat.allapot = 'értékelve';
-        await dolgozat.save();
-
-        res.status(200).json({ message: 'Értékelés sikeresen mentve.', dolgozat });
-    } catch (error) {
-        console.error('Hiba történt az értékelés mentése során:', error);
-        res.status(500).json({ error: 'Hiba történt az értékelés mentése során' });
-    }
-});
-
 
 // Értesítés küldése a hallgatónak és a témavezetőnek az értékelésről
 async function kuldErtesitesHallgatonakEsTemavezetonek(cimzettEmail, dolgozat, szerep) {
