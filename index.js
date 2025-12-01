@@ -103,7 +103,7 @@ app.post('/api/register', async (req, res) => {
 
     try {
         const hash = await bcrypt.hash(jelszo, 10);
-        const ujFelhasznalo = new Felhasznalo({ nev, neptun, email, csoport, jelszo: hash });
+        const ujFelhasznalo = new Felhasznalo({ nev, neptun, email, csoportok, jelszo: hash });
         await ujFelhasznalo.save();
         res.status(201).json({ message: 'Sikeres regisztráció' });
     } catch (error) {
@@ -206,7 +206,7 @@ app.get('/api/dolgozatok', async (req, res) => {
 app.get('/api/dolgozatok/kesz', async (req, res) => {
     try {
         const keszDolgozatok = await Dolgozat.find({
-            allapot: { $in: ['elfogadva', 'feltöltésre vár', 'feltöltve', 'értékelve'] }
+            allapot: { $in: ['elfogadva','feltöltve'] }
         });
         res.json(keszDolgozatok);
     } catch (error) {
@@ -325,12 +325,12 @@ app.get('/api/felhasznalok', async (req, res) => {
 // Felhasználó módosítása
 app.put('/api/felhasznalok/:id', async (req, res) => {
     const { id } = req.params;
-    const { nev, neptun, email, csoport } = req.body;
+    const { nev, neptun, email, csoportok } = req.body;
 
     try {
         const updatedFelhasznalo = await Felhasznalo.findByIdAndUpdate(
             id,
-            { nev, neptun, email, csoport },
+            { nev, neptun, email, csoportok },
             { new: true }
         );
 
@@ -463,6 +463,53 @@ TDK Adminisztrációs Rendszer`
         console.error(`Hiba történt az értesítés küldésekor a ${szerep} számára:`, error);
     }
 }
+
+// 🔹 Regisztráció
+app.post('/api/regisztracio', async (req, res) => {
+    try {
+        const { nev, neptun, email, jelszo } = req.body;
+
+        if (!nev || !email || !jelszo) {
+            return res.status(400).json({ error: 'Minden kötelező mezőt ki kell tölteni!' });
+        }
+
+        const letezo = await Felhasznalo.findOne({ email });
+        if (letezo) {
+            return res.status(400).json({ error: 'Ez az e-mail cím már létezik.' });
+        }
+
+        const hash = await bcrypt.hash(jelszo, 10);
+        const ujFelhasznalo = new Felhasznalo({
+            nev,
+            neptun,
+            email,
+            password: hash,
+            csoportok: ['hallgato']
+        });
+
+        await ujFelhasznalo.save();
+
+        const token = jwt.sign({ id: ujFelhasznalo._id }, secretKey, { expiresIn: '1h' });
+        res.status(201).json({ token, felhasznalo: ujFelhasznalo });
+
+    } catch (err) {
+        console.error('Regisztrációs hiba:', err);
+        res.status(500).json({ error: 'Szerverhiba' });
+    }
+});
+
+app.get('/api/dolgozatok/ertekeleshez', async (req, res) => {
+    try {
+        const dolgozatok = await Dolgozat.find({
+            allapot: { $in: ['feltöltve', 'értékelve'] }
+        });
+        res.json(dolgozatok);
+    } catch (error) {
+        res.status(500).json({ error: 'Hiba történt az értékelhető dolgozatok lekérésekor' });
+    }
+});
+
+
 
 // Szerver indítása megadott porton
 app.listen(port, () => {

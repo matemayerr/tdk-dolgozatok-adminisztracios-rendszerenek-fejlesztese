@@ -1,8 +1,6 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 20px;
-    background-color: #f4f4f4;
 }
 
 input[type="checkbox"] {
@@ -10,9 +8,13 @@ input[type="checkbox"] {
     margin-right: 5px;
 }
 
+main, section {
+    padding: 5px 2px; /* felső és alsó: 10px, bal és jobb: 15px */
+    box-sizing: border-box;
+}
 
 header {
-    background: #333;
+    background: #242a43;
     color: #fff;
     padding: 10px 0;
     text-align: center;
@@ -33,8 +35,6 @@ input {
 
 button {
     padding: 10px 15px;
-    background-color: #333;
-    color: #fff;
     border: none;
     cursor: pointer;
 }
@@ -58,17 +58,15 @@ li {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
 }
 
 th, td {
-    padding: 10px;
+    padding: 4px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
 }
 
 th {
-    background-color: #333;
+    background-color: #242a43;
     color: white;
 }
 
@@ -117,13 +115,13 @@ nav ul li:last-child {
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: white;
-    padding: 20px;
+    padding: 30px;
     border-radius: 8px;
     z-index: 101;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    width: 400px; /* fix szélesség, ne essen össze */
+    width: 322px; /* fix szélesség, ne essen össze */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
@@ -141,8 +139,6 @@ nav ul li:last-child {
   display: block;
   text-align: center;
 }
-
-
 
 .blur-layer {
     position: fixed;
@@ -185,7 +181,7 @@ nav ul li:last-child {
 
 /* A Hozzáadás és Mégse gomb egységes legyen */
 #hozzaadas-gomb, #megse-gomb {
-    background-color: #333;
+    background-color: #242a43;
     color: white;
     border-radius: 5px;
     font-size: 16px;
@@ -279,8 +275,6 @@ nav ul li:last-child {
 .uj-dolgozat-form .dropdown-btn {
     width: 100%;
     padding: 10px;
-    background-color: #3498db;
-    color: white;
     text-align: left;
     border: none;
     border-radius: 5px;
@@ -301,10 +295,9 @@ nav ul li:last-child {
 .user-dropdown .dropdown-content label {
     display: flex;
     align-items: center;
-    padding: 8px;
-    border-bottom: 1px solid #444;
-    cursor: pointer;
     justify-content: flex-start;
+    padding: 5px;
+    cursor: pointer;
     gap: 10px;                 /* Plusz távolság a checkbox és a név között */
     width: 100%;               /* A label töltse ki a sort */
     box-sizing: border-box;
@@ -326,13 +319,20 @@ nav ul li:last-child {
 
 .user-dropdown {
     margin-bottom: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* vagy flex-start ha balra akarod igazítani */
+    gap: 5px;
+    width: 100%;
+    }
+    
 }
 
 .uj-dolgozat-form input,
 .uj-dolgozat-form textarea {
     font-family: Arial, sans-serif;
     font-size: 16px;
-    color: #333;
+    color: #242a43;
     padding: 10px;
     box-sizing: border-box;
 }
@@ -348,7 +348,7 @@ nav ul li:last-child {
 
 
 #hozzaadas-gomb, #megse-gomb {
-    background-color: #333;
+    background-color: #242a43;
     color: white;
     border-radius: 5px;
     font-size: 16px;
@@ -366,7 +366,7 @@ nav ul li:last-child {
 nav ul li .dropdown-content {
     display: none;
     position: absolute;
-    background-color: #333;
+    background-color: #242a43;
     min-width: 200px;
     z-index: 10;
 }
@@ -388,7 +388,7 @@ nav ul li .dropdown-content a:hover {
 
 nav ul li a.active {
     color: white !important;
-    background-color: #333 !important;  /* Aktív menü maradjon fehér */
+    background-color: #242a43 !important;  /* Aktív menü maradjon fehér */
 }
 
 #ertekeles-modal {
@@ -454,12 +454,16 @@ nav ul li a.active {
     overflow-y: auto;   /* görgethetővé teszi */
 }
 
-
+#uj-dolgozat-gomb {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
 
 #uj-felhasznalo-gomb {
     margin-top: 20px;
     margin-bottom: 20px;
 }
+
 
 /* Térköz az űrlap elemek között */
 .modal-form .form-group {
@@ -513,8 +517,68 @@ nav ul li a.active {
     margin-top: 10px;
 }
 
-
+#register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    font-size: 13px;
+  }
   
+  #register-form label,
+  #register-form input {
+    width: 170px;
+  }
+  
+  .login-background {
+    background-image: url("images/bagoly.png");
+    background-size: 30%;
+    background-position: 70% 100px;
+    background-repeat: no-repeat;
+    background-color: #f4f4f4;
+    min-height: 100vh;
+}
+
+.cim-szoveg {
+    white-space: normal;
+    word-break: break-word;
+    max-width: 100%;
+    display: inline-block;
+}
+
+.uj-felhasznalo-form .form-group input,
+.uj-felhasznalo-form button,
+.uj-felhasznalo-form .dropdown-btn {
+    width: 300px;
+    box-sizing: border-box;
+    margin: 8px auto;
+}
+
+#felhasznalo-hozzaadas-gomb {
+    background-color: #242a43;
+    color: white;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-top: 5px;
+}
+
+#felhasznalo-megse-gomb{
+    background-color: #242a43;
+    color: white;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-top: 5px;
+}
+
+#felhasznalo-hozzaadas-gomb:hover,
+#felhasznalo-megse-gomb:hover {
+    background-color: #555;
+}
+
+.leiras-cimke {
+    font-weight: bold;
+}
+
 
 
 

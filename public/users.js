@@ -275,9 +275,14 @@ document.getElementById('modosit-mentes').addEventListener('click', async () => 
 
         if (res.ok) {
             const updatedFelhasznalo = await res.json();
-            const index = felhasznalok.findIndex(f => f._id === modositandoFelhasznaloId);
-            felhasznalok[index] = updatedFelhasznalo;
-            renderTable();
+
+            // Frissítsd a teljes listát
+            await loadFelhasznalok();
+            
+            // Zárd be a modalt
+            document.getElementById('modosit-felhasznalo-modal').style.display = 'none';
+            document.getElementById('modosit-homalyositas').style.display = 'none';
+            
             document.getElementById('modosit-felhasznalo-modal').style.display = 'none';
             document.getElementById('modosit-homalyositas').style.display = 'none';
         } else {

@@ -1,6 +1,52 @@
 document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('login-form');
 
+    // 🔹 Modal nyitása/zárása
+const openModalBtn = document.getElementById('open-register-modal');
+const closeModalBtn = document.getElementById('close-register-modal');
+const registerModal = document.getElementById('register-modal');
+
+openModalBtn.addEventListener('click', () => {
+    registerModal.style.display = 'block';
+});
+
+closeModalBtn.addEventListener('click', () => {
+    registerModal.style.display = 'none';
+});
+
+// 🔹 Regisztráció kezelése
+const registerForm = document.getElementById('register-form');
+registerForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const nev = document.getElementById('reg-nev').value;
+    const neptun = document.getElementById('reg-neptun').value || null;
+    const email = document.getElementById('reg-email').value;
+    const jelszo = document.getElementById('reg-jelszo').value;
+
+    try {
+        const response = await fetch('/api/regisztracio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nev, neptun, email, jelszo })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('felhasznalo', JSON.stringify(data.felhasznalo));
+            window.location.href = 'index.html'; // sikeres reg után bejelentkezés
+        } else {
+            const err = await response.json();
+            document.getElementById('register-error').textContent = err.error || 'Hiba történt.';
+            document.getElementById('register-error').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Regisztrációs hiba:', error);
+    }
+});
+
+    // Bejelentkezés
     loginForm.addEventListener('submit', async function (event) {
         event.preventDefault();
 
@@ -14,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify({ neptun, jelszo })
             });
 
+            
             if (!response.ok) {
                 document.getElementById('login-error').style.display = 'block';
                 return;

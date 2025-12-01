@@ -75,7 +75,9 @@ try {
     
     dolgozatTbody.innerHTML = '';
     paginatedDolgozatok.forEach(dolgozat => {
-        const roviditettCim = dolgozat.cím.length > 40 ? dolgozat.cím.substring(0, 40) + '...' : dolgozat.cím;
+        const roviditettCim = dolgozat.cím
+        
+        /* .length > 110 ? dolgozat.cím.substring(0, 110) + '...' : dolgozat.cím; */
         
         const tr = document.createElement('tr');
         tr.dataset.id = dolgozat._id;

@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Dolgozatok lekérdezése
     async function listazErtekelesDolgozatok() {
         try {
-            const response = await fetch('/api/dolgozatok/kesz');
+            const response = await fetch('/api/dolgozatok/ertekeleshez');
             dolgozatok = await response.json();
             megjelenitDolgozatok();
         } catch (err) {
@@ -27,17 +27,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Megjelenítés
     function megjelenitDolgozatok() {
-        const filtered = dolgozatok.filter(d =>
-            d.cím.toLowerCase().includes(searchInput.value.toLowerCase())
-        );
-
+        const filtered = dolgozatok
+            .filter(d => ['feltöltve', 'értékelve'].includes(d.allapot))
+            .filter(d =>
+                d.cím.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                d.hallgato_id?.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                d.temavezeto_id?.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                d.allapot?.toLowerCase().includes(searchInput.value.toLowerCase())
+            );
+    
         const start = (currentPage - 1) * itemsPerPage;
         const paginated = filtered.slice(start, start + itemsPerPage);
-
+    
         ertekelesTbody.innerHTML = '';
         paginated.forEach(d => {
             const gombFelirat = d.pontszam ? 'Megtekintés' : 'Értékelés';
-            tr = document.createElement('tr');
+            const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${d.cím}</td>
                 <td>${d.hallgato_id}</td>
@@ -48,9 +53,10 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
             ertekelesTbody.appendChild(tr);
         });
-
+    
         frissitPaginacio(filtered.length);
     }
+    
 
     // Modál megnyitása
 
