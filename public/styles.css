@@ -73,10 +73,12 @@ tr:hover {
 /* Menüpontok stílusa */
 nav ul {
     list-style-type: none; /* Eltávolítja a listapontokat */
+    align-items: center;
     margin: 0;
     padding: 0;
     display: flex; /* Flexbox használata a horizontális elrendezéshez */
     justify-content: left; /* Balra igazítja a menüpontokat */
+    width: auto;
 }
 
 nav ul li a {
@@ -98,11 +100,15 @@ nav ul li a {
     text-decoration: none;
     color: white;
     font-weight: bold;
-    padding: 10px;
+    padding: 1px;
 }
 
 nav ul li a:hover {
     color: #007bff;
+}
+
+nav ul li:last-child {
+    margin-left: auto; /* Ez viszi a kijelentkezés gombot a jobb oldalra */
 }
 
 /* Dropdown menü alapértelmezett rejtése */

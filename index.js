@@ -239,15 +239,37 @@ app.delete('/api/dolgozatok/:id', async (req, res) => {
 // Új felhasználó hozzáadása
 app.post('/api/felhasznalok', async (req, res) => {
     const { nev, neptun, email, csoport } = req.body;
-    const felhasznalo = new Felhasznalo({ nev, neptun, email, csoport });
+
+    if (!nev || !neptun || !email || !csoport) {
+        return res.status(400).json({ error: "Minden mező kitöltése kötelező!" });
+    }
 
     try {
+        const letezoFelhasznalo = await Felhasznalo.findOne({ neptun });
+        if (letezoFelhasznalo) {
+            return res.status(400).json({ error: "Ez a Neptun-kód már létezik!" });
+        }
+
+        // **ÚJ:** Alapértelmezett jelszó titkosítással
+        const alapJelszo = "Temp1234"; // Ezt meg lehet változtatni később
+        const hashJelszo = await bcrypt.hash(alapJelszo, 10);
+
+        const felhasznalo = new Felhasznalo({ 
+            nev, 
+            neptun, 
+            email, 
+            csoport, 
+            password: hashJelszo // **Jelszó kötelező az adatbázisban**
+        });
+
         await felhasznalo.save();
         res.status(201).json(felhasznalo);
     } catch (error) {
+        console.error("💥 Hiba történt a felhasználó mentésekor:", error);
         res.status(500).json({ error: 'Hiba történt a felhasználó mentésekor' });
     }
 });
+
 
 // Felhasználók listázása
 app.get('/api/felhasznalok', async (req, res) => {
@@ -296,15 +318,30 @@ app.delete('/api/felhasznalok/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
+        // Ellenőrizzük, hogy a felhasználó témavezető vagy bíráló-e
+        const vanDolgozat = await Dolgozat.findOne({ 
+            $or: [
+                { temavezeto_id: id }, 
+                { biralo_id: id }
+            ]
+        });
+
+        if (vanDolgozat) {
+            return res.status(400).json({ error: "A felhasználó nem törölhető, mert témavezető vagy bíráló egy dolgozatnál." });
+        }
+
+        // Ha nincs kapcsolódó dolgozat, akkor törölhető
         const felhasznalo = await Felhasznalo.findByIdAndDelete(id);
         if (!felhasznalo) {
             return res.status(404).json({ error: 'Felhasználó nem található' });
         }
+
         res.json({ message: 'Felhasználó sikeresen törölve' });
     } catch (error) {
         res.status(500).json({ error: 'Hiba történt a felhasználó törlése során' });
     }
 });
+
 
 // Fájl feltöltése és értesítés küldése a bírálónak
 app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res) => {
