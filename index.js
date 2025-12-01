@@ -21,6 +21,7 @@ app.use(express.json()); // JSON adatküldés engedélyezése (pl. POST és PUT 
 // Mongoose modellek létrehozása a "Dolgozat" és "Felhasznalo" gyűjteményekhez
 const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     cím: { type: String, required: true },
+    leiras: { type: String },
     hallgato_ids: { type: [String], required: true }, // ✔ Több hallgató támogatása
     temavezeto_id: { type: String, required: true },
     allapot: { type: String, default: 'benyújtva' },
@@ -189,7 +190,19 @@ app.get('/api/dolgozatok/kesz', async (req, res) => {
     }
 });
 
-// Új dolgozat hozzáadása
+
+  // Új dolgozat hozzáadása
+app.post('/api/dolgozatok', async (req, res) => {
+    const { cím, hallgato_ids, temavezeto_id, allapot, leiras } = req.body;
+    try {
+        const dolgozat = new Dolgozat({ cím, hallgato_ids, temavezeto_id, allapot, leiras });
+        await dolgozat.save();
+        res.status(201).json(dolgozat);
+    } catch (error) {
+        console.error('Hiba történt a dolgozat hozzáadásakor:', error);
+        res.status(500).json({ error: 'Hiba történt a dolgozat hozzáadásakor' });
+    }
+});
 
 
 // Dolgozat módosítása

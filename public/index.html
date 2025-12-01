@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TDK Adminisztrációs Rendszer</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
     <header>
@@ -13,7 +14,15 @@
     <ul>
         <li><a href="index.html">Főoldal</a></li>
         <li><a href="users.html">Felhasználók kezelése</a></li>
-        <li><a href="papers.html">Dolgozatok kezelése</a></li>
+        <li class="dropdown">
+    <a href="#" class="dropbtn">Dolgozatok kezelése</a>
+    <div class="dropdown-content">
+        <a href="papers.html">Új dolgozat hozzáadása</a>
+        <a href="review-papers.html">Dolgozatok értékelése</a>
+        <a href="completed-papers.html">Befejezett dolgozatok</a>
+    </div>
+</li>
+
         <li><a href="login.html" id="login-link">Bejelentkezés</a></li>
         <li><a href="#" id="logout-link" style="display: none;">Kijelentkezés</a></li>
     </ul>

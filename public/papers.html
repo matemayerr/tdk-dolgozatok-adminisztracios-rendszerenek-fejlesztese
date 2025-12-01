@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dolgozatok kezelése</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+
 </head>
 <body>
     <header>
@@ -30,24 +32,36 @@
     <main>
         <section>
         <p>
+            
             <!-- Új dolgozat felvétele -->
-            <h2>Új dolgozat hozzáadása:</h2>
-            <form id="dolgozat-form">
-                <input type="text" id="dolgozat-cim" placeholder="Dolgozat címe" required>
-                <div class="dropdown">
-    <button class="dropbtn" onclick="toggleDropdown()">Hallgató(k) kiválasztása ▼</button>
-    <div id="hallgato-lista" class="dropdown-content">
-        <!-- Ide töltjük be a hallgatók checkboxait -->
-    </div>
+<button id="uj-dolgozat-gomb">Új dolgozat hozzáadása</button>
+
+<!-- A form rejtve, kattintásra jelenik meg -->
+<div id="uj-dolgozat-form" class="modal-form uj-dolgozat-form" style="display: none;">
+    <input type="text" id="dolgozat-cim" placeholder="Dolgozat címe">
+    <textarea id="dolgozat-leiras" placeholder="Rövid leírás"></textarea>
+
+<div class="user-dropdown">
+  <button class="dropdown-btn">Hallgató(k) kiválasztása ▾</button>
+  <div class="dropdown-content" id="hallgato-lista">
+    <!-- JS generálja ide -->
+  </div>
 </div>
 
-<div class="dropdown">
-    <button class="dropbtn" onclick="toggleDropdown()">Témavezető kiválasztása ▼</button>
-    <div id="temavezeto-lista" class="dropdown-content"></div>
+<div class="user-dropdown">
+  <button class="dropdown-btn">Témavezető kiválasztása ▾</button>
+  <div class="dropdown-content" id="temavezeto-lista">
+    <!-- JS generálja ide -->
+  </div>
 </div>
 
-                <button type="submit">Hozzáadás</button>
-            </form>
+    <button id="hozzaadas-gomb">Hozzáadás</button>
+    <button id="megse-gomb">Mégse</button>
+</div>
+
+<!-- Homályosító réteg -->
+<div id="homalyositas" class="blur-layer" style="display: none;"></div>
+
 
             <!-- "Felvett dolgozatok" és kereső ikon egy sorban -->
             <div class="header-with-search">
@@ -62,6 +76,7 @@
                 <thead>
                     <tr>
                         <th>Cím</th>
+                        <th>Leírás</th>
                         <th>Hallgató Neptun-kód</th>
                         <th>Témavezető Neptun-kód</th>
                         <th>Állapot</th>

@@ -67,6 +67,7 @@ function megjelenitDolgozatok() {
         tr.dataset.id = dolgozat._id;
         tr.innerHTML = `
             <td title="${dolgozat.cím}">${roviditettCim}</td>
+            <td>${dolgozat.leiras || ''}</td> 
             <td>${dolgozat.hallgato_ids ? dolgozat.hallgato_ids.join(', ') : 'N/A'}</td>
             <td>${dolgozat.temavezeto_id || 'N/A'}</td>
             <td>${dolgozat.allapot || 'N/A'}</td>
@@ -268,13 +269,58 @@ async function saveDolgozat(id, cells) {
     }
 
     // Keresés
-    searchInput.addEventListener('input', () => {
+    searchInput.addEventListener('input', () => {tr.inn
         currentPage = 1;
         megjelenitDolgozatok();
     });
+    
+    const ujDolgozatGomb = document.getElementById('uj-dolgozat-gomb');
+const ujDolgozatForm = document.getElementById('uj-dolgozat-form');
+const homalyositas = document.getElementById('homalyositas');
+const megseGomb = document.getElementById('megse-gomb');
+
+ujDolgozatGomb.addEventListener('click', () => {
+    ujDolgozatForm.style.display = 'block';
+    homalyositas.style.display = 'block';
+});
+
+megseGomb.addEventListener('click', () => {
+    ujDolgozatForm.style.display = 'none';
+    homalyositas.style.display = 'none';
+});
+
 
     // Indításkor dolgozatok betöltése és felhasználók betöltése csoport szerint
     listazDolgozatok();
     betoltFelhasznalok();
+});
+
+// Lebegő menü dropdownok kezeléséhez
+document.querySelectorAll('.dropdown-btn').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();  // Ne záródjon be
+        const dropdown = this.parentElement;
+        dropdown.classList.toggle('active');
+    });
+});
+
+// Ne zárja be a menüt, ha a felhasználó a checkboxra vagy radiogombra kattint
+document.querySelectorAll('.user-dropdown .dropdown-content').forEach(content => {
+    content.addEventListener('click', function (e) {
+        e.stopPropagation(); // Ne terjedjen fel
+    });
+});
+
+// Ha ESC-et nyom a felhasználó, bezárja az összeset (opcionális)
+document.addEventListener('keydown', function (e) {
+    if (e.key === "Escape") {
+        document.querySelectorAll('.user-dropdown').forEach(drop => drop.classList.remove('active'));
+    }
+});
+
+
+// Ha a felhasználó máshova kattint, zárjuk be a dropdownokat
+document.addEventListener('click', () => {
+    document.querySelectorAll('.user-dropdown').forEach(drop => drop.classList.remove('active'));
 });
 

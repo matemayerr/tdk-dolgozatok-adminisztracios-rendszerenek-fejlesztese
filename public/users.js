@@ -167,16 +167,18 @@ window.toggleDropdown = function(id) {
     dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
 };
 
-
 // Bezárja a lenyíló menüt, ha máshova kattintasz
 document.addEventListener('click', function(event) {
-    const dropdowns = document.querySelectorAll('.dropdown-content');
+    const dropdowns = document.querySelectorAll('.user-dropdown .dropdown-content');
     dropdowns.forEach(dropdown => {
         if (!dropdown.parentElement.contains(event.target)) {
             dropdown.style.display = 'none';
         }
     });
 });
+
+
+
 
 
     loadFelhasznalok();
