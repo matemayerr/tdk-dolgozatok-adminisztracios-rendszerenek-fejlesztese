@@ -3,9 +3,37 @@ document.addEventListener('DOMContentLoaded', function () {
     const dolgozatTbody = document.getElementById('dolgozat-tbody');
     const searchInput = document.getElementById('dolgozat-search-input');
     const paginationContainer = document.getElementById('dolgozat-pagination');
+    const hallgatoSelect = document.getElementById('dolgozat-hallgato-id');
+    const temavezetoSelect = document.getElementById('dolgozat-temavezeto-id');
     let dolgozatok = [];
     let currentPage = 1;
     const itemsPerPage = 10;
+
+    // Felhasználók betöltése csoportok szerint
+    async function betoltFelhasznalok() {
+        try {
+            const response = await fetch('/api/felhasznalok/csoportok');
+            const { hallgatok, temavezetok } = await response.json();
+
+            hallgatoSelect.innerHTML = '<option value="">Válasszon hallgatót</option>';
+            hallgatok.forEach(hallgato => {
+                const option = document.createElement('option');
+                option.value = hallgato.neptun;
+                option.textContent = `${hallgato.nev} (${hallgato.neptun})`;
+                hallgatoSelect.appendChild(option);
+            });
+
+            temavezetoSelect.innerHTML = '<option value="">Válasszon témavezetőt</option>';
+            temavezetok.forEach(temavezeto => {
+                const option = document.createElement('option');
+                option.value = temavezeto.neptun;
+                option.textContent = `${temavezeto.nev} (${temavezeto.neptun})`;
+                temavezetoSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Hiba történt a felhasználók betöltése során:', error);
+        }
+    }
 
     // Dolgozatok lekérdezése
     async function listazDolgozatok() {
@@ -57,8 +85,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const formData = {
                 cím: document.getElementById('dolgozat-cim').value,
-                hallgato_id: document.getElementById('dolgozat-hallgato-id').value,
-                temavezeto_id: document.getElementById('dolgozat-temavezeto-id').value,
+                hallgato_id: hallgatoSelect.value,
+                temavezeto_id: temavezetoSelect.value,
                 allapot: "benyújtva"
             };
 
@@ -68,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             try {
-                const response = await fetch('/api/dolgozatok/feltoltes', {
+                const response = await fetch('/api/dolgozatok', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
@@ -76,8 +104,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (response.ok) {
                     const ujDolgozat = await response.json();
-                    dolgozatok.push(ujDolgozat); // Hozzáadjuk az új dolgozatot a listához
-                    megjelenitDolgozatok(); // Frissítjük a megjelenítést
+                    dolgozatok.push(ujDolgozat);
+                    megjelenitDolgozatok();
                     dolgozatForm.reset();
                 } else {
                     console.error('Hiba történt a dolgozat hozzáadása során');
@@ -183,13 +211,26 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Kereső megjelenítése/elrejtése
+    window.toggleDolgozatSearch = function() {
+        if (searchInput.style.display === 'none') {
+            searchInput.style.display = 'block';
+            searchInput.focus();
+        } else {
+            searchInput.style.display = 'none';
+            searchInput.value = '';
+            megjelenitDolgozatok();
+        }
+    }
+
     // Keresés
     searchInput.addEventListener('input', () => {
         currentPage = 1;
         megjelenitDolgozatok();
     });
 
-    // Indításkor dolgozatok betöltése
+    // Indításkor dolgozatok betöltése és felhasználók betöltése csoport szerint
     listazDolgozatok();
+    betoltFelhasznalok();
 });
 
