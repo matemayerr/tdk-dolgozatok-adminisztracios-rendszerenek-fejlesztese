@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bejelentkezés</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>TDK Adminisztrációs Rendszer</h1>
+    </header>
+
+    <main>
+        <section>
+            <p><h2>Bejelentkezés</h2>
+            <form id="login-form">
+                <input type="text" id="neptun" placeholder="Neptun-kód" required>
+                <input type="password" id="jelszo" placeholder="Jelszó" required>
+                <button type="submit">Bejelentkezés</button>
+            </form>
+            <p id="login-error" style="color: red; display: none;">Hibás Neptun-kód vagy jelszó!</p>
+        </section>
+    </main>
+
+    <script src="login.js"></script>
+</body>
+</html>
+

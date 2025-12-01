@@ -30,12 +30,86 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     elutasitas_oka: { type: String }
 }));
 
+const bcrypt = require('bcrypt');
+
+// Felhasznalo modell
 const Felhasznalo = mongoose.model('felhasznalo', new mongoose.Schema({
     nev: { type: String, required: true },
-    neptun: { type: String, required: true },
+    neptun: { type: String, required: true, unique: true },
     email: { type: String, required: true },
-    csoport: { type: String, required: true }
+    csoport: { type: String, required: true },
+    password: { type: String, required: true }
 }));
+
+// Ellenörzöm a Neptun-kod és jelszo helyesseget, majd egy JWT tokent adok vissza
+const jwt = require('jsonwebtoken');
+const secretKey = 'titkosKulcs123'; // Titkos kulcs a tokenhez (ezt .env-be kellene tenni)
+
+app.post('/api/login', async (req, res) => {
+    const { neptun, jelszo } = req.body;
+
+    try {
+        console.log("Bejelentkezési próbálkozás:", neptun);
+
+        const felhasznalo = await Felhasznalo.findOne({ neptun });
+        if (!felhasznalo) {
+            console.error("Nincs ilyen felhasználó:", neptun);
+            return res.status(400).json({ error: 'Hibás Neptun-kód vagy jelszó' });
+        }
+
+        console.log("Felhasználó megtalálva:", felhasznalo);
+
+        // Ellenőrizzük, hogy van-e jelszó a request-ben
+        if (!jelszo) {
+            console.error("Nincs jelszó megadva a bejelentkezéshez!");
+            return res.status(400).json({ error: 'Hiányzó jelszó!' });
+        }
+
+        // Ellenőrizzük, hogy a felhasználónak van-e mentett jelszava
+        if (!felhasznalo.password) {
+            console.error("A felhasználónak nincs jelszava az adatbázisban!");
+            return res.status(500).json({ error: 'Nincs jelszó mentve az adatbázisban!' });
+        }
+
+        const isMatch = await bcrypt.compare(jelszo, felhasznalo.password);
+        if (!isMatch) {
+            console.error("Helytelen jelszó:", jelszo);
+            return res.status(400).json({ error: 'Hibás Neptun-kód vagy jelszó' });
+        }
+
+        console.log("Jelszó egyezik, token generálás...");
+        const token = jwt.sign({ id: felhasznalo._id, csoport: felhasznalo.csoport }, secretKey, { expiresIn: '1h' });
+
+        console.log("Bejelentkezés sikeres!");
+        res.json({ token, felhasznalo });
+    } catch (error) {
+        console.error("Hiba történt a bejelentkezés során:", error);
+        res.status(500).json({ error: 'Szerverhiba' });
+    }
+});
+
+// A frontend oldalon torli a tokent
+app.post('/api/logout', (req, res) => {
+    res.json({ message: 'Sikeres kijelentkezés' });
+});
+
+// Az endpoint biztositja, hogy a jelszavak biztonsagban legyenek mentve
+app.post('/api/register', async (req, res) => {
+    const { nev, neptun, email, csoport, jelszo } = req.body;
+
+    try {
+        const hash = await bcrypt.hash(jelszo, 10);
+        const ujFelhasznalo = new Felhasznalo({ nev, neptun, email, csoport, jelszo: hash });
+        await ujFelhasznalo.save();
+        res.status(201).json({ message: 'Sikeres regisztráció' });
+    } catch (error) {
+        res.status(500).json({ error: 'Hiba történt a regisztráció során' });
+    }
+});
+
+
+
+
 
 // Nodemailer beállítása SendGrid SMTP szerverrel az e-mail küldéshez
 const transporter = nodemailer.createTransport({
