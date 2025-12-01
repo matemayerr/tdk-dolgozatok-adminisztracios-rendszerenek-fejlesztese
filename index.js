@@ -76,6 +76,7 @@ app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res
         }
 
         dolgozat.filePath = `/uploads/${req.file.filename}`;
+        dolgozat.allapot = 'feltöltve'; // Állapot frissítése 'feltöltve' értékre
         await dolgozat.save();
 
         res.status(200).json({ message: 'Fájl sikeresen feltöltve', filePath: dolgozat.filePath });
@@ -83,6 +84,7 @@ app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res
         res.status(500).json({ error: 'Hiba történt a fájl mentésekor' });
     }
 });
+
 
 // Minden dolgozat lekérdezése
 app.get('/api/dolgozatok', async (req, res) => {
@@ -97,12 +99,16 @@ app.get('/api/dolgozatok', async (req, res) => {
 // Kész dolgozatok lekérdezése
 app.get('/api/dolgozatok/kesz', async (req, res) => {
     try {
-        const keszDolgozatok = await Dolgozat.find({ allapot: 'elfogadva' });
+        // Az allapot mező többféle értékkel is megjelenhet
+        const keszDolgozatok = await Dolgozat.find({ 
+            allapot: { $in: ['elfogadva', 'feltöltésre vár', 'feltöltve'] } 
+        });
         res.json(keszDolgozatok);
     } catch (error) {
         res.status(500).json({ error: 'Hiba történt a kész dolgozatok lekérésekor' });
     }
 });
+
 
 // Dolgozat értékelése
 app.put('/api/dolgozatok/ertekeles/:id', async (req, res) => {

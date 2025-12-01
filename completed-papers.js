@@ -24,31 +24,30 @@ document.addEventListener('DOMContentLoaded', function () {
         const tr = document.createElement('tr');
         tr.dataset.id = dolgozat._id;
 
+        const isFeltoltve = dolgozat.allapot === 'feltöltve';
+
         tr.innerHTML = `
             <td>${dolgozat.cím || 'N/A'}</td>
             <td>${dolgozat.hallgato_id || 'N/A'}</td>
             <td>${dolgozat.temavezeto_id || 'N/A'}</td>
-            <td>${dolgozat.allapot || 'N/A'}</td>
+            <td class="upload-status" id="status-${dolgozat._id}">${isFeltoltve ? 'Feltöltve' : 'Feltöltésre vár'}</td>
             <td>
-                <input type="file" id="file-${dolgozat._id}" required>
-                <button class="upload-btn">Feltöltés</button>
+                <input type="file" id="file-${dolgozat._id}" ${isFeltoltve ? 'disabled' : ''}>
+                <button class="upload-btn" ${isFeltoltve ? 'disabled' : ''}>Feltöltés</button>
             </td>
-            <td class="upload-status" id="status-${dolgozat._id}">Nincs feltöltve</td>
         `;
         keszDolgozatokTbody.appendChild(tr);
 
-        // Feltöltési funkció hozzárendelése
         const uploadBtn = tr.querySelector('.upload-btn');
         uploadBtn.addEventListener('click', async () => {
-            await feltoltDolgozat(dolgozat._id);
+            await feltoltDolgozat(dolgozat._id, uploadBtn);
         });
     }
 
     // Fájl feltöltése az adott dolgozathoz
-    async function feltoltDolgozat(dolgozatId) {
+    async function feltoltDolgozat(dolgozatId, uploadBtn) {
         const fileInput = document.getElementById(`file-${dolgozatId}`);
         
-        // Ellenőrizzük, hogy a fileInput létezik
         if (!fileInput) {
             console.error(`Fájl input nem található: file-${dolgozatId}`);
             return;
@@ -74,19 +73,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error('Hiba történt a fájl feltöltése során');
             }
 
-            const result = await response.json();
             alert('Fájl sikeresen feltöltve!');
-
-            // Frissítjük a táblázatot, hogy jelezze a feltöltést
-            const statusCell = document.getElementById(`status-${dolgozatId}`);
-            if (statusCell) {
-                statusCell.textContent = 'Feltöltve';
-            }
+            document.getElementById(`status-${dolgozatId}`).textContent = 'Feltöltve';
+            fileInput.disabled = true;
+            uploadBtn.disabled = true;
         } catch (error) {
             console.error('Hiba történt a fájl feltöltése során:', error);
         }
     }
 
-    // Kész dolgozatok listázása indításkor
     listazKeszDolgozatok();
 });
+
