@@ -1,4 +1,4 @@
-// public/kar-biralat.js
+// public/faculties.js
 
 document.addEventListener('DOMContentLoaded', () => {
   initKarBiralatAdmin();
@@ -8,19 +8,22 @@ document.addEventListener('DOMContentLoaded', () => {
 let KAROK = [];
 let DOLGOZATOK = [];
 const biraloCache = {}; // rovidites -> biralok tömb
+let GLOBAL_UPLOAD_DEADLINE = null; // globális dolgozat feltöltési határidő
 
 async function initKarBiralatAdmin() {
   const hibadiv = document.getElementById('hiba-uzenet');
   hibadiv.textContent = '';
 
   try {
-    const [karok, dolgozatok] = await Promise.all([
+    const [karok, dolgozatok, globalHatarido] = await Promise.all([
       betoltKarok(),
-      betoltDolgozatok()
+      betoltDolgozatok(),
+      betoltGlobalFeltoltesHatarido()
     ]);
 
     KAROK = karok;
     DOLGOZATOK = dolgozatok;
+    GLOBAL_UPLOAD_DEADLINE = globalHatarido;
 
     renderKarok();
   } catch (err) {
@@ -28,7 +31,6 @@ async function initKarBiralatAdmin() {
     hibadiv.textContent = 'Hiba történt az adatok betöltésekor. Próbáld meg frissíteni az oldalt.';
   }
 
-  // Kijelentkezés gomb – ha máshogy csinálod, töröld/írd át
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
@@ -40,6 +42,19 @@ async function initKarBiralatAdmin() {
 }
 
 /* -------------------- SEGÉDFÜGGVÉNYEK – FETCH -------------------- */
+
+async function betoltGlobalFeltoltesHatarido() {
+  try {
+    const res = await fetch('/api/deadlines/dolgozat_feltoltes_global');
+    if (!res.ok) return null;
+
+    const d = await res.json();
+    return d.hatarido || null;
+  } catch (err) {
+    console.error('Hiba a globális feltöltési határidő lekérésekor:', err);
+    return null;
+  }
+}
 
 async function betoltKarok() {
   const res = await fetch('/api/karok');
@@ -85,7 +100,6 @@ async function mentsKarHatarido(karId, datumStr) {
   return await res.json();
 }
 
-
 async function hozzaadBiralo(dolgozatId, felhasznaloId) {
   const res = await fetch(`/api/dolgozatok/${dolgozatId}/add-reviewer`, {
     method: 'POST',
@@ -117,10 +131,9 @@ function renderKarok() {
   container.innerHTML = '';
 
   // 🔹 Map, ami akár rövidítésből, akár teljes névből egy "kulcsot" csinál
-  // Ha nincs rovidites, akkor a teljes nevet használjuk kulcsként
   const karKodMap = {};
   KAROK.forEach(kar => {
-    const keyValue = (kar.rovidites && kar.rovidites.trim()) || kar.nev; // pl. "GIVK" vagy teljes név
+    const keyValue = (kar.rovidites && kar.rovidites.trim()) || kar.nev;
 
     if (kar.rovidites && kar.rovidites.trim() !== '') {
       karKodMap[kar.rovidites] = keyValue;
@@ -136,7 +149,7 @@ function renderKarok() {
     let key = 'NINCS_KAR';
 
     if (d.kar) {
-      const mapped = karKodMap[d.kar];   // lehet "GIVK" VAGY a teljes név
+      const mapped = karKodMap[d.kar];
       key = mapped || 'NINCS_KAR';
     }
 
@@ -146,14 +159,12 @@ function renderKarok() {
     dolgozatokKarSzerint[key].push(d);
   });
 
-  // 🔹 végigmegyünk az összes karon – ugyanazzal a kulccsal kérdezzük le
   KAROK.forEach(kar => {
     const key = (kar.rovidites && kar.rovidites.trim()) || kar.nev;
     const karDolgozatok = dolgozatokKarSzerint[key] || [];
     renderEgyKarCard(container, kar, karDolgozatok);
   });
 
-  // 🔹 Kar nélküli dolgozatok külön cardban
   if (dolgozatokKarSzerint['NINCS_KAR'] && dolgozatokKarSzerint['NINCS_KAR'].length > 0) {
     renderEgyKarCard(
       container,
@@ -167,20 +178,17 @@ function renderKarok() {
   }
 }
 
-
-
 function formatDateForInput(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return '';
 
-  const year   = d.getFullYear();
-  const month  = String(d.getMonth() + 1).padStart(2, '0');
-  const day    = String(d.getDate()).padStart(2, '0');
-  const hours  = String(d.getHours()).padStart(2, '0');
-  const mins   = String(d.getMinutes()).padStart(2, '0');
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const mins = String(d.getMinutes()).padStart(2, '0');
 
-  // 👉 datetime-local input formátuma: YYYY-MM-DDTHH:MM
   return `${year}-${month}-${day}T${hours}:${mins}`;
 }
 
@@ -189,7 +197,6 @@ function formatDateHuman(dateStr) {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return 'Érvénytelen dátum';
 
-  // Dátum + idő magyar formátumban
   return d.toLocaleString('hu-HU', {
     year: 'numeric',
     month: '2-digit',
@@ -225,14 +232,24 @@ async function renderEgyKarCard(container, kar, karDolgozatok) {
   hataridoWrapper.style.gap = '8px';
 
   const hataridoInput = document.createElement('input');
-    hataridoInput.type = 'datetime-local';          // dátum + idő
-    hataridoInput.value = formatDateForInput(kar.feltoltesHatarido);
-    hataridoInput.style.padding = '2px 4px';
+  const effectiveDate = kar.feltoltesHatarido || GLOBAL_UPLOAD_DEADLINE;
 
+  hataridoInput.type = 'datetime-local';
+  hataridoInput.value = formatDateForInput(effectiveDate);
+  hataridoInput.style.padding = '2px 4px';
 
   const hataridoLabel = document.createElement('span');
   hataridoLabel.style.fontSize = '0.85rem';
-  hataridoLabel.textContent = `Jelenlegi: ${formatDateHuman(kar.feltoltesHatarido)}`;
+
+  if (kar.feltoltesHatarido) {
+    hataridoLabel.textContent =
+      `Jelenlegi (kar-specifikus): ${formatDateHuman(kar.feltoltesHatarido)}`;
+  } else if (GLOBAL_UPLOAD_DEADLINE) {
+    hataridoLabel.textContent =
+      `Jelenlegi (globális alap): ${formatDateHuman(GLOBAL_UPLOAD_DEADLINE)}`;
+  } else {
+    hataridoLabel.textContent = 'Jelenlegi: nincs beállítva határidő';
+  }
 
   const hataridoBtn = document.createElement('button');
   hataridoBtn.textContent = 'Határidő mentése';
@@ -241,27 +258,62 @@ async function renderEgyKarCard(container, kar, karDolgozatok) {
   hataridoBtn.addEventListener('click', async () => {
     const hibadiv = document.getElementById('hiba-uzenet');
     hibadiv.textContent = '';
+
     try {
       if (kar.rovidites === 'NINCS_KAR') {
         alert('Kar nélküli gyűjtőhöz nem állíthatsz be határidőt.');
         return;
       }
 
+      // ❌ Nincs dátum az inputban
       if (!hataridoInput.value) {
-        alert('Kérlek válassz dátumot!');
+        if (GLOBAL_UPLOAD_DEADLINE) {
+          const confirmed = confirm(
+            'Nem adtál meg dátumot.\n\n' +
+            'Ebben az esetben a kar-specifikus határidőt töröljük, ' +
+            'és ez a kar a globális dolgozat-feltöltési határidőt fogja használni.\n\n' +
+            'Folytatod?'
+          );
+          if (!confirmed) return;
+
+          const updated = await mentsKarHatarido(kar._id, null);
+          kar.feltoltesHatarido = updated.feltoltesHatarido;
+
+          hataridoInput.value = formatDateForInput(GLOBAL_UPLOAD_DEADLINE);
+          hataridoLabel.textContent =
+            `Jelenlegi (globális alap): ${formatDateHuman(GLOBAL_UPLOAD_DEADLINE)}`;
+
+          alert('A kar-specifikus határidő törölve, mostantól a globális határidő érvényes erre a karra is.');
+          return;
+        }
+
+        // Globális sincs → tényleg korlátlan
+        const confirmed = confirm(
+          'Nem adtál meg dátumot, és globális feltöltési határidő sincs beállítva.\n\n' +
+          'Ebben az esetben ez a kar nem lesz időkorlátozva a feltöltésnél.\n\n' +
+          'Biztosan folytatod?'
+        );
+        if (!confirmed) return;
+
+        const updated = await mentsKarHatarido(kar._id, null);
+        kar.feltoltesHatarido = updated.feltoltesHatarido;
+
+        hataridoInput.value = '';
+        hataridoLabel.textContent = 'Jelenlegi: nincs beállítva határidő';
+
+        alert('A kar-specifikus határidő törölve, nincs korlát.');
         return;
       }
 
+      // ✅ Van dátum → mentés
       const updated = await mentsKarHatarido(kar._id, hataridoInput.value);
-kar.feltoltesHatarido = updated.feltoltesHatarido;
+      kar.feltoltesHatarido = updated.feltoltesHatarido;
 
-// 🔹 input értéke is frissüljön
-hataridoInput.value = formatDateForInput(updated.feltoltesHatarido);
+      hataridoInput.value = formatDateForInput(updated.feltoltesHatarido);
+      hataridoLabel.textContent =
+        `Jelenlegi (kar-specifikus): ${formatDateHuman(updated.feltoltesHatarido)}`;
 
-// 🔹 felirat frissítése
-hataridoLabel.textContent = `Jelenlegi: ${formatDateHuman(updated.feltoltesHatarido)}`;
-alert('Határidő sikeresen mentve.');
-
+      alert('Határidő sikeresen mentve.');
     } catch (err) {
       console.error(err);
       hibadiv.textContent = err.message || 'Hiba a határidő mentésekor.';
@@ -285,7 +337,6 @@ alert('Határidő sikeresen mentve.');
     p.style.fontStyle = 'italic';
     body.appendChild(p);
   } else {
-    // bírálók betöltése az adott karhoz
     let biralok;
     try {
       biralok = await betoltBiralok(kar.rovidites === 'NINCS_KAR' ? 'osszes' : kar.rovidites);
@@ -316,28 +367,23 @@ alert('Határidő sikeresen mentve.');
     karDolgozatok.forEach(d => {
       const tr = document.createElement('tr');
 
-      // Cím
       const tdCim = document.createElement('td');
       tdCim.textContent = d.cim;
       tdCim.style.fontWeight = '500';
 
-      // Hallgatók
       const tdHallgato = document.createElement('td');
       tdHallgato.innerHTML = (d.szerzok || [])
         .map(s => `${s.nev || 'Ismeretlen'} <span style="opacity:0.7;">(${s.neptun || ''})</span>`)
         .join('<br>') || '-';
 
-      // Témavezetők
       const tdTema = document.createElement('td');
       tdTema.innerHTML = (d.temavezeto || [])
         .map(t => `${t.nev || 'Ismeretlen'} <span style="opacity:0.7;">(${t.neptun || ''})</span>`)
         .join('<br>') || '-';
 
-      // Állapot
       const tdAllapot = document.createElement('td');
       tdAllapot.textContent = d.allapot || '-';
 
-      // Bírálók lista
       const tdBiralok = document.createElement('td');
       if (!d.biralok || d.biralok.length === 0) {
         tdBiralok.textContent = 'Nincs bíráló';
@@ -365,9 +411,8 @@ alert('Határidő sikeresen mentve.');
 
             try {
               await torolBiralo(d._id, b.id);
-              // frontend állapot frissítése
               d.biralok = d.biralok.filter(x => x.id !== b.id);
-              renderKarok(); // egyszerű megoldás: újrarendereljük az egészet
+              renderKarok();
             } catch (err) {
               console.error(err);
               hibadiv.textContent = err.message || 'Hiba a bíráló törlésekor.';
@@ -380,7 +425,6 @@ alert('Határidő sikeresen mentve.');
         });
       }
 
-      // Új bíráló választása
       const tdUjBiralo = document.createElement('td');
 
       if (kar.rovidites === 'NINCS_KAR') {
@@ -421,7 +465,6 @@ alert('Határidő sikeresen mentve.');
 
           try {
             await hozzaadBiralo(d._id, valasztottId);
-            // backend sikeres, újratöltjük az adatokat
             DOLGOZATOK = await betoltDolgozatok();
             renderKarok();
           } catch (err) {

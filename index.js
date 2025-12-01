@@ -57,12 +57,91 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
         type: String,
         enum: ['Felkérve', 'Elfogadva', 'Elutasítva'],
         default: 'Felkérve'
-      }
+      },
+            // ⬇️ mikor küldtünk neki utoljára emlékeztetőt
+      lastReminderAt: { type: Date }
     }
   ],
   szekcioId: { type: mongoose.Schema.Types.ObjectId, ref: 'Section', default: null }
 }));
 
+
+// 🔹 Határidők modell
+const DeadlineSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true }, // pl. 'dolgozat_jelentkezes'
+  nev: { type: String, required: true },               // emberi név
+  leiras: { type: String },                            // magyarázat (opcionális)
+  hatarido: { type: Date, required: true },            // konkrét dátum+idő
+  soft: { type: Boolean, default: false }              // true = túlléphető (pl. bírálat)
+});
+
+const Deadline = mongoose.model('Deadline', DeadlineSchema);
+
+
+// 🔹 Összes határidő lekérése
+app.get('/api/deadlines', async (req, res) => {
+  try {
+    const deadlines = await Deadline.find().lean();
+    res.json(deadlines);
+  } catch (err) {
+    console.error('Hiba a határidők lekérésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a határidők lekérésekor' });
+  }
+});
+
+// 🔹 Egy konkrét határidő lekérése kulcs alapján
+app.get('/api/deadlines/:key', async (req, res) => {
+  try {
+    const deadline = await Deadline.findOne({ key: req.params.key }).lean();
+    if (!deadline) {
+      return res.status(404).json({ error: 'Nincs ilyen határidő beállítva.' });
+    }
+    res.json(deadline);
+  } catch (err) {
+    console.error('Hiba a határidő lekérésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a határidő lekérésekor' });
+  }
+});
+
+// 🔹 Határidő létrehozása / módosítása kulcs alapján (upsert)
+app.put('/api/deadlines/:key', async (req, res) => {
+  try {
+    const key = req.params.key;               // pl. 'dolgozat_jelentkezes'
+    const { hatarido, nev, leiras } = req.body;
+
+    if (!hatarido) {
+      return res.status(400).json({ error: 'Hiányzik a határidő.' });
+    }
+
+    const date = new Date(hatarido);
+    if (isNaN(date.getTime())) {
+      return res.status(400).json({ error: 'Érvénytelen dátum formátum.' });
+    }
+
+    // Ezek lesznek "soft" határidők (túlléphető, csak figyelmeztetést küldünk majd)
+    const softKeys = ['biralat_hatarido'];
+    const soft = softKeys.includes(key);
+
+    const updated = await Deadline.findOneAndUpdate(
+      { key },
+      {
+        $set: {
+          key,
+          nev: nev || key,
+          leiras: leiras || '',
+          hatarido: date,
+          soft
+        }
+      },
+      { upsert: true, new: true }
+    );
+
+    res.json(updated);
+  } catch (err) {
+    console.error('Hiba a határidő mentésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a határidő mentésekor.' });
+  }
+});
 
 
 
@@ -219,7 +298,7 @@ app.post('/api/dolgozatok/ertekeles/:id', async (req, res) => {
 
         dolgozat.pontszam = pontszam;
         dolgozat.szovegesErtekeles = szovegesErtekeles;
-        dolgozat.allapot = 'értékelve';
+        dolgozat.allapot = 'bírálva';
         await dolgozat.save();
 
         res.status(200).json({ message: 'Értékelés sikeresen mentve.', dolgozat });
@@ -346,6 +425,12 @@ app.get('/api/dolgozatok/feltoltheto', async (req, res) => {
 
 // Új dolgozat hozzáadása
 app.post('/api/dolgozatok', async (req, res) => {
+    // 🔹 Határidő ellenőrzés – csak akkor tilt, ha be van állítva
+  if (await isGlobalDeadlineExpired('dolgozat_jelentkezes')) {
+    return res.status(400).json({
+      error: 'A dolgozat jelentkezési határideje lejárt, új dolgozat már nem adható le.'
+    });
+  }
   // kar-t is vegyük át a body-ból
   const { cím, hallgato_ids, temavezeto_ids, leiras, kar: bodyKar } = req.body;
 
@@ -457,7 +542,7 @@ app.put('/api/dolgozatok/:id/status', async (req, res) => {
         'elfogadva',
         'elutasítva',
         'bírálat alatt',
-        'értékelve',
+        'bírálva',
         'zsűrizésre kész'
         ];
 
@@ -685,6 +770,21 @@ app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res
   }
 });
 
+async function isGlobalDeadlineExpired(key) {
+  try {
+    const d = await Deadline.findOne({ key }).lean();
+    if (!d || !d.hatarido) return false; // ha nincs beállítva, ne tiltsunk
+
+    const now = new Date();
+    const hatarido = new Date(d.hatarido);
+
+    return now.getTime() > hatarido.getTime();
+  } catch (err) {
+    console.error('Hiba a globális határidő ellenőrzésekor:', err);
+    // hiba esetén inkább ne bénítsuk le a rendszert
+    return false;
+  }
+}
 
 
 
@@ -699,6 +799,10 @@ app.post('/api/papers/:id/ertekeles', async (req, res) => {
     if (!dolgozat) return res.status(404).send('Dolgozat nem található');
 
     dolgozat.ertekeles = ertekeles;
+
+    // ⬇️ Jelöljük, hogy a bírálat elkészült
+    dolgozat.allapot = 'bírálva';
+
     await dolgozat.save();
 
     res.json({ message: 'Értékelés elmentve', dolgozat });
@@ -707,6 +811,7 @@ app.post('/api/papers/:id/ertekeles', async (req, res) => {
     res.status(500).json({ error: 'Szerver hiba' });
   }
 });
+
 
 
 // Értékelés lekérdezése (megtekintéshez)
@@ -767,7 +872,7 @@ app.post('/api/dolgozatok/ertekeles-feltoltes/:id', upload.single('file'), async
 
         dolgozat.ertekelesFilePath = `/uploads/${req.file.filename}`;
         dolgozat.pontszam = pontszam;
-        dolgozat.allapot = 'értékelve';
+        dolgozat.allapot = 'bírálva';
         await dolgozat.save();
 
         const hallgato = await Felhasznalo.findOne({ neptun: dolgozat.hallgato_ids[0] });
@@ -900,8 +1005,9 @@ app.post('/api/regisztracio', async (req, res) => {
 app.get('/api/dolgozatok/ertekeleshez', async (req, res) => {
     try {
         const dolgozatok = await Dolgozat.find({
-            allapot: { $in: ['feltöltve', 'értékelve','elfogadva - témavezető által'] }
-        });
+          allapot: { $in: ['elfogadva - témavezető által', 'elutasítva - témavezető által'] },
+          'biralok.allapot': 'Elfogadva'
+        })
         res.json(dolgozatok);
     } catch (error) {
         res.status(500).json({ error: 'Hiba történt az értékelhető dolgozatok lekérésekor' });
@@ -1187,6 +1293,13 @@ app.post('/api/topics/:id/jelentkezes', async (req, res) => {
   const { id } = req.params;
   const { hallgato_ids } = req.body; // Több hallgató jelentkezhet
 
+    // 🔹 UGYANAZ A HATÁRIDŐ-ELLENŐRZÉS
+  if (await isGlobalDeadlineExpired('dolgozat_jelentkezes')) {
+    return res.status(400).json({
+      error: 'A dolgozat jelentkezési határideje lejárt, témára már nem lehet jelentkezni.'
+    });
+  }
+
   try {
     const topic = await TemaJavaslat.findById(id);
     if (!topic) return res.status(404).json({ error: 'Téma nem található' });
@@ -1429,29 +1542,68 @@ app.get('/api/stats/szemelyek', async (req, res) => {
   
 const UniversityStructure = require('./models/universityStructure.js');
 
+
 async function isUploadDeadlineExpiredForDolgozat(dolgozat) {
   try {
-    if (!dolgozat || !dolgozat.kar) return false;
+    const now = new Date();
+    let hatarido = null;
+    let forras = 'nincs';
 
-    const karDoc = await UniversityStructure.findOne({
-      $or: [
-        { rovidites: dolgozat.kar }, // pl. GIVK
-        { nev: dolgozat.kar }        // ha valahol teljes név van tárolva
-      ]
-    }).lean();
+    // 1️⃣ KAR-specifikus határidő – ha van kar, megpróbáljuk kinyerni
+    if (dolgozat && dolgozat.kar) {
+      const karDoc = await UniversityStructure.findOne({
+        $or: [
+          { rovidites: dolgozat.kar }, // pl. "GIVK"
+          { nev: dolgozat.kar }        // ha teljes név van eltárolva
+        ]
+      }).lean();
 
-    if (!karDoc || !karDoc.feltoltesHatarido) return false;
+      if (karDoc && karDoc.feltoltesHatarido) {
+        const d = new Date(karDoc.feltoltesHatarido);
+        if (!isNaN(d.getTime())) {
+          hatarido = d;
+          forras = `kar-specifikus (${karDoc.rovidites || karDoc.nev})`;
+        }
+      }
+    }
 
-    const now = new Date(); // 🔹 szerver ideje!
-    const hatarido = new Date(karDoc.feltoltesHatarido);
+    // 2️⃣ Ha még nincs határidő, akkor jön a GLOBÁLIS
+    if (!hatarido) {
+      const globalDeadlineDoc = await Deadline.findOne({
+        key: 'dolgozat_feltoltes_global'
+      }).lean();
 
-    return now.getTime() > hatarido.getTime(); // true = lejárt
+      if (globalDeadlineDoc && globalDeadlineDoc.hatarido) {
+        const d = new Date(globalDeadlineDoc.hatarido);
+        if (!isNaN(d.getTime())) {
+          hatarido = d;
+          forras = 'globális';
+        }
+      }
+    }
+
+    // 3️⃣ Ha se kar-specifikus, se globális nincs → nincs korlát
+    if (!hatarido) {
+      console.log(`⏱ NINCS feltöltési határidő (dolgozat=${dolgozat?._id})`);
+      return false;
+    }
+
+    const lejart = now.getTime() > hatarido.getTime();
+    console.log(
+      `⏱ Feltöltési határidő forrás=${forras}, határidő=${hatarido.toISOString()}, ` +
+      `now=${now.toISOString()}, lejart=${lejart}`
+    );
+
+    return lejart;
   } catch (err) {
     console.error('Hiba a feltöltési határidő ellenőrzésekor:', err);
-    // hiba esetén inkább ne tiltsunk (false), hogy ne bénuljon le a rendszer
+    // hiba esetén inkább ne tiltsunk le mindent
     return false;
   }
 }
+
+
+
 
 
 // 🔹 Egyetemi struktúra lekérdezése
@@ -1684,16 +1836,29 @@ app.get('/api/karok', async (req, res) => {
   }
 });
 
-// 🔹 Karhoz tartozó dolgozat-feltöltési határidő mentése
+// 🔹 Karhoz tartozó dolgozat-feltöltési határidő mentése / törlése
 app.put('/api/karok/:id/hatarido', async (req, res) => {
   try {
     const { id } = req.params;
     const { hatarido } = req.body;
 
+    // 👉 Ha nincs határidő megadva: kar-specifikus határidő törlése (null),
+    //    innentől a globális dolgozat_feltoltes_global lesz az érvényes.
     if (!hatarido) {
-      return res.status(400).json({ error: 'Hiányzik a határidő.' });
+      const updated = await UniversityStructure.findByIdAndUpdate(
+        id,
+        { $set: { feltoltesHatarido: null } },
+        { new: true }
+      );
+
+      if (!updated) {
+        return res.status(404).json({ error: 'Kar nem található.' });
+      }
+
+      return res.json(updated);
     }
 
+    // 👉 Ha van dátum: normál mentés
     const updated = await UniversityStructure.findByIdAndUpdate(
       id,
       { feltoltesHatarido: new Date(hatarido) },
@@ -1710,6 +1875,8 @@ app.put('/api/karok/:id/hatarido', async (req, res) => {
     res.status(500).json({ error: 'Szerverhiba a határidő mentésekor.' });
   }
 });
+
+
 
 
 // ✅ Dolgozat eltávolítása szekcióból
@@ -1864,6 +2031,136 @@ app.post('/api/upload-homepage', upload.single('file'), async (req, res) => {
     res.status(500).json({ error: 'Nem sikerült feldolgozni a Word dokumentumot.' });
   }
 });
+
+
+async function sendDailyReviewReminders() {
+  try {
+    // 1️⃣ Bírálati (soft) határidő lekérése
+    const deadline = await Deadline.findOne({ key: 'biralat_hatarido' });
+    if (!deadline || !deadline.hatarido) {
+      return; // nincs beállítva, nincs mit küldeni
+    }
+
+    const now = new Date();
+    const hatarido = new Date(deadline.hatarido);
+    if (isNaN(hatarido.getTime())) return;
+
+    // Csak akkor küldünk, ha már lejárt a határidő
+    if (now <= hatarido) return;
+
+    const todayStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+
+    // 2️⃣ Összes olyan dolgozat, ahol van Elfogadott bíráló, de még NINCS kész a bírálat
+    const dolgozatok = await Dolgozat.find({
+      'biralok.allapot': 'Elfogadva',
+      allapot: { $ne: 'bírálva' }   // itt használjuk a fenti módosítást
+    }).populate('biralok.felhasznaloId'); // hogy legyen e-mail cím
+
+    for (const d of dolgozatok) {
+      for (const b of d.biralok) {
+        if (b.allapot !== 'Elfogadva') continue;
+
+        // Ha már ma küldtünk neki, ne küldjünk újra
+        if (b.lastReminderAt) {
+          const lastStr = b.lastReminderAt.toISOString().slice(0, 10);
+          if (lastStr === todayStr) continue;
+        }
+
+        const felhasznalo = b.felhasznaloId;
+        if (!felhasznalo || !felhasznalo.email) continue;
+
+        const emailSzoveg = betoltEmailSablon('emlekezteto_biralat_hatarido.txt', {
+          NEV: felhasznalo.nev || 'Tisztelt Bíráló',
+          DOLGOZATCIM: d.cím || 'ismeretlen című dolgozat',
+          HATARIDO: hatarido.toLocaleString('hu-HU'),
+          LINK: `http://localhost:3000/import_form.html?id=${d._id}`
+        });
+
+        await transporter.sendMail({
+          from: 'TDK rendszer <m48625729@gmail.com>',
+          to: felhasznalo.email,
+          subject: 'Emlékeztető: TDK dolgozat bírálata',
+          text: emailSzoveg
+        });
+
+        // Jelöljük, hogy ma már küldtünk neki
+        b.lastReminderAt = now;
+      }
+
+      await d.save();
+    }
+  } catch (err) {
+    console.error('Hiba a bírálói emlékeztetők küldésekor:', err);
+  }
+}
+
+// 3️⃣ Időzítő: óránként lefuttatjuk (lastReminderAt miatt így is csak napi 1 mail jut bírálónként)
+setInterval(() => {
+  // 1️⃣ Bírálat indítható (feltöltési határidő lejárt + témavezető elfogadta)
+  sendReviewStartEmailsAfterUploadDeadline()
+    .catch(err => console.error('Hiba a bírálat megkezdéséről szóló értesítéseknél:', err));
+
+  // 2️⃣ Már futó bírálatokhoz napi emlékeztető a bírálati határidő után
+  sendDailyReviewReminders()
+    .catch(err => console.error('Hiba az emlékeztető futtatásakor:', err));
+}, 1000 * 10); // óránként fut
+
+
+async function sendReviewStartEmailsAfterUploadDeadline() {
+  try {
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+
+    // 🔍 Olyan dolgozatok, amelyeket a témavezető már elfogadott,
+    // van elfogadott bírálójuk, de még NINCS kész bírálat.
+    const dolgozatok = await Dolgozat.find({
+      allapot: 'elfogadva - témavezető által',
+      'biralok.allapot': 'Elfogadva'
+    }).populate('biralok.felhasznaloId'); // kell az e-mail cím
+
+    for (const d of dolgozatok) {
+      // ⏱ ellenőrizzük, hogy LEJÁRT-e a feltöltési határidő erre a dolgozatra
+      const uploadDeadlineExpired = await isUploadDeadlineExpiredForDolgozat(d);
+      if (!uploadDeadlineExpired) continue;
+
+      // Végigmegyünk az elfogadott bírálókon
+      for (const b of d.biralok || []) {
+        if (b.allapot !== 'Elfogadva') continue;
+
+        // Ha ma már KÜLDTÜNK neki bármilyen bírálati e-mailt (start vagy emlékeztető), ne küldjünk még egyet
+        if (b.lastReminderAt) {
+          const lastStr = b.lastReminderAt.toISOString().slice(0, 10);
+          if (lastStr === todayStr) continue;
+        }
+
+        const felhasznalo = b.felhasznaloId;
+        if (!felhasznalo || !felhasznalo.email) continue;
+
+        const emailSzoveg = betoltEmailSablon('ertesites_biralat_megkezdheto.txt', {
+          NEV: felhasznalo.nev || 'Tisztelt Bíráló',
+          DOLGOZATCIM: d.cím || d.cim || 'ismeretlen című dolgozat',
+          LINK: `http://localhost:3000/import_form.html?id=${d._id}`
+        });
+
+        await transporter.sendMail({
+          from: 'TDK rendszer <m48625729@gmail.com>',
+          to: felhasznalo.email,
+          subject: 'TDK dolgozat bírálata megkezdhető',
+          text: emailSzoveg
+        });
+
+        // Megjegyezzük, hogy ma már küldtünk neki e-mailt
+        b.lastReminderAt = now;
+      }
+
+      await d.save();
+    }
+  } catch (err) {
+    console.error('Hiba a bírálat megkezdéséről szóló értesítések küldésekor:', err);
+  }
+}
+
+
 
 // -------------------------------
 // Főoldal tartalmának betöltése (a legutóbb feltöltött Word alapján)
@@ -2131,6 +2428,29 @@ app.delete('/api/dolgozatok/:id/files/:fileId', async (req, res) => {
     res.status(500).json({ error: 'Szerverhiba a fájl törlésekor' });
   }
 });
+
+
+
+// 🔹 Határidő törlése kulcs alapján
+app.delete('/api/deadlines/:key', async (req, res) => {
+  try {
+    const key = req.params.key;
+
+    // Töröljük a dokumentumot az adott kulcs alapján
+    const deleted = await Deadline.findOneAndDelete({ key });
+
+    // Ha nincs ilyen, én nem tekintem hibának – a cél úgyis az, hogy ne legyen határidő
+    if (!deleted) {
+      return res.status(200).json({ message: 'Nem volt beállítva határidő, nincs mit törölni.' });
+    }
+
+    res.json({ message: 'Határidő törölve.' });
+  } catch (err) {
+    console.error('Hiba a határidő törlésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a határidő törlésekor.' });
+  }
+});
+
 
 
 

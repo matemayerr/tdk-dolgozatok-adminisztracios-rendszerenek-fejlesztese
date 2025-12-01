@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Dolgozatok kezelése</title>
+        <title>Határidők kezelése - TDK rendszer</title>
         <link rel="stylesheet" href="styles.css">
         <link rel="icon" href="favicon.ico" type="image/x-icon">
 
@@ -42,17 +42,33 @@
     </ul>
     </nav>
 
-        </header>
+    </header>
+
 
   <main class="container">
-    <h1 style="margin-top: 20px;">Karok szerinti dolgozatok és bírálók kezelése</h1>
+    <h1>Határidők kezelése</h1>
+    <p>Itt tudod beállítani a TDK folyamatokhoz tartozó globális határidőket.</p>
 
-    <div id="karok-container" style="margin-top: 20px;"></div>
-    <div id="hiba-uzenet" style="color: red; margin-top: 10px;"></div>
+    <table id="deadline-table" class="table">
+      <thead>
+        <tr>
+          <th>Határidő típusa</th>
+          <th>Dátum és idő</th>
+          <th>Művelet</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- JS tölti fel -->
+      </tbody>
+    </table>
+
+    <p class="info">
+      Megjegyzés: ha egy határidő nincs beállítva, akkor az adott funkció nincs korlátozva.
+    </p>
   </main>
 
-</body>
+  <script src="deadlines.js"></script>
+  <script src="auth.js"></script>
 
-<script src="faculties.js" defer></script>
-<script src="auth.js"></script>
+</body>
 </html>

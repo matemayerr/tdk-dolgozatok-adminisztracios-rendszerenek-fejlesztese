@@ -10,6 +10,73 @@ document.addEventListener('DOMContentLoaded', function () {
     let aktualisModositandoId = null;
     let itemsPerPage = 25;
     let loggedInUser = null; // 🔹 bejelentkezett felhasználó adatai
+    let dolgozatJelentkezesDeadline = null;
+    let dolgozatJelentkezesLejart = false;
+
+
+
+    function formatDateTimeHu(date) {
+    return date.toLocaleString('hu-HU', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).replace(',', '');
+}
+
+// 🔹 Határidő lekérése a backendről
+async function betoltDolgozatJelentkezesHatarido() {
+    try {
+        const res = await fetch('/api/deadlines/dolgozat_jelentkezes');
+        if (!res.ok) return;           // ha nincs beállítva, nincs korlátozás
+        const data = await res.json();
+
+        if (!data.hatarido) return;
+
+        dolgozatJelentkezesDeadline = new Date(data.hatarido);
+        frissitDolgozatJelentkezesUI();
+    } catch (err) {
+        console.error('Hiba a dolgozat jelentkezési határidő betöltésekor:', err);
+    }
+}
+
+// 🔹 UI frissítése: szöveg + gombok
+function frissitDolgozatJelentkezesUI() {
+    if (!dolgozatJelentkezesDeadline) return;
+
+    const now = new Date();
+    dolgozatJelentkezesLejart = now.getTime() > dolgozatJelentkezesDeadline.getTime();
+
+    const infoElem = document.getElementById('dolgozat-deadline-info');
+    const ujDolgozatGomb = document.getElementById('uj-dolgozat-gomb');
+    const hozzaadasGomb = document.getElementById('hozzaadas-gomb');
+
+    const formatted = formatDateTimeHu(dolgozatJelentkezesDeadline);
+
+    if (infoElem) {
+        if (dolgozatJelentkezesLejart) {
+            infoElem.textContent =
+                `A dolgozat jelentkezési határidő lejárt (${formatted}). Új dolgozat már nem adható hozzá.`;
+            infoElem.classList.add('deadline-expired');
+        } else {
+            infoElem.textContent = `Dolgozat jelentkezési határidő: ${formatted}`;
+            infoElem.classList.remove('deadline-expired');
+        }
+    }
+
+    if (dolgozatJelentkezesLejart) {
+        if (ujDolgozatGomb) {
+            ujDolgozatGomb.disabled = true;
+            ujDolgozatGomb.classList.add('disabled-btn');
+        }
+        if (hozzaadasGomb) {
+            hozzaadasGomb.disabled = true;
+            hozzaadasGomb.classList.add('disabled-btn');
+        }
+    }
+}
+
 
 
 //sor kiválasztás
@@ -189,6 +256,12 @@ dolgozatTbody.appendChild(detailTr);  // Először a részletek jönnek alulra
 if (dolgozatForm) {
   dolgozatForm.addEventListener('submit', async (event) => {
     event.preventDefault();
+    
+    if (dolgozatJelentkezesLejart) {
+  alert('A dolgozat jelentkezési határideje lejárt, új dolgozat már nem adható hozzá.');
+  return;
+}
+
 
     if (!loggedInUser || !loggedInUser.neptun) {
       alert('Nem sikerült azonosítani a bejelentkezett hallgatót. Jelentkezz be újra!');
@@ -440,9 +513,14 @@ const homalyositas = document.getElementById('homalyositas');
 const megseGomb = document.getElementById('megse-gomb');
 
 ujDolgozatGomb.addEventListener('click', () => {
+    if (dolgozatJelentkezesLejart) {
+        alert('A dolgozat jelentkezési határideje lejárt, új dolgozat már nem hozható létre.');
+        return;
+    }
     ujDolgozatForm.style.display = 'block';
     homalyositas.style.display = 'block';
 });
+
 
 megseGomb.addEventListener('click', () => {
     ujDolgozatForm.style.display = 'none';
@@ -485,6 +563,8 @@ async function betoltAktualisFelhasznalo() {
     betoltAktualisFelhasznalo();
     listazDolgozatok();
     betoltFelhasznalok();
+    betoltDolgozatJelentkezesHatarido();
+
 });
 
 

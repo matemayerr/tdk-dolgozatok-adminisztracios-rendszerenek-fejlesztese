@@ -1,0 +1,11 @@
+Tisztelt {{NEV}}!
+
+A(z) "{{DOLGOZATCIM}}" című TDK dolgozat bírálatának határideje {{HATARIDO}} időponttal lejárt.
+
+Kérjük, hogy a bírálatát mielőbb töltse fel a rendszerbe:
+{{LINK}}
+
+Ez az emlékeztető mindaddig naponta kiküldésre kerül, amíg a bírálat el nem készül.
+
+Üdvözlettel,
+TDK Adminisztrációs Rendszer

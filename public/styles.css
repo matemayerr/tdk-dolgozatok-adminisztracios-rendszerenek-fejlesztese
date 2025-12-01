@@ -2281,3 +2281,37 @@ body.login-oldal {
 #menu-adminisztraciok {
   display: none;
 }
+
+
+.deadline-info {
+  margin: 8px 0 16px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.deadline-info.deadline-expired {
+  color: #b00020;
+  font-weight: bold;
+}
+
+button.disabled-btn {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* MINDEN olyan elemre hasson, amin van disabled-btn osztály */
+.disabled-btn {
+  background-color: #b0b0b0 !important;  /* szürke lesz, nem zöld */
+  border-color: #b0b0b0 !important;
+  color: #ffffff !important;
+  cursor: not-allowed !important;        /* áthúzott kör kurzor */
+  pointer-events: none;                  /* ne lehessen rákattintani */
+  opacity: 0.8;
+}
+
+/* hoverre se változzon meg */
+.disabled-btn:hover {
+  background-color: #b0b0b0 !important;
+  border-color: #b0b0b0 !important;
+  color: #ffffff !important;
+}

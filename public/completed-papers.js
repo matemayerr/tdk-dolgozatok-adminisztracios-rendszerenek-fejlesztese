@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', function () {
   let currentUploadPaperId = null;
   let selectedFiles = [];        // csak a most kiválasztott, még fel nem töltött fájlok
   let KAROK = [];                // /api/karok-ból jön
+  let GLOBAL_UPLOAD_DEADLINE = null; // 🔹 IDE hozzuk be a globális határidőt
+
 
   const feltoltesEngedelyezettAllapotok = [
     'jelentkezett',
@@ -389,29 +391,61 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  // 🔹 ÚJ: Globális dolgozatfeltöltési határidő betöltése
+  async function betoltGlobalFeltoltesHatarido() {
+    try {
+      const res = await fetch('/api/deadlines/dolgozat_feltoltes_global');
+      if (!res.ok) {
+        GLOBAL_UPLOAD_DEADLINE = null;
+        return;
+      }
+      const d = await res.json();
+      GLOBAL_UPLOAD_DEADLINE = d.hatarido || null;
+    } catch (err) {
+      console.error('Hiba a globális feltöltési határidő lekérésekor:', err);
+      GLOBAL_UPLOAD_DEADLINE = null;
+    }
+  }
+
   function getKarDeadlineInfo(dolgozat) {
-    if (!dolgozat || !dolgozat.kar) {
-      return {
-        text: 'Ehhez a dolgozathoz nincs kar beállítva.',
-        lejart: false
-      };
-    }
-
-    const karObj = KAROK.find(
-      k => k.rovidites === dolgozat.kar || k.nev === dolgozat.kar
-    );
-
-    if (!karObj || !karObj.feltoltesHatarido) {
-      return {
-        text: 'Ehhez a karhoz nincs feltöltési határidő beállítva.',
-        lejart: false
-      };
-    }
-
-    const hatarido = new Date(karObj.feltoltesHatarido);
     const now = new Date();
-    const lejart = now.getTime() > hatarido.getTime();
+    let hatarido = null;
+    let forras = '';
 
+    // 1️⃣ Kar-specifikus határidő
+    if (dolgozat.kar && KAROK && KAROK.length > 0) {
+      const karDoc = KAROK.find(k =>
+        (k.rovidites && k.rovidites === dolgozat.kar) ||
+        (k.nev && k.nev === dolgozat.kar)
+      );
+
+      if (karDoc && karDoc.feltoltesHatarido) {
+        const d = new Date(karDoc.feltoltesHatarido);
+        if (!Number.isNaN(d.getTime())) {
+          hatarido = d;
+          forras = `kar-specifikus (${karDoc.rovidites || karDoc.nev})`;
+        }
+      }
+    }
+
+    // 2️⃣ Ha nincs kar-specifikus, akkor globális
+    if (!hatarido && GLOBAL_UPLOAD_DEADLINE) {
+      const d = new Date(GLOBAL_UPLOAD_DEADLINE);
+      if (!Number.isNaN(d.getTime())) {
+        hatarido = d;
+        forras = 'globális határidő';
+      }
+    }
+
+    // 3️⃣ Ha semmi nincs → nincs korlát
+    if (!hatarido) {
+      return {
+        text: 'Nincs beállítva határidő (korlátlan feltöltés)',
+        lejart: false
+      };
+    }
+
+    const lejart = now.getTime() > hatarido.getTime();
     const human = hatarido.toLocaleString('hu-HU', {
       year: 'numeric',
       month: '2-digit',
@@ -421,9 +455,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     return {
-      text: lejart
-        ? `Feltöltési határidő: ${human} (LEJÁRT)`
-        : `Feltöltési határidő: ${human}`,
+      text: `${forras}: ${human}`,
       lejart
     };
   }
@@ -481,6 +513,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ------------------------
   (async function init() {
     await betoltKarok();
+    await betoltGlobalFeltoltesHatarido();
     await listazDolgozatok();
   })();
 });

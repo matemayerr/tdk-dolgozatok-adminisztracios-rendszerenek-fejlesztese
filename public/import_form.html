@@ -127,6 +127,13 @@
   <h1>Tudományos és Művészeti Diákköri Konferencia</h1>
   <h2>Pontozólap a dolgozat bírálatához</h2>
 
+   <div id="biralat-deadline-box"
+       style="margin: 10px 0; padding: 8px 12px; border-radius: 4px;
+              background:#fff3cd; color:#856404; font-weight: bold;">
+    Bírálat leadásának (ajánlott) határideje:
+    <span id="biralat-deadline-text">nincs beállítva</span>
+  </div>
+
   <hr>
   <p id="feltoltes-utmutato">Az értékelő lap feltöltéséhez kérem kattintson a Browse gombra!</p>
   <p><input type="file" id="upload" accept=".xlsx, .xls" </p>
@@ -315,6 +322,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     initReadonlyMode();
     initPaperSelect();
+    loadReviewDeadline();
 
     if (readonlyMode && paperIdFromUrl) {
       loadEvaluation(paperIdFromUrl);
@@ -523,6 +531,44 @@
       console.error('Hiba az értékelés betöltésekor:', err);
     }
   }
+
+
+    async function loadReviewDeadline() {
+    try {
+      const res = await fetch('/api/deadlines/biralat_hatarido');
+      if (!res.ok) return; // ha nincs ilyen, nem csinálunk semmit
+
+      const data = await res.json();
+      if (!data.hatarido) return;
+
+      const d = new Date(data.hatarido);
+      if (isNaN(d.getTime())) return;
+
+      // Szép magyar formátum
+      const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      const formatted = d.toLocaleString('hu-HU', options).replace(',', '');
+
+      const span = document.getElementById('biralat-deadline-text');
+      const box  = document.getElementById('biralat-deadline-box');
+
+      if (span) span.textContent = formatted;
+
+      // Ha már lejárt, piros figyelmeztetés
+      if (Date.now() > d.getTime() && box) {
+        box.style.background = '#f8d7da';
+        box.style.color = '#721c24';
+      }
+    } catch (err) {
+      console.error('Nem sikerült lekérni a bírálati határidőt:', err);
+    }
+  }
+
 </script>
 
 

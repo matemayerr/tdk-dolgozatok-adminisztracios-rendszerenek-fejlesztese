@@ -134,15 +134,21 @@ document.addEventListener('DOMContentLoaded', function () {
     window.searchDolgozatok = searchDolgozatok;
     window.frissitItemsPerPage = frissitItemsPerPage;
 
-    fetch('/api/papers')
-        .then(res => res.json())
-        .then(adatok => {
-            // Csak az elfogadott dolgozatokat listázzuk
-            dolgozatok = adatok.filter(d => d.allapot === 'elfogadva - témavezető által');
-            filteredDolgozatok = dolgozatok;
-            megjelenitDolgozatok();
-        })
-        .catch(err => {
-            console.error('Hiba a dolgozatok betöltésekor:', err);
-        });
+fetch('/api/papers')
+  .then(res => res.json())
+  .then(adatok => {
+    // Csak az értékeléshez kapcsolódó állapotú dolgozatok
+    const reviewStates = [
+      'elfogadva - témavezető által',
+      'bírálva'
+    ];
+
+    dolgozatok = adatok.filter(d => reviewStates.includes(d.allapot));
+    filteredDolgozatok = dolgozatok;
+    megjelenitDolgozatok();
+  })
+  .catch(err => {
+    console.error('Hiba a dolgozatok betöltésekor:', err);
+  });
+
 });

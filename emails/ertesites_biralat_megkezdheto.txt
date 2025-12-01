@@ -1,0 +1,13 @@
+Kedves {{NEV}}!
+
+Tájékoztatjuk, hogy a következő TDK dolgozat bírálata megkezdhető:
+
+Cím: {{DOLGOZATCIM}}
+
+A bírálati űrlapot az alábbi linken érheti el:
+{{LINK}}
+
+Kérjük, hogy a bírálatot a megadott határidőig legyen szíves elvégezni.
+
+Üdvözlettel,
+TDK Adminisztrációs Rendszer
