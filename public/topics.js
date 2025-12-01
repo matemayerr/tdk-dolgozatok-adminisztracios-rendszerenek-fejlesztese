@@ -1,4 +1,14 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    // 🔹 Bejelentkezett user adatai
+  const loggedUser = JSON.parse(localStorage.getItem('felhasznalo') || 'null');
+
+  // 🔹 Csak hallgató? (NINCS más csoportja)
+  const csakHallgato =
+    loggedUser &&
+    Array.isArray(loggedUser.csoportok) &&
+    loggedUser.csoportok.length === 1 &&
+    loggedUser.csoportok.includes('hallgato');
+
   // Globális flag alapértéke – ne írjuk felül, ha máshol már beállítottad
   if (typeof window.dolgozatJelentkezesLejart === 'undefined') {
     window.dolgozatJelentkezesLejart = false;
@@ -53,6 +63,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const tableBody        = document.querySelector('#topic-table tbody');
   const supervisorSelect = document.getElementById('topic-supervisor'); // (ha majd lesz ilyen)
 
+    // 🔹 Csak hallgató esetén az "Új témajavaslat" gomb ne is látszódjon
+  if (newTopicBtn && csakHallgato) {
+    newTopicBtn.style.display = 'none';
+  }
+
+
   let selectedTopicId = null;
   let currentEditId   = null;
 
@@ -65,8 +81,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!res.ok) throw new Error('Hibás válasz /api/topics');
       let topics = await res.json();
 
-      // 🔹 Lekérjük az aktuális felhasználót
-      const userData = JSON.parse(localStorage.getItem('felhasznalo') || 'null');
+            // 🔹 Bejelentkezett felhasználó (a DOMContentLoaded elején kiolvasva)
+      const userData = loggedUser;
+
 
       // 🔹 Ha hallgató, lekérjük a már beadott dolgozatait, és kiszűrjük a már választott témákat
       let dolgozatok = [];
@@ -93,23 +110,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tr = document.createElement('tr');
         const cim     = t.cim || '';
         const tvNev   = t.temavezetoNev || t.temavezeto?.nev || '';
-        const tanszek = (t.tanszek && t.tanszek.trim() !== '') ? t.tanszek : '–';
         const kar     = t.kar?.nev || t.kar || '–';
         const ossz    = t.osszefoglalo || t.osszefoglal || '';
+
+                // 🔹 Csak hallgató: csak Jelentkezés gomb
+        const actionsHtml = csakHallgato
+          ? `
+            <button class="jelentkezes-btn topic-apply-btn" data-topic-id="${t._id}">
+              Jelentkezés
+            </button>`
+          : `
+            <button class="jelentkezes-btn topic-apply-btn topic-apply-btn" data-topic-id="${t._id}">
+              Jelentkezés
+            </button>
+            <button class="modosit-btn" data-id="${t._id}">Módosítás</button>
+            <button class="delete-btn" data-id="${t._id}">Törlés</button>`;
 
         tr.innerHTML = `
           <td class="clickable-title" data-id="${t._id}">${cim}</td>
           <td>${tvNev}</td>
-          <td>${tanszek}</td>
           <td>${kar}</td>
           <td>
-            <button class="jelentkezes-btn topic-apply-btn" data-topic-id="${t._id}">
-              Jelentkezés
-            </button>
-            <button class="modosit-btn" data-id="${t._id}">Módosítás</button>
-            <button class="delete-btn" data-id="${t._id}">Törlés</button>
+            ${actionsHtml}
           </td>
         `;
+
         tableBody.appendChild(tr);
 
         // Lenyitható összefoglaló sor
@@ -162,7 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
       console.error('Hiba a témák betöltésekor:', err);
-      tableBody.innerHTML = '<tr><td colspan="5">(Hiba a témák betöltésekor)</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="4">(Hiba a témák betöltésekor)</td></tr>';
       showToast('Hiba a témák betöltésekor.', 'error');
     }
   }
@@ -172,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.betoltTemak = loadTopics;
 
   // ───────────────────────────────── 3) ÚJ TÉMA — ŰRLAP
-  if (newTopicBtn && topicForm && cancelBtn) {
+      if (newTopicBtn && topicForm && cancelBtn && !csakHallgato) {
     newTopicBtn.addEventListener('click', () => {
       document.getElementById('uj-topic-homalyositas').style.display = 'block';
       topicForm.style.display = 'block';
@@ -352,8 +377,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     editTitle.value      = cells[0].innerText.trim();
     editSupervisor.value = cells[1].innerText.trim();
-    editDept.value       = cells[2].innerText.trim();
-    editFaculty.value    = cells[3].innerText.trim();
+    editFaculty.value    = cells[2].innerText.trim();
+
 
     const summaryRow = row.nextElementSibling;
     if (summaryRow && summaryRow.querySelector('.topic-details-panel')) {
@@ -372,7 +397,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveEditBtn.addEventListener('click', async () => {
       const cim           = document.getElementById('edit-title').value.trim();
       const temavezetoNev = document.getElementById('edit-supervisor').value.trim();
-      const tanszek       = document.getElementById('edit-department').value.trim();
       const kar           = document.getElementById('edit-faculty').value.trim();
       const osszefoglalo  = document.getElementById('edit-summary').value.trim();
 

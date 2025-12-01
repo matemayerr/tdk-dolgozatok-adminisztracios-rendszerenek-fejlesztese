@@ -669,27 +669,34 @@ app.post('/api/dolgozatok', async (req, res) => {
 // Dolgozat módosítása
 app.put('/api/dolgozatok/:id', async (req, res) => {
   const { id } = req.params;
-  const { cím, hallgato_ids, temavezeto_ids, elutasitas_oka } = req.body;
+  const { cím, leiras, hallgato_ids, temavezeto_ids, elutasitas_oka } = req.body;
 
   try {
-    const updateData = {
-      cím,
-      hallgato_ids,
-      temavezeto_ids,
-      elutasitas_oka
-    };
+    const updateData = {};
 
-    // 🔹 Ha kapunk hallgato_ids tömböt, frissítjük a kar-t is az első hallgató alapján
-    if (Array.isArray(hallgato_ids) && hallgato_ids.length > 0) {
-      const elsoHallgato = await Felhasznalo.findOne({ neptun: hallgato_ids[0] }).lean();
-      updateData.kar = elsoHallgato?.kar || '';
+    if (typeof cím !== 'undefined') {
+      updateData.cím = cím;
+    }
+    if (typeof leiras !== 'undefined') {
+      updateData.leiras = leiras;
+    }
+    if (Array.isArray(hallgato_ids)) {
+      updateData.hallgato_ids = hallgato_ids;
+
+      // csak akkor számoljuk újra a kart, ha tényleg küldtek hallgato_ids-t
+      if (hallgato_ids.length > 0) {
+        const elsoHallgato = await Felhasznalo.findOne({ neptun: hallgato_ids[0] }).lean();
+        updateData.kar = elsoHallgato?.kar || '';
+      }
+    }
+    if (Array.isArray(temavezeto_ids)) {
+      updateData.temavezeto_ids = temavezeto_ids;
+    }
+    if (typeof elutasitas_oka !== 'undefined') {
+      updateData.elutasitas_oka = elutasitas_oka;
     }
 
-    const updatedDolgozat = await Dolgozat.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
+    const updatedDolgozat = await Dolgozat.findByIdAndUpdate(id, updateData, { new: true });
 
     if (!updatedDolgozat) {
       return res.status(404).json({ error: 'Dolgozat nem található' });
@@ -700,6 +707,7 @@ app.put('/api/dolgozatok/:id', async (req, res) => {
     res.status(500).json({ error: 'Hiba történt a dolgozat módosítása során' });
   }
 });
+
 
 
 // Dolgozat törlése
@@ -1803,7 +1811,7 @@ app.delete('/api/topics/:id', async (req, res) => {
 app.get('/api/temavezetok', async (req, res) => {
   try {
     const temavezetok = await Felhasznalo.find({ csoportok: { $in: ['temavezeto'] } })
-  .select('nev neptun email kar tanszek');
+  .select('nev neptun email kar');
     res.json(temavezetok);
   } catch (err) {
     console.error('Hiba a témavezetők lekérésekor:', err);

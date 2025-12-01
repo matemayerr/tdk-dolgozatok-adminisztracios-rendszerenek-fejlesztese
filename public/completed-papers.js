@@ -180,7 +180,6 @@ document.addEventListener('DOMContentLoaded', function () {
       if (mutassFeltoltesGombot) {
         const btn = document.createElement('button');
         btn.className = 'jelentkezes-btn';
-        btn.title = hataridoSzoveg;
 
         if (hataridoLejart) {
           btn.textContent = 'Határidő lejárt';
@@ -209,10 +208,10 @@ document.addEventListener('DOMContentLoaded', function () {
             </p>
             <p><strong>Hallgatók:</strong> ${hallgatokText}</p>
             <p><strong>Témavezetők:</strong> ${temavezetoText}</p>
-            <p><strong>Kar határidő:</strong> ${hataridoSzoveg}</p>
           </div>
         </td>
       `;
+
 
       dolgozatTbody.appendChild(tr);
       dolgozatTbody.appendChild(detailTr);
@@ -248,13 +247,20 @@ document.addEventListener('DOMContentLoaded', function () {
     selectedFiles = [];
     uploadInput.value = '';
 
-    const dolgozat = dolgozatok.find(d => d._id === id);
-    const { text: hataridoSzoveg, lejart: hataridoLejart } = getKarDeadlineInfo(dolgozat);
+        const dolgozat = dolgozatok.find(d => d._id === id);
+    const { text, human, lejart: hataridoLejart } = getKarDeadlineInfo(dolgozat);
 
     const deadlineElem = document.getElementById('upload-deadline-info');
     if (deadlineElem) {
-      deadlineElem.textContent = hataridoSzoveg;
+      if (human) {
+        // Csak ez látszik: "Határidő: 2025. 11. 27. 16:55"
+        deadlineElem.textContent = `Határidő: ${human}`;
+      } else {
+        // ha nincs konkrét dátum, marad a magyarázó szöveg
+        deadlineElem.textContent = text || '';
+      }
     }
+
 
     uploadSaveBtn.disabled = hataridoLejart;
     if (hataridoLejart) {
@@ -555,6 +561,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!hatarido) {
       return {
         text: 'Nincs beállítva határidő (korlátlan feltöltés)',
+        human: '',
         lejart: false
       };
     }
@@ -568,8 +575,11 @@ document.addEventListener('DOMContentLoaded', function () {
       minute: '2-digit'
     });
 
+    const text = forras ? `${forras}: ${human}` : human;
+
     return {
-      text: `${forras}: ${human}`,
+      text,
+      human,
       lejart
     };
   }

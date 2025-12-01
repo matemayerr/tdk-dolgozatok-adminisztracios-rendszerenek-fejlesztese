@@ -66,7 +66,7 @@ table {
 }
 
 th, td {
-    padding: 6px 8px;    /* kisebb térköz: függőlegesen 6px, vízszintesen 8px */
+    padding: 6px 0px;    /* kisebb térköz: függőlegesen 6px, vízszintesen 0px */
     text-align: left;
     vertical-align: middle;
     line-height: 1.4;
@@ -464,7 +464,6 @@ nav ul li a.active {
     text-align: left;
     line-height: 1.6;
     padding: 10px 0;
-    white-space: pre-wrap;
     word-break: break-word;
 }
 
@@ -2383,3 +2382,4 @@ button.disabled-btn {
 .secondary-btn:hover {
   background-color: #757575;
 }
+
