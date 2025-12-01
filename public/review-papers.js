@@ -232,45 +232,69 @@ document.addEventListener('DOMContentLoaded', function () {
     window.searchDolgozatok = searchDolgozatok;
     window.frissitItemsPerPage = frissitItemsPerPage;
 
-    // 🔹 Inicializálás: aktuális user + dolgozatok betöltése
-    (async () => {
-        currentUser = await loadCurrentUser();
+// 🔹 Inicializálás: aktuális user + dolgozatok betöltése
+(async () => {
+    currentUser = await loadCurrentUser();
 
-        if (currentUser && Array.isArray(currentUser.csoportok)) {
-            const csoportok = currentUser.csoportok;
+    if (currentUser && Array.isArray(currentUser.csoportok)) {
+        const csoportok = currentUser.csoportok;
 
-            // csak akkor hallgatói nézet, ha tényleg CSAK hallgato/hallgató csoportja van
-            const tartalmazHallgatot =
-                csoportok.includes('hallgato') ||
-                csoportok.includes('hallgató');
+        const tartalmazHallgatot =
+            csoportok.includes('hallgato') ||
+            csoportok.includes('hallgató');
 
-            const csakHallgato =
-                csoportok.every(c => c === 'hallgato' || c === 'hallgató');
+        const csakHallgato =
+            csoportok.every(c => c === 'hallgato' || c === 'hallgató');
 
-            isStudentUser = tartalmazHallgatot && csakHallgato;
+        isStudentUser = tartalmazHallgatot && csakHallgato;
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.warn('Nincs token, nem tudom lekérni a dolgozatokat. Jelentkezz be.');
+            dolgozatok = [];
+            filteredDolgozatok = [];
+            megjelenitDolgozatok();
+            return;
         }
 
-        fetch('/api/papers')
-            .then(res => res.json())
-            .then(adatok => {
-                // Csak az értékeléshez kapcsolódó állapotú dolgozatok
-                const baseReviewStates = [
-                    'elfogadva - témavezető által',
-                    'bírálat alatt',
-                    'bírálva'
-                ];
+        const res = await fetch('/api/papers', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-                // 🔹 Hallgatók csak a "bírálva" állapotú dolgozatokat látják
-                const allowedStates = isStudentUser
-                    ? ['bírálva']
-                    : baseReviewStates;
+        if (!res.ok) {
+            console.error('Nem sikerült lekérni a dolgozatokat. HTTP:', res.status);
+            dolgozatok = [];
+            filteredDolgozatok = [];
+            megjelenitDolgozatok();
+            return;
+        }
 
-                dolgozatok = adatok.filter(d => allowedStates.includes(d.allapot));
-                filteredDolgozatok = dolgozatok;
-                megjelenitDolgozatok();
-            })
-            .catch(err => {
-                console.error('Hiba a dolgozatok betöltésekor:', err);
-            });
-    })();
+        const adatok = await res.json();
+        const lista = Array.isArray(adatok) ? adatok : [];
+
+        const baseReviewStates = [
+            'elfogadva - témavezető által',
+            'bírálat alatt',
+            'bírálva'
+        ];
+
+        const allowedStates = isStudentUser
+            ? ['bírálva']
+            : baseReviewStates;
+
+        dolgozatok = lista.filter(d => allowedStates.includes(d.allapot));
+        filteredDolgozatok = dolgozatok;
+        megjelenitDolgozatok();
+
+    } catch (err) {
+        console.error('Hiba a dolgozatok betöltésekor:', err);
+        dolgozatok = [];
+        filteredDolgozatok = [];
+        megjelenitDolgozatok();
+    }
+})();
 });

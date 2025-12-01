@@ -63,10 +63,18 @@ async function betoltKarok() {
 }
 
 async function betoltDolgozatok() {
-  const res = await fetch('/api/papers');
+  const token = localStorage.getItem('token');
+
+  const res = await fetch('/api/papers', {
+    headers: {
+      'Authorization': token ? `Bearer ${token}` : ''
+    }
+  });
+
   if (!res.ok) throw new Error('Nem sikerült betölteni a dolgozatokat');
-  return await res.json(); // amit az /api/papers ad vissza
+  return await res.json();
 }
+
 
 async function betoltBiralok(karRoviditesVagyOsszes) {
   const key = karRoviditesVagyOsszes || 'osszes';

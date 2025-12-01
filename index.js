@@ -198,6 +198,37 @@ function betoltEmailSablon(fajlNev, helyettesites = {}) {
 const jwt = require('jsonwebtoken');
 const secretKey = 'titkosKulcs123'; // Titkos kulcs a tokenhez (ezt .env-be kellene tenni)
 
+
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Hiányzó token' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, secretKey);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(403).json({ error: 'Érvénytelen token' });
+  }
+};
+
+// 🔹 Segédfüggvény: admin-jellegű felhasználó-e
+function isAdminLikeUser(user) {
+  if (!user || !Array.isArray(user.csoportok)) return false;
+
+  const adminGroups = [
+    'admin',
+    'egyetemi adminisztrátor',
+    'kari adminisztrátor'
+  ];
+
+  return user.csoportok.some(csoport => adminGroups.includes(csoport));
+}
+
+
 app.post('/api/login', async (req, res) => {
     const { email, jelszo } = req.body;
 
@@ -245,6 +276,9 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ error: 'Szerverhiba' });
     }
 });
+
+
+
 
 // A frontend oldalon torli a tokent
 app.post('/api/logout', (req, res) => {
@@ -488,11 +522,50 @@ app.put('/api/dolgozatok/reorder', async (req, res) => {
   }
 });
 
-// Minden dolgozat lekérdezése
-app.get('/api/dolgozatok', async (req, res) => {
+
+// Minden dolgozat lekérdezése (szerepkör alapú szűréssel)
+app.get('/api/dolgozatok', authMiddleware, async (req, res) => {
   try {
-    const dolgozatok = await Dolgozat.find()
-      .sort({ szekcioId: 1, sorszam: 1, _id: 1 })  // 🔹 itt a rendezés
+    const bejelentkezettFelhasznaloId = req.user.id;
+    const bejelentkezettCsoportok = req.user.csoportok || [];
+
+    // 🔹 Megkeressük a teljes felhasználói rekordot (neptun miatt)
+    const aktualisFelhasznalo = await Felhasznalo.findById(bejelentkezettFelhasznaloId).lean();
+    const sajatNeptun = aktualisFelhasznalo?.neptun || null;
+
+    // 🔹 Alap query: minden dolgozat
+    let query = {};
+
+    // 🔹 Ha NEM admin-jellegű felhasználó → szűrünk
+    if (!isAdminLikeUser({ csoportok: bejelentkezettCsoportok })) {
+      const orFeltetelek = [];
+
+      // Hallgató: ahol a hallgato_ids tartalmazza az ő Neptun-kódját
+      if (bejelentkezettCsoportok.includes('hallgato') && sajatNeptun) {
+        orFeltetelek.push({ hallgato_ids: sajatNeptun });
+      }
+
+      // Témavezető: ahol a temavezeto_ids tartalmazza az ő Neptun-kódját
+      if (bejelentkezettCsoportok.includes('temavezeto') && sajatNeptun) {
+        orFeltetelek.push({ temavezeto_ids: sajatNeptun });
+      }
+
+      // Bíráló: ahol a biralok tömbben felhasznaloId = ő
+      if (bejelentkezettCsoportok.includes('biralo')) {
+        orFeltetelek.push({ 'biralok.felhasznaloId': bejelentkezettFelhasznaloId });
+      }
+
+      // Ha bármelyik szerep miatt van feltétel, beállítjuk az $or-t
+      if (orFeltetelek.length > 0) {
+        query = { $or: orFeltetelek };
+      } else {
+        // ha elvileg nem admin és nincs releváns szerepe, ne lásson semmit
+        query = { _id: null };
+      }
+    }
+
+    const dolgozatok = await Dolgozat.find(query)
+      .sort({ szekcioId: 1, sorszam: 1, _id: 1 })
       .lean();
 
     const felhasznalok = await Felhasznalo.find().lean();
@@ -504,7 +577,6 @@ app.get('/api/dolgozatok', async (req, res) => {
       if (f.neptun) felhasznaloMapNeptun[f.neptun] = f;
       felhasznaloMapId[String(f._id)] = f;
     });
-
 
     const eredmeny = dolgozatok.map(d => ({
       _id: d._id,
@@ -520,7 +592,6 @@ app.get('/api/dolgozatok', async (req, res) => {
         nev: felhasznaloMapNeptun[neptun]?.nev || '',
         neptun
       }))
-
     }));
 
     res.json(eredmeny);
@@ -806,21 +877,8 @@ app.delete('/api/felhasznalok/:id', async (req, res) => {
     }
 });
 
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Hiányzó token' });
-  }
 
-  const token = authHeader.split(' ')[1];
-  try {
-    const decoded = jwt.verify(token, secretKey);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(403).json({ error: 'Érvénytelen token' });
-  }
-};
+
 
 app.get('/api/felhasznalok/jelenlegi', authMiddleware, async (req, res) => {
   try {
@@ -1465,12 +1523,41 @@ app.get('/api/papers/:id', async (req, res) => {
 });
 
 
-
-
-// 🔹 Dolgozatok lekérése, szekciókhoz és listákhoz is használható formátumban
-app.get('/api/papers', async (req, res) => {
+// 🔹 Dolgozatok lekérése, szekciókhoz és listákhoz is használható formátumban (szerepkör alapú szűréssel)
+app.get('/api/papers', authMiddleware, async (req, res) => {
   try {
-    const dolgozatok = await Dolgozat.find()
+    const bejelentkezettFelhasznaloId = req.user.id;
+    const bejelentkezettCsoportok = req.user.csoportok || [];
+
+    // 🔹 Megkeressük a teljes felhasználót a Neptun-kód miatt
+    const aktualisFelhasznalo = await Felhasznalo.findById(bejelentkezettFelhasznaloId).lean();
+    const sajatNeptun = aktualisFelhasznalo?.neptun || null;
+
+    let query = {};
+
+    if (!isAdminLikeUser({ csoportok: bejelentkezettCsoportok })) {
+      const orFeltetelek = [];
+
+      if (bejelentkezettCsoportok.includes('hallgato') && sajatNeptun) {
+        orFeltetelek.push({ hallgato_ids: sajatNeptun });
+      }
+
+      if (bejelentkezettCsoportok.includes('temavezeto') && sajatNeptun) {
+        orFeltetelek.push({ temavezeto_ids: sajatNeptun });
+      }
+
+      if (bejelentkezettCsoportok.includes('biralo')) {
+        orFeltetelek.push({ 'biralok.felhasznaloId': bejelentkezettFelhasznaloId });
+      }
+
+      if (orFeltetelek.length > 0) {
+        query = { $or: orFeltetelek };
+      } else {
+        query = { _id: null };
+      }
+    }
+
+    const dolgozatok = await Dolgozat.find(query)
       .sort({ szekcioId: 1, sorszam: 1, _id: 1 })
       .lean();
 
@@ -1487,13 +1574,12 @@ app.get('/api/papers', async (req, res) => {
     });
 
     const eredmeny = dolgozatok.map(d => {
-      // 🔹 Kar kinyerése – ha nincs a dolgozatban, vegyük az első hallgató karját
       let kar = d.kar || '';
       if (!kar && Array.isArray(d.hallgato_ids) && d.hallgato_ids.length > 0) {
         const elsoNeptun = d.hallgato_ids[0];
         const hallgato = felhasznaloMapNeptun[elsoNeptun];
         if (hallgato && hallgato.kar) {
-          kar = hallgato.kar; // lehet rövidítés vagy teljes név
+          kar = hallgato.kar;
         }
       }
 
@@ -1535,17 +1621,14 @@ app.get('/api/papers', async (req, res) => {
           };
         }),
 
-        // 🔹 Bírálónkénti értékelések a frontendnek
         ertekelesek: (d.ertekelesek || []).map(e => ({
           biraloId: String(e.biraloId),
           pontszam: e.pontszam,
           szovegesErtekeles: e.szovegesErtekeles || ''
         })),
 
-        // 🔹 Jelölés, ha a két fő bírálat között > 12 pont a különbség
         nagyElteres12: !!d.nagyElteres12,
 
-        // 🔹 Összesített számláló: hány elfogadott bíráló, hány elkészült bírálat
         reviewCounter: (() => {
           const accepted = (d.biralok || []).filter(b => b.allapot === 'Elfogadva');
           const acceptedIds = accepted.map(b => String(b.felhasznaloId));
@@ -1558,7 +1641,7 @@ app.get('/api/papers', async (req, res) => {
           };
         })()
       };
-    }); // <-- map lezárása
+    });
 
     res.json(eredmeny);
   } catch (error) {
@@ -1566,7 +1649,6 @@ app.get('/api/papers', async (req, res) => {
     res.status(500).json({ error: 'Szerverhiba a dolgozatok lekérésekor' });
   }
 });
-
 
 
 //Jelszó visszaállítás e-mail küldés tokennel
@@ -2288,6 +2370,14 @@ app.post('/api/sections/:id/add-judge', async (req, res) => {
     const { id } = req.params;
     const { felhasznaloId, szerep } = req.body;
 
+    // 🔹 Zsűri-jelentkezési határidő ellenőrzése
+    // Ha nincs beállítva ilyen határidő, az isGlobalDeadlineExpired(false)-t ad vissza, tehát engedjük.
+    if (await isGlobalDeadlineExpired('zsuri_jelentkezes')) {
+      return res.status(400).json({
+        error: 'A zsűritagok jelentkezési határideje lejárt, új zsűritag már nem adható hozzá.'
+      });
+    }
+
     if (!felhasznaloId || !szerep)
       return res.status(400).json({ error: 'Hiányzó adatok.' });
 
@@ -2295,8 +2385,12 @@ app.post('/api/sections/:id/add-judge', async (req, res) => {
     if (!section) return res.status(404).json({ error: 'Szekció nem található.' });
 
     // Ha már létezik ugyanaz a szerep / személy
-    const alreadyExists = section.zsuri.some(z => String(z.felhasznaloId) === String(felhasznaloId));
-    if (alreadyExists) return res.status(400).json({ error: 'Ez a felhasználó már zsűritag ebben a szekcióban.' });
+    const alreadyExists = section.zsuri.some(
+      z => String(z.felhasznaloId) === String(felhasznaloId)
+    );
+    if (alreadyExists) {
+      return res.status(400).json({ error: 'Ez a felhasználó már zsűritag ebben a szekcióban.' });
+    }
 
     section.zsuri.push({ felhasznaloId, szerep });
     await section.save();

@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await betoltKarok();
   await loadSections();
 
+  // Karok betöltése
   async function betoltKarok() {
     try {
       const response = await fetch('/api/university-structure');
@@ -28,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       karLista.forEach(kar => {
         const option = document.createElement('option');
+        // A rövidítés helyett a teljes név mentődik
         option.value = kar.nev;
         option.textContent = kar.nev;
         karSelect.appendChild(option);
@@ -37,19 +39,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // Új szekció hozzáadása
   document.getElementById('section-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const nameInput = document.getElementById('section-name');
     const kar = document.getElementById('szekcio-kar').value;
     const name = nameInput.value.trim();
-   if (!name) {
+
+    if (!name) {
       showToast('A szekció neve nem lehet üres.', 'error');
       return;
     }
 
     const semesterRes = await fetch('/api/settings/current-semester');
     const semesterData = await semesterRes.json();
-    const felev = semesterData.value || 'Ismeretlen';
+    const felev = semesterData.value || semesterData.ertek || 'Ismeretlen';
 
     const response = await fetch('/api/sections', {
       method: 'POST',
@@ -62,9 +66,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       await loadSections();
     } else {
       showToast('Hiba történt a szekció hozzáadásakor.', 'error');
-}
+    }
   });
 
+  // Szekciók és hozzájuk tartozó dolgozatok betöltése
   async function loadSections() {
     const tableBody = document.getElementById('sections-table-body');
     tableBody.innerHTML = '';
@@ -72,14 +77,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const [respSec, respPapers] = await Promise.all([
         fetch('/api/sections'),
-        fetch('/api/papers')
+        authFetch('/api/papers')
       ]);
 
       const sections = await respSec.json();
-      allPapersCache = await respPapers.json();
+
+      // 🔧 Itt volt a hiba: ugyanazt a respPapers-t kétszer próbáltuk .json()-ozni.
+      let papers = [];
+      if (!respPapers.ok) {
+        console.error('Nem sikerült a dolgozatok lekérése:', await respPapers.text());
+        papers = [];
+      } else {
+        papers = await respPapers.json();
+      }
+
+      if (!Array.isArray(papers)) {
+        papers = [];
+      }
+
+      allPapersCache = papers;
 
       for (const section of sections) {
         const row = document.createElement('tr');
+
+        // Szekció neve + lenyitható ikon
         const nameCell = document.createElement('td');
         nameCell.innerHTML = `
           <div class="clickable-title">
@@ -88,14 +109,17 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>`;
         row.appendChild(nameCell);
 
+        // Kar
         const karCell = document.createElement('td');
         karCell.textContent = section.kar || '-';
         row.appendChild(karCell);
 
+        // Félév
         const felevCell = document.createElement('td');
         felevCell.textContent = section.felev || 'Ismeretlen';
         row.appendChild(felevCell);
 
+        // Műveletek
         const actionsCell = document.createElement('td');
         actionsCell.classList.add('actions-cell');
 
@@ -126,11 +150,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         row.appendChild(actionsCell);
         tableBody.appendChild(row);
 
+        // Lenyíló sor a dolgozatoknak
         const detailRow = document.createElement('tr');
         const detailCell = document.createElement('td');
         detailCell.colSpan = 4;
 
-        const papersInSection = allPapersCache.filter(p => String(p.szekcioId) === String(section._id));
+        const papersInSection = allPapersCache.filter(
+          p => String(p.szekcioId) === String(section._id)
+        );
 
         if (papersInSection.length === 0) {
           detailCell.innerHTML = `<div class="dolgozat-details-panel">Nincs dolgozat hozzárendelve.</div>`;
@@ -138,7 +165,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           const innerTable = document.createElement('table');
           innerTable.classList.add('inner-table');
           innerTable.innerHTML = `
-            <thead><tr><th>Cím</th><th>Állapot</th><th></th></tr></thead>
+            <thead>
+              <tr>
+                <th>Cím</th>
+                <th>Állapot</th>
+                <th></th>
+              </tr>
+            </thead>
             <tbody></tbody>`;
 
           const innerTbody = innerTable.querySelector('tbody');
@@ -150,7 +183,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const titleCell = document.createElement('td');
             const statusCell = document.createElement('td');
             const deleteCell = document.createElement('td');
-
 
             const torlesButton = document.createElement('button');
             torlesButton.textContent = 'Eltávolítás';
@@ -169,9 +201,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                   showToast('Hiba történt az eltávolítás során.', 'error');
                 }
               } catch (error) {
-                  console.error('Hiba a dolgozat eltávolításakor:', error);
-                  showToast('Szerverhiba a dolgozat eltávolításakor.', 'error');
-                }
+                console.error('Hiba a dolgozat eltávolításakor:', error);
+                showToast('Szerverhiba a dolgozat eltávolításakor.', 'error');
+              }
             });
 
             const toggleSpan = document.createElement('span');
@@ -179,22 +211,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleSpan.classList.add('toggle-icon');
 
             const dragHandle = document.createElement('span');
-              dragHandle.textContent = '☰';
-              dragHandle.classList.add('drag-handle');
-              dragHandle.style.cursor = 'move';
-              dragHandle.style.marginRight = '8px';
-              dragHandle.style.fontSize = '16px';
-              dragHandle.style.color = '#555';
+            dragHandle.textContent = '☰';
+            dragHandle.classList.add('drag-handle');
+            dragHandle.style.cursor = 'move';
+            dragHandle.style.marginRight = '8px';
+            dragHandle.style.fontSize = '16px';
+            dragHandle.style.color = '#555';
 
             const titleSpan = document.createElement('span');
             titleSpan.textContent = p.cim || p.cím || 'Névtelen dolgozat';
 
             const clickableDiv = document.createElement('div');
-              clickableDiv.classList.add('clickable-paper');
-              clickableDiv.appendChild(dragHandle); // ☰ ikon
-              clickableDiv.appendChild(titleSpan);  // dolgozat címe
-              clickableDiv.appendChild(toggleSpan); // lenyíló nyíl
+            clickableDiv.classList.add('clickable-paper');
+            clickableDiv.appendChild(dragHandle); // ☰ ikon
+            clickableDiv.appendChild(titleSpan);  // dolgozat címe
+            clickableDiv.appendChild(toggleSpan); // lenyíló nyíl
 
+            const innerDetailRow = document.createElement('tr');
+            const innerDetailCell = document.createElement('td');
+            innerDetailCell.colSpan = 3;
+
+            const hallgatokSzoveg = (p.szerzok || [])
+              .map(s => `${s.nev} (${s.neptun})`)
+              .join(', ') || '—';
+            const temavezetoSzoveg = (p.temavezeto || [])
+              .map(t => `${t.nev} (${t.neptun})`)
+              .join(', ') || '—';
+
+            innerDetailCell.innerHTML = `
+              <div class="dolgozat-details-panel">
+                <p><strong>Tartalmi összefoglaló:</strong><br>${p.leiras || '—'}</p>
+                <p><strong>Hallgató(k):</strong> ${hallgatokSzoveg}</p>
+                <p><strong>Témavezető(k):</strong> ${temavezetoSzoveg}</p>
+              </div>`;
+
+            innerDetailRow.appendChild(innerDetailCell);
+            innerDetailRow.style.display = 'none';
 
             clickableDiv.addEventListener('click', () => {
               const isVisible = innerDetailRow.style.display === 'table-row';
@@ -210,54 +262,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             innerRow.appendChild(statusCell);
             innerRow.appendChild(deleteCell);
             innerTbody.appendChild(innerRow);
-
-            const innerDetailRow = document.createElement('tr');
-            const innerDetailCell = document.createElement('td');
-            innerDetailCell.colSpan = 3;
-
-            const hallgatokSzoveg = (p.szerzok || []).map(s => `${s.nev} (${s.neptun})`).join(', ') || '—';
-            const temavezetoSzoveg = (p.temavezeto || []).map(t => `${t.nev} (${t.neptun})`).join(', ') || '—';
-
-            innerDetailCell.innerHTML = `
-              <div class="dolgozat-details-panel">
-                <p><strong>Tartalmi összefoglaló:</strong><br>${p.leiras || '—'}</p>
-                <p><strong>Hallgató(k):</strong> ${hallgatokSzoveg}</p>
-                <p><strong>Témavezető(k):</strong> ${temavezetoSzoveg}</p>
-              </div>`;
-
-            innerDetailRow.appendChild(innerDetailCell);
-            innerDetailRow.style.display = 'none';
             innerTbody.appendChild(innerDetailRow);
           }
 
           // Drag and drop aktiválása az adott szekció dolgozatainál
-Sortable.create(innerTbody, {
-  handle: '.drag-handle',
-  animation: 150,
-  onEnd: async () => {
-    const rows = Array.from(innerTbody.querySelectorAll('tr[data-id]'));
-    const ujRend = rows.map((row, index) => ({
-      id: row.dataset.id,
-      sorszam: index + 1
-    }));
+          Sortable.create(innerTbody, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: async () => {
+              const rows = Array.from(innerTbody.querySelectorAll('tr[data-id]'));
+              const ujRend = rows.map((row, index) => ({
+                id: row.dataset.id,
+                sorszam: index + 1
+              }));
 
-    try {
-      const res = await fetch('/api/dolgozatok/reorder', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dolgozatok: ujRend })
-      });
-      if (res.ok) {
-        console.log('✅ Sorrend frissítve.');
-      } else {
-        console.error('❌ Hiba a sorrend mentésekor.');
-      }
-    } catch (err) {
-      console.error('⚠️ Hálózati hiba a sorrend mentésekor:', err);
-    }
-  }
-});
-
+              try {
+                const res = await fetch('/api/dolgozatok/reorder', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ dolgozatok: ujRend })
+                });
+                if (res.ok) {
+                  console.log('✅ Sorrend frissítve.');
+                } else {
+                  console.error('❌ Hiba a sorrend mentésekor.');
+                }
+              } catch (err) {
+                console.error('⚠️ Hálózati hiba a sorrend mentésekor:', err);
+              }
+            }
+          });
 
           detailCell.appendChild(innerTable);
         }
@@ -266,6 +300,7 @@ Sortable.create(innerTbody, {
         detailRow.style.display = 'none';
         tableBody.appendChild(detailRow);
 
+        // Szekció lenyitása / összecsukása
         nameCell.querySelector('.clickable-title').addEventListener('click', () => {
           const isVisible = detailRow.style.display === 'table-row';
           detailRow.style.display = isVisible ? 'none' : 'table-row';
@@ -278,7 +313,7 @@ Sortable.create(innerTbody, {
     }
   }
 
-
+  // Szekció törlése
   async function deleteSection(id) {
     if (!confirm('Biztosan törölni szeretnéd ezt a szekciót?')) return;
     const response = await fetch(`/api/sections/${id}`, { method: 'DELETE' });
@@ -289,6 +324,7 @@ Sortable.create(innerTbody, {
     }
   }
 
+  // Szekció átnevezése
   function editSection(section) {
     const newName = prompt('Add meg az új nevet:', section.name);
     if (!newName || newName.trim() === '') return;
@@ -301,11 +337,12 @@ Sortable.create(innerTbody, {
       if (response.ok) {
         loadSections();
       } else {
-  showToast('Hiba a törlés során.', 'error');
-}
+        showToast('Hiba a törlés során.', 'error');
+      }
     });
   }
 
+  // Dolgozat hozzárendelés modal
   let selectedSectionId = null;
 
   function openAssignModal(sectionId) {
@@ -322,9 +359,14 @@ Sortable.create(innerTbody, {
 
   async function loadAllPapers() {
     try {
-      const response = await fetch('/api/papers');
-      const papers = await response.json();
+      const response = await authFetch('/api/papers');
+      if (!response.ok) {
+        console.error('Nem sikerült a dolgozatok lekérése:', await response.text());
+        showToast('Nem sikerült a dolgozatok lekérése (valószínűleg lejárt a bejelentkezés).', 'error');
+        return;
+      }
 
+      const papers = await response.json();
       const listContainer = document.getElementById('assign-papers-list');
       listContainer.innerHTML = '';
 
@@ -345,30 +387,29 @@ Sortable.create(innerTbody, {
     }
   }
 
-document.getElementById('assign-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const checked = document.querySelectorAll('#assign-papers-list input[type="checkbox"]:checked');
-  const paperIds = Array.from(checked).map(cb => cb.value);
+  document.getElementById('assign-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const checked = document.querySelectorAll('#assign-papers-list input[type="checkbox"]:checked');
+    const paperIds = Array.from(checked).map(cb => cb.value);
 
-  try {
-    const response = await fetch(`/api/sections/${selectedSectionId}/add-papers`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paperIds })
-    });
+    try {
+      const response = await fetch(`/api/sections/${selectedSectionId}/add-papers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paperIds })
+      });
 
-    if (response.ok) {
-      showToast('Dolgozatok sikeresen hozzárendelve.', 'success');
-      closeAssignModal();
-    } else {
-      showToast('Hiba történt a dolgozatok hozzárendelésekor.', 'error');
+      if (response.ok) {
+        showToast('Dolgozatok sikeresen hozzárendelve.', 'success');
+        closeAssignModal();
+      } else {
+        showToast('Hiba történt a dolgozatok hozzárendelésekor.', 'error');
+      }
+    } catch (err) {
+      console.error('Hiba a hozzárendelés során:', err);
+      showToast('Szerverhiba a dolgozatok hozzárendelésekor.', 'error');
     }
-  } catch (err) {
-    console.error('Hiba a hozzárendelés során:', err);
-    showToast('Szerverhiba a dolgozatok hozzárendelésekor.', 'error');
-  }
-});
-
+  });
 
   function filterPapersByTitle() {
     const searchTerm = document.getElementById('search-papers-input').value.toLowerCase();
@@ -378,7 +419,14 @@ document.getElementById('assign-form').addEventListener('submit', async (e) => {
       label.style.display = text.includes(searchTerm) ? 'block' : 'none';
     });
   }
+
+  // ha HTML-ből hívod, szükség lehet a window-ra is:
+  window.openAssignModal = openAssignModal;
+  window.closeAssignModal = closeAssignModal;
+  window.filterPapersByTitle = filterPapersByTitle;
 });
+
+// ----------------- Zsűri modal és segédfüggvények -----------------
 
 let currentSectionIdForZsuri = null;
 
@@ -404,7 +452,7 @@ async function openZsuriModal(sectionId) {
   });
 
   // Zsűritag hozzáadása gomb esemény
-    const addBtn = document.getElementById('add-zsuri-btn');
+  const addBtn = document.getElementById('add-zsuri-btn');
   addBtn.onclick = async () => {
     const felhasznaloId = document.getElementById('zsuri-felhasznalo').value;
     const szerep = document.getElementById('zsuri-szerep').value;
@@ -433,17 +481,16 @@ async function openZsuriModal(sectionId) {
         showToast(data.error || 'Hiba történt a hozzáadás során.', 'error');
       }
     } catch (err) {
-        console.error('Hiba a zsűritag hozzáadásakor:', err);
-        showToast('Szerverhiba a hozzáadás során.', 'error');
-      }
+      console.error('Hiba a zsűritag hozzáadásakor:', err);
+      showToast('Szerverhiba a hozzáadás során.', 'error');
+    }
   };
-
 
   // Aktuális zsűritagok betöltése
   const sectionRes = await fetch(`/api/sections`);
   const sections = await sectionRes.json();
   const section = sections.find(s => s._id === sectionId);
-  renderZsuriList(section.zsuri);
+  renderZsuriList(section?.zsuri || []);
 }
 
 function renderZsuriList(zsuriLista) {
@@ -522,7 +569,6 @@ async function removeJudge(userId) {
   }
 }
 
-
 // 🔔 Egységes toast értesítés
 function showToast(message, type = 'info', duration = 3000) {
   const container = document.getElementById('toast-container');
@@ -557,16 +603,27 @@ function showToast(message, type = 'info', duration = 3000) {
   }, duration);
 }
 
+// Tokenes fetch
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem('token');
+  const headers = options.headers || {};
 
+  if (token) {
+    headers['Authorization'] = 'Bearer ' + token;
+  }
 
-//aktuális félév
+  return fetch(url, { ...options, headers });
+}
+
+// ----------------- Aktuális félév módosító modal -----------------
+
 function openSemesterModal() {
   document.getElementById('semester-modal').style.display = 'block';
 
   fetch('/api/settings/current-semester')
     .then(res => res.json())
     .then(data => {
-      document.getElementById('semester-input').value = data.ertek || '';
+      document.getElementById('semester-input').value = data.ertek || data.value || '';
     });
 }
 
@@ -578,9 +635,9 @@ document.getElementById('semester-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const ertek = document.getElementById('semester-input').value.trim();
   if (!ertek) {
-  showToast('Kérlek, adj meg egy félévet.', 'error');
-  return;
-}
+    showToast('Kérlek, adj meg egy félévet.', 'error');
+    return;
+  }
 
   fetch('/api/settings/current-semester', {
     method: 'PUT',
@@ -588,10 +645,8 @@ document.getElementById('semester-form').addEventListener('submit', (e) => {
     body: JSON.stringify({ ertek })
   })
     .then(res => res.json())
-    .then(data => {
+    .then(() => {
       showToast('Félév sikeresen frissítve.', 'success');
       closeSemesterModal();
     });
 });
-
-

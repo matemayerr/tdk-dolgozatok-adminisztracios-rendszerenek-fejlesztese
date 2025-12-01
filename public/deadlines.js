@@ -29,13 +29,9 @@ const DEADLINE_TYPES = [
     key: 'zsuri_ertesites',
     label: 'Zsűritagok értesítése',
     description: 'Eddig az időpontig küldjük ki a zsűritagoknak a dolgozatokra vonatkozó értesítéseket.'
-  },
-  {
-    key: 'zsuri_adminisztracio',
-    label: 'Zsűri adminisztráció határidő',
-    description: 'Ha eddig az időpontig nem fogadta el valaki a tagságot, emlékeztetőt kap.'
   }
 ];
+
 
 document.addEventListener('DOMContentLoaded', () => {
   renderDeadlineRows();
