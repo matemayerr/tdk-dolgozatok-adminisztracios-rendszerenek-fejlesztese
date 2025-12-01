@@ -225,10 +225,49 @@ app.get('/uploads/:filename', (req, res) => {
 
 // CRUD műveletek a dolgozatokra
 
+// 🔹 Dolgozatok sorrendjének mentése drag and drop után
+app.put('/api/dolgozatok/reorder', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const dolgozatok = body.dolgozatok;
+
+    console.log('🔁 Érkezett sorrend:', JSON.stringify(dolgozatok, null, 2));
+
+    if (!Array.isArray(dolgozatok)) {
+      return res.status(400).json({ error: 'Hibás formátumú dolgozatlista.' });
+    }
+
+    let updatedCount = 0;
+
+    for (const d of dolgozatok) {
+      if (!d.id) {
+        console.warn('⚠️ Hiányzik az id egy elemnél:', d);
+        continue;
+      }
+
+      const result = await Dolgozat.updateOne(
+        { _id: d.id },
+        { $set: { sorszam: d.sorszam ?? 0 } }
+      );
+
+      updatedCount += result.modifiedCount ?? result.nModified ?? 0;
+    }
+
+    console.log('✅ Sorrend frissítve, módosított dokumentumok:', updatedCount);
+    res.json({ message: 'Sorrend sikeresen frissítve.', updated: updatedCount });
+  } catch (err) {
+    console.error('❌ Hiba a sorrend mentésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a sorrend mentésekor.', details: String(err.message || err) });
+  }
+});
+
 // Minden dolgozat lekérdezése
 app.get('/api/dolgozatok', async (req, res) => {
   try {
-    const dolgozatok = await Dolgozat.find().lean();
+    const dolgozatok = await Dolgozat.find()
+      .sort({ szekcioId: 1, sorszam: 1, _id: 1 })  // 🔹 itt a rendezés
+      .lean();
+
     const felhasznalok = await Felhasznalo.find().lean();
 
     // Neptun → felhasználó map
@@ -259,6 +298,7 @@ app.get('/api/dolgozatok', async (req, res) => {
     res.status(500).json({ error: 'Szerverhiba a dolgozatok lekérésekor' });
   }
 });
+
 
 
 // Feltöltéshez elérhető dolgozatok lekérdezése
@@ -837,7 +877,10 @@ app.get('/api/papers/:id', async (req, res) => {
 // 🔹 Dolgozatok lekérése, szekciókhoz és listákhoz is használható formátumban
 app.get('/api/papers', async (req, res) => {
   try {
-    const dolgozatok = await Dolgozat.find().lean();
+    const dolgozatok = await Dolgozat.find()
+      .sort({ szekcioId: 1, sorszam: 1, _id: 1 })  // 🔹 itt a rendezés
+      .lean();
+
     const felhasznalok = await Felhasznalo.find().lean();
 
     const felhasznaloMap = {};
@@ -875,9 +918,6 @@ app.get('/api/papers', async (req, res) => {
     res.status(500).json({ error: 'Szerverhiba a dolgozatok lekérésekor' });
   }
 });
-
-
-
 
 
 
@@ -1615,44 +1655,9 @@ app.get('/api/homepage-content', (req, res) => {
   res.send(htmlContent);
 });
 
-// 🔹 Dolgozatok sorrendjének mentése drag and drop után
-app.put('/api/dolgozatok/reorder', async (req, res) => {
-  const { dolgozatok } = req.body;
 
-  if (!Array.isArray(dolgozatok)) {
-    return res.status(400).json({ error: 'Hibás formátumú dolgozatlista.' });
-  }
 
-  try {
-    const bulkOperations = [];
 
-    for (const { id, sorszam } of dolgozatok) {
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        console.warn('⚠️ Érvénytelen ObjectId:', id);
-        continue;
-      }
-
-      bulkOperations.push({
-        updateOne: {
-          filter: { _id: new mongoose.Types.ObjectId(id) },
-          update: { $set: { sorszam: sorszam } }
-        }
-      });
-    }
-
-    if (bulkOperations.length === 0) {
-      return res.status(400).json({ error: 'Nincs érvényes frissítés.' });
-    }
-
-    const result = await mongoose.connection.collection('dolgozats').bulkWrite(bulkOperations);
-    console.log('✅ Dolgozatok sorrendje frissítve:', result.modifiedCount);
-
-    res.json({ message: 'Sorrend sikeresen frissítve.', updated: result.modifiedCount });
-  } catch (err) {
-    console.error('❌ Hiba a sorrend mentésekor:', err);
-    res.status(500).json({ error: 'Szerverhiba a sorrend mentésekor.' });
-  }
-});
 
 
 

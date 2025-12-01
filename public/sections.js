@@ -42,7 +42,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const nameInput = document.getElementById('section-name');
     const kar = document.getElementById('szekcio-kar').value;
     const name = nameInput.value.trim();
-    if (!name) return alert('A szekció neve nem lehet üres.');
+   if (!name) {
+      showToast('A szekció neve nem lehet üres.', 'error');
+      return;
+    }
 
     const semesterRes = await fetch('/api/settings/current-semester');
     const semesterData = await semesterRes.json();
@@ -58,8 +61,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       nameInput.value = '';
       await loadSections();
     } else {
-      alert('Hiba történt a szekció hozzáadásakor.');
-    }
+      showToast('Hiba történt a szekció hozzáadásakor.', 'error');
+}
   });
 
   async function loadSections() {
@@ -160,15 +163,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                   method: 'PUT'
                 });
                 if (response.ok) {
-                  alert('Dolgozat eltávolítva a szekcióból.');
+                  showToast('Dolgozat eltávolítva a szekcióból.', 'success');
                   await loadSections();
                 } else {
-                  alert('Hiba történt az eltávolítás során.');
+                  showToast('Hiba történt az eltávolítás során.', 'error');
                 }
               } catch (error) {
-                console.error('Hiba a dolgozat eltávolításakor:', error);
-                alert('Szerverhiba a dolgozat eltávolításakor.');
-              }
+                  console.error('Hiba a dolgozat eltávolításakor:', error);
+                  showToast('Szerverhiba a dolgozat eltávolításakor.', 'error');
+                }
             });
 
             const toggleSpan = document.createElement('span');
@@ -282,7 +285,7 @@ Sortable.create(innerTbody, {
     if (response.ok) {
       await loadSections();
     } else {
-      alert('Hiba történt a törlés során.');
+      showToast('Hiba történt a törlés során.', 'error');
     }
   }
 
@@ -298,8 +301,8 @@ Sortable.create(innerTbody, {
       if (response.ok) {
         loadSections();
       } else {
-        alert('Hiba történt a módosítás során.');
-      }
+  showToast('Hiba a törlés során.', 'error');
+}
     });
   }
 
@@ -342,28 +345,30 @@ Sortable.create(innerTbody, {
     }
   }
 
-  document.getElementById('assign-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const checked = document.querySelectorAll('#assign-papers-list input[type="checkbox"]:checked');
-    const paperIds = Array.from(checked).map(cb => cb.value);
+document.getElementById('assign-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const checked = document.querySelectorAll('#assign-papers-list input[type="checkbox"]:checked');
+  const paperIds = Array.from(checked).map(cb => cb.value);
 
-    try {
-      const response = await fetch(`/api/sections/${selectedSectionId}/add-papers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paperIds })
-      });
+  try {
+    const response = await fetch(`/api/sections/${selectedSectionId}/add-papers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paperIds })
+    });
 
-      if (response.ok) {
-        alert('Dolgozatok sikeresen hozzárendelve.');
-        closeAssignModal();
-      } else {
-        alert('Hiba történt a dolgozatok hozzárendelésekor.');
-      }
-    } catch (err) {
-      console.error('Hiba a hozzárendelés során:', err);
+    if (response.ok) {
+      showToast('Dolgozatok sikeresen hozzárendelve.', 'success');
+      closeAssignModal();
+    } else {
+      showToast('Hiba történt a dolgozatok hozzárendelésekor.', 'error');
     }
-  });
+  } catch (err) {
+    console.error('Hiba a hozzárendelés során:', err);
+    showToast('Szerverhiba a dolgozatok hozzárendelésekor.', 'error');
+  }
+});
+
 
   function filterPapersByTitle() {
     const searchTerm = document.getElementById('search-papers-input').value.toLowerCase();
@@ -376,6 +381,10 @@ Sortable.create(innerTbody, {
 });
 
 let currentSectionIdForZsuri = null;
+
+function closeZsuriModal() {
+  document.getElementById('zsuri-modal').style.display = 'none';
+}
 
 async function openZsuriModal(sectionId) {
   currentSectionIdForZsuri = sectionId;
@@ -395,34 +404,39 @@ async function openZsuriModal(sectionId) {
   });
 
   // Zsűritag hozzáadása gomb esemény
-document.getElementById('add-zsuri-btn').addEventListener('click', async () => {
-  const felhasznaloId = document.getElementById('zsuri-felhasznalo').value;
-  const szerep = document.getElementById('zsuri-szerep').value;
+    const addBtn = document.getElementById('add-zsuri-btn');
+  addBtn.onclick = async () => {
+    const felhasznaloId = document.getElementById('zsuri-felhasznalo').value;
+    const szerep = document.getElementById('zsuri-szerep').value;
 
-  if (!felhasznaloId || !szerep) {
-    alert('Válassz felhasználót és szerepet!');
-    return;
-  }
-
-  try {
-    const response = await fetch(`/api/sections/${currentSectionIdForZsuri}/add-judge`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ felhasznaloId, szerep })
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      alert('Zsűritag sikeresen hozzáadva.');
-      openZsuriModal(currentSectionIdForZsuri); // újratölti a listát
-    } else {
-      alert(data.error || 'Hiba történt a hozzáadás során.');
+    if (!felhasznaloId || !szerep) {
+      showToast('Válassz felhasználót és szerepet!', 'error');
+      return;
     }
-  } catch (err) {
-    console.error('Hiba a zsűritag hozzáadásakor:', err);
-    alert('Szerverhiba a hozzáadás során.');
-  }
-});
+
+    try {
+      const response = await fetch(`/api/sections/${currentSectionIdForZsuri}/add-judge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ felhasznaloId, szerep })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        showToast('Zsűritag sikeresen hozzáadva.', 'success');
+        // csak a lista újratöltése:
+        const sectionRes = await fetch('/api/sections');
+        const sections = await sectionRes.json();
+        const section = sections.find(s => s._id === currentSectionIdForZsuri);
+        renderZsuriList(section.zsuri);
+      } else {
+        showToast(data.error || 'Hiba történt a hozzáadás során.', 'error');
+      }
+    } catch (err) {
+        console.error('Hiba a zsűritag hozzáadásakor:', err);
+        showToast('Szerverhiba a hozzáadás során.', 'error');
+      }
+  };
 
 
   // Aktuális zsűritagok betöltése
@@ -440,19 +454,40 @@ function renderZsuriList(zsuriLista) {
     return;
   }
 
+  const szerepFelirat = {
+    elnok: 'Zsűri elnök',
+    titkar: 'Zsűri titkár',
+    zsuri: 'Zsűri tag'
+  };
+
   const table = document.createElement('table');
   table.innerHTML = `
-    <thead><tr><th>Név</th><th>Szerep</th><th>Állapot</th><th></th></tr></thead>
+    <thead>
+      <tr>
+        <th>Név</th>
+        <th>Szerep</th>
+        <th>Állapot</th>
+        <th></th>
+      </tr>
+    </thead>
     <tbody></tbody>`;
   const tbody = table.querySelector('tbody');
 
   zsuriLista.forEach(z => {
     const tr = document.createElement('tr');
+
+    const nev = z.felhasznaloId?.nev || '-';
+    const szerepSzoveg = szerepFelirat[z.szerep] || z.szerep;
+
     tr.innerHTML = `
-      <td>${z.felhasznaloId?.nev || '-'}</td>
-      <td>${z.szerep}</td>
+      <td>${nev}</td>
+      <td><span class="zsuri-role zsuri-role-${z.szerep}">${szerepSzoveg}</span></td>
       <td>${z.allapot}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="removeJudge('${z.felhasznaloId._id}')">Törlés</button></td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="removeJudge('${z.felhasznaloId._id}')">
+          Törlés
+        </button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -462,14 +497,67 @@ function renderZsuriList(zsuriLista) {
 
 async function removeJudge(userId) {
   if (!confirm('Biztosan eltávolítod ezt a zsűritagot?')) return;
-  const res = await fetch(`/api/sections/${currentSectionIdForZsuri}/remove-judge/${userId}`, { method: 'DELETE' });
-  if (res.ok) {
-    alert('Zsűritag eltávolítva.');
-    openZsuriModal(currentSectionIdForZsuri); // újratöltés
-  } else {
-    alert('Hiba a törlés során.');
+
+  try {
+    const res = await fetch(`/api/sections/${currentSectionIdForZsuri}/remove-judge/${userId}`, {
+      method: 'DELETE'
+    });
+
+    if (res.ok) {
+      showToast('Zsűritag eltávolítva.', 'success');
+
+      // lista újratöltése ugyanarra a szekcióra
+      const sectionRes = await fetch('/api/sections');
+      const sections = await sectionRes.json();
+      const section = sections.find(s => s._id === currentSectionIdForZsuri);
+      if (section) {
+        renderZsuriList(section.zsuri);
+      }
+    } else {
+      showToast('Hiba a törlés során.', 'error');
+    }
+  } catch (err) {
+    console.error('Hiba a zsűritag eltávolításakor:', err);
+    showToast('Szerverhiba a törlés során.', 'error');
   }
 }
+
+
+// 🔔 Egységes toast értesítés
+function showToast(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('toast-container');
+
+  // ha valamiért nincs konténer, fallback alertre
+  if (!container) {
+    alert(message);
+    return;
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+
+  // kattintással is bezárható
+  toast.addEventListener('click', () => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  });
+
+  container.appendChild(toast);
+
+  // animáció indítás
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
+
+  // automatikus eltűnés
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+
 
 //aktuális félév
 function openSemesterModal() {
@@ -489,7 +577,10 @@ function closeSemesterModal() {
 document.getElementById('semester-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const ertek = document.getElementById('semester-input').value.trim();
-  if (!ertek) return alert('Kérlek, adj meg egy félévet.');
+  if (!ertek) {
+  showToast('Kérlek, adj meg egy félévet.', 'error');
+  return;
+}
 
   fetch('/api/settings/current-semester', {
     method: 'PUT',
@@ -498,7 +589,7 @@ document.getElementById('semester-form').addEventListener('submit', (e) => {
   })
     .then(res => res.json())
     .then(data => {
-      alert('Félév sikeresen frissítve.');
+      showToast('Félév sikeresen frissítve.', 'success');
       closeSemesterModal();
     });
 });

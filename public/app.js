@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let itemsPerPage = 25;
 
 //sor kiválasztás
-    const sorSzamSelect = document.getElementById('sor-szam-valaszto');
+    const sorSzamSelect = document.getElementById('sorok-szama-dolgozat');
     if (sorSzamSelect) {
         sorSzamSelect.addEventListener('change', () => {
             const ertek = sorSzamSelect.value;
@@ -146,26 +146,29 @@ const filteredDolgozatok = dolgozatok.filter(dolgozat => {
 const detailTr = document.createElement('tr');
 detailTr.classList.add('dolgozat-details-row');
 detailTr.id = `details-${dolgozat._id}`;
+detailTr.style.display = 'none';   // 🔹 alapból legyen rejtve a SOR
+
 detailTr.innerHTML = `
-    <td colspan="3" style="display: none;" id="details-${dolgozat._id}">
-        <div class="dolgozat-details-panel" id="panel-${dolgozat._id}">
+  <td colspan="3">
+    <div class="dolgozat-details-panel">
 
-            <p class="dolgozat-leiras">
-  <span class="leiras-cimke">Tartalmi összefoglaló:</span><br>
-  <span class="leiras-szoveg">${dolgozat.leiras || '—'}</span>
-</p>
-            <p><strong>Hallgatók:</strong> ${
-  (dolgozat.szerzok || []).map(s => `${s.nev} (${s.neptun})`).join(', ') || '—'
-}</p>
-<p><strong>Témavezetők:</strong> ${
-  (dolgozat.temavezeto || []).map(t => `${t.nev} (${t.neptun})`).join(', ') || '—'
-}</p>
+      <p class="dolgozat-leiras">
+        <span class="leiras-cimke">Tartalmi összefoglaló:</span><br>
+        <span class="leiras-szoveg">${dolgozat.leiras || '—'}</span>
+      </p>
 
+      <p><strong>Hallgatók:</strong> ${
+        (dolgozat.szerzok || []).map(s => `${s.nev} (${s.neptun})`).join(', ') || '—'
+      }</p>
 
+      <p><strong>Témavezetők:</strong> ${
+        (dolgozat.temavezeto || []).map(t => `${t.nev} (${t.neptun})`).join(', ') || '—'
+      }</p>
 
-        </div>
-    </td>
+    </div>
+  </td>
 `;
+
 
 
 dolgozatTbody.appendChild(tr);        // A dolgozat fő sora felül
@@ -242,41 +245,58 @@ if (dolgozatForm) {
 
     // Dolgozat szerkesztése
     window.editDolgozat = async function (id) {
-        aktualisModositandoId = id;
-        const dolgozat = dolgozatok.find(d => d._id === id);
-    
-        // Inputmezők feltöltése
-        document.getElementById('modosit-dolgozat-cim').value = dolgozat.cim || dolgozat.cím || '';
-        document.getElementById('modosit-dolgozat-leiras').value = dolgozat.leiras || '';
-        document.getElementById('modosit-allapot').value = dolgozat.allapot || 'benyújtva';
-    
-        // Felhasználók lekérése
-        const response = await fetch('/api/felhasznalok');
-        const felhasznalok = await response.json();
-        const hallgatok = felhasznalok.filter(f => f.csoportok.includes('hallgato'));
-        const temavezetok = felhasznalok.filter(f => f.csoportok.includes('temavezeto'));
-    
-        // Hallgatók
-        const hallgatoLista = document.getElementById('modosit-hallgato-lista');
-        hallgatoLista.innerHTML = hallgatok.map(h => `
-            <label><input type="checkbox" value="${h.neptun}" ${dolgozat.hallgato_ids.includes(h.neptun) ? 'checked' : ''}> ${h.nev} (${h.neptun})</label>
-        `).join('');
-    
-        // Témavezető
-        const temavezetoLista = document.getElementById('modosit-temavezeto-lista');
-        temavezetoLista.innerHTML = temavezetok.map(t => `
-            <label>
-                <input type="checkbox" value="${t.neptun}">
-                ${t.nev} (${t.neptun})
-            </label>
-        `).join('');
-        
-    
-        // Megjelenítés
-        document.getElementById('modosit-dolgozat-form').style.display = 'block';
-        document.getElementById('homalyositas').style.display = 'block';
-        
-    };
+    aktualisModositandoId = id;
+    const dolgozat = dolgozatok.find(d => d._id === id);
+    if (!dolgozat) {
+        console.error('Nem találom a dolgozatot:', id);
+        return;
+    }
+
+    // Inputmezők feltöltése
+    document.getElementById('modosit-dolgozat-cim').value = dolgozat.cim || dolgozat.cím || '';
+    document.getElementById('modosit-dolgozat-leiras').value = dolgozat.leiras || '';
+    document.getElementById('modosit-allapot').value = dolgozat.allapot || 'benyújtva';
+
+    // Felhasználók lekérése
+    const response = await fetch('/api/felhasznalok');
+    const felhasznalok = await response.json();
+    const hallgatok = felhasznalok.filter(f => (f.csoportok || []).includes('hallgato'));
+    const temavezetok = felhasznalok.filter(f => (f.csoportok || []).includes('temavezeto'));
+
+    // ✅ Dolgozat hallgató- és témavezető Neptun-kódjai a frontend objektumból
+    const dolgozatHallgatoNeptunok = (dolgozat.szerzok || [])
+        .map(s => s.neptun)
+        .filter(Boolean);
+
+    const dolgozatTemavezetoNeptunok = (dolgozat.temavezeto || [])
+        .map(t => t.neptun)
+        .filter(Boolean);
+
+    // Hallgatók listája (előre kipipálva)
+    const hallgatoLista = document.getElementById('modosit-hallgato-lista');
+    hallgatoLista.innerHTML = hallgatok.map(h => `
+        <label>
+            <input type="checkbox" value="${h.neptun}"
+                ${dolgozatHallgatoNeptunok.includes(h.neptun) ? 'checked' : ''}>
+            ${h.nev} (${h.neptun})
+        </label>
+    `).join('');
+
+    // Témavezetők listája (előre kipipálva)
+    const temavezetoLista = document.getElementById('modosit-temavezeto-lista');
+    temavezetoLista.innerHTML = temavezetok.map(t => `
+        <label>
+            <input type="checkbox" value="${t.neptun}"
+                ${dolgozatTemavezetoNeptunok.includes(t.neptun) ? 'checked' : ''}>
+            ${t.nev} (${t.neptun})
+        </label>
+    `).join('');
+
+    // Modal megjelenítése
+    document.getElementById('modosit-dolgozat-form').style.display = 'block';
+    document.getElementById('homalyositas').style.display = 'block';
+};
+
     
 
 
