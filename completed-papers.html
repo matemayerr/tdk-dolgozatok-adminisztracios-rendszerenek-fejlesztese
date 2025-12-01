@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dolgozatok feltöltése</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>TDK Adminisztrációs Rendszer</h1>
+        <nav>
+    <ul>
+        <li><a href="index.html">Főoldal</a></li>
+        <li><a href="users.html">Felhasználók kezelése</a></li>
+        <li class="dropdown">
+            <a href="#" class="dropbtn">Dolgozatok kezelése</a>
+            <div class="dropdown-content">
+                <a href="papers.html">Új dolgozatok hozzáadása</a>
+                <a href="completed-papers.html">Kész dolgozatok feltöltése</a>
+                <a href="review-papers.html">Dolgozatok értékelése</a> <!-- Új menüpont -->
+            </div>
+        </li>
+    </ul>
+</nav>
+    </header>
+
+    <main>
+        <section>
+            <p><h2>Dolgozat feltöltése</h2>
+            <form id="upload-form" enctype="multipart/form-data">
+                <input type="file" id="dolgozat-file" accept="application/pdf" required>
+                <input type="text" id="dolgozat-cim" placeholder="Cím" required>
+                <button type="submit">Feltöltés</button>
+            </form>
+
+            <h2>Feltöltött dolgozatok</h2>
+            <table id="feltoltott-dolgozatok-table">
+                <thead>
+                    <tr>
+                        <th>Cím</th>
+                        <th>Fájl</th>
+                    </tr>
+                </thead>
+                <tbody id="feltoltott-dolgozatok-tbody">
+                    <!-- Feltöltött dolgozatok listája ide kerül -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script src="completed-papers.js"></script>
+</body>
+</html>
+

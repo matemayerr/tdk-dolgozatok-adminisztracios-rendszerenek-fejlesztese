@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dolgozatok értékelése</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>TDK Adminisztrációs Rendszer</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Főoldal</a></li>
+                <li><a href="users.html">Felhasználók kezelése</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropbtn">Dolgozatok kezelése</a>
+                    <div class="dropdown-content">
+                        <a href="papers.html">Új dolgozatok hozzáadása</a>
+                        <a href="completed-papers.html">Dolgozatok feltöltése</a>
+                        <a href="review-papers.html">Dolgozatok értékelése</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <p><h2>Dolgozatok értékelése</h2>
+            <table id="ertekeles-table">
+                <thead>
+                    <tr>
+                        <th>Cím</th>
+                        <th>Hallgató</th>
+                        <th>Témavezető</th>
+                        <th>Állapot</th>
+                        <th>Pontszám</th>
+                        <th>Értékelés</th>
+                    </tr>
+                </thead>
+                <tbody id="ertekeles-tbody">
+                    <!-- Dolgozatok listája ide kerül -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
