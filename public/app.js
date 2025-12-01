@@ -14,14 +14,15 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const response = await fetch('/api/felhasznalok/csoportok');
             const { hallgatok, temavezetok } = await response.json();
+            
+            // Hallgatók betöltése a legördülő menübe
+        const hallgatoLista = document.getElementById('hallgato-lista');
+        hallgatoLista.innerHTML = hallgatok.map(hallgato => `
+            <label>
+                <input type="checkbox" value="${hallgato.neptun}"> ${hallgato.nev} (${hallgato.neptun})
+            </label>
+        `).join('');
 
-            hallgatoSelect.innerHTML = '<option value="">Válasszon hallgatót</option>';
-            hallgatok.forEach(hallgato => {
-                const option = document.createElement('option');
-                option.value = hallgato.neptun;
-                option.textContent = `${hallgato.nev} (${hallgato.neptun})`;
-                hallgatoSelect.appendChild(option);
-            });
 
             temavezetoSelect.innerHTML = '<option value="">Válasszon témavezetőt</option>';
             temavezetok.forEach(temavezeto => {
@@ -46,55 +47,65 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Dolgozatok megjelenítése
-    function megjelenitDolgozatok() {
-        const filteredDolgozatok = dolgozatok.filter(dolgozat => 
-            dolgozat.cím.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-            dolgozat.hallgato_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-            dolgozat.temavezeto_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-            dolgozat.allapot.toLowerCase().includes(searchInput.value.toLowerCase())
-        );
+// Dolgozatok megjelenítése
+function megjelenitDolgozatok() {
+    const filteredDolgozatok = dolgozatok.filter(dolgozat => 
+        dolgozat.cím.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+        (Array.isArray(dolgozat.hallgato_ids) && dolgozat.hallgato_ids.some(id => id.toLowerCase().includes(searchInput.value.toLowerCase()))) ||
+        dolgozat.temavezeto_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+        dolgozat.allapot.toLowerCase().includes(searchInput.value.toLowerCase())
+    );
 
-        const start = (currentPage - 1) * itemsPerPage;
-        const paginatedDolgozatok = filteredDolgozatok.slice(start, start + itemsPerPage);
+    const start = (currentPage - 1) * itemsPerPage;
+    const paginatedDolgozatok = filteredDolgozatok.slice(start, start + itemsPerPage);
+    
+    dolgozatTbody.innerHTML = '';
+    paginatedDolgozatok.forEach(dolgozat => {
+        const roviditettCim = dolgozat.cím.length > 40 ? dolgozat.cím.substring(0, 40) + '...' : dolgozat.cím;
         
-        dolgozatTbody.innerHTML = '';
-        paginatedDolgozatok.forEach(dolgozat => {
-            const tr = document.createElement('tr');
-            tr.dataset.id = dolgozat._id;
-            tr.innerHTML = `
-                <td>${dolgozat.cím || 'N/A'}</td>
-                <td>${dolgozat.hallgato_id || 'N/A'}</td>
-                <td>${dolgozat.temavezeto_id || 'N/A'}</td>
-                <td>${dolgozat.allapot || 'N/A'}</td>
-                <td>
-                    <button onclick="editDolgozat('${dolgozat._id}')">Módosítás</button>
-                    <button onclick="deleteDolgozat('${dolgozat._id}')">Törlés</button>
-                </td>
-            `;
-            dolgozatTbody.appendChild(tr);
-        });
+        const tr = document.createElement('tr');
+        tr.dataset.id = dolgozat._id;
+        tr.innerHTML = `
+            <td title="${dolgozat.cím}">${roviditettCim}</td>
+            <td>${dolgozat.hallgato_ids ? dolgozat.hallgato_ids.join(', ') : 'N/A'}</td>
+            <td>${dolgozat.temavezeto_id || 'N/A'}</td>
+            <td>${dolgozat.allapot || 'N/A'}</td>
+            <td>
+                <button onclick="editDolgozat('${dolgozat._id}')">Módosítás</button>
+                <button onclick="deleteDolgozat('${dolgozat._id}')">Törlés</button>
+            </td>
+        `;
+        dolgozatTbody.appendChild(tr);
+    });
 
-        frissitPaginacio(filteredDolgozatok.length);
-    }
+    frissitPaginacio(filteredDolgozatok.length);
+}
+
 
     // Új dolgozat hozzáadása
     if (dolgozatForm) {
         dolgozatForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const formData = {
-                cím: document.getElementById('dolgozat-cim').value,
-                hallgato_id: hallgatoSelect.value,
-                temavezeto_id: temavezetoSelect.value,
-                allapot: "benyújtva"
-            };
+          const selectedHallgatok = Array.from(document.querySelectorAll('#hallgato-lista input[type="checkbox"]:checked'))
+    .map(checkbox => checkbox.value);
 
-            if (!formData.cím || !formData.hallgato_id || !formData.temavezeto_id) {
-                alert('Kérlek, töltsd ki az összes mezőt!');
-                return;
-            }
+if (selectedHallgatok.length === 0) {
+    alert('Válassz legalább egy hallgatót!');
+    return;
+}
 
+const formData = {
+    cím: document.getElementById('dolgozat-cim').value,
+    hallgato_ids: selectedHallgatok, 
+    temavezeto_id: temavezetoSelect.value,
+    allapot: "benyújtva"
+};
+
+if (!formData.cím || !formData.temavezeto_id || formData.hallgato_ids.length === 0) {
+    alert('Kérlek, töltsd ki az összes mezőt!');
+    return;
+}
             try {
                 const response = await fetch('/api/dolgozatok', {
                     method: 'POST',
@@ -151,11 +162,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Dolgozat mentése szerkesztés után
     async function saveDolgozat(id, cells) {
         const updatedDolgozat = {
-            cím: cells[0].querySelector('input').value,
-            hallgato_id: cells[1].querySelector('input').value,
-            temavezeto_id: cells[2].querySelector('input').value,
-            allapot: document.getElementById(`allapot-${id}`).value,
-        };
+    cím: cells[0].querySelector('input').value,
+    hallgato_ids: Array.from(cells[1].querySelectorAll('input[type="checkbox"]:checked'))
+        .map(checkbox => checkbox.value),
+    temavezeto_id: cells[2].querySelector('input').value,
+    allapot: document.getElementById(`allapot-${id}`).value,
+};
+
 
         try {
             const response = await fetch(`/api/dolgozatok/${id}`, {

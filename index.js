@@ -21,7 +21,7 @@ app.use(express.json()); // JSON adatküldés engedélyezése (pl. POST és PUT 
 // Mongoose modellek létrehozása a "Dolgozat" és "Felhasznalo" gyűjteményekhez
 const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     cím: { type: String, required: true },
-    hallgato_id: { type: String, required: true },
+    hallgato_ids: { type: [String], required: true }, // ✔ Több hallgató támogatása
     temavezeto_id: { type: String, required: true },
     allapot: { type: String, default: 'benyújtva' },
     filePath: { type: String },
@@ -29,6 +29,7 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     ertekelesFilePath: { type: String },
     elutasitas_oka: { type: String }
 }));
+
 
 const bcrypt = require('bcrypt');
 
@@ -190,8 +191,13 @@ app.get('/api/dolgozatok/kesz', async (req, res) => {
 
 // Új dolgozat hozzáadása
 app.post('/api/dolgozatok', async (req, res) => {
-    const { cím, hallgato_id, temavezeto_id } = req.body;
-    const dolgozat = new Dolgozat({ cím, hallgato_id, temavezeto_id });
+    const { cím, hallgato_ids, temavezeto_id } = req.body;
+
+    if (!cím || !hallgato_ids || hallgato_ids.length === 0 || !temavezeto_id) {
+        return res.status(400).json({ error: 'Minden mezőt ki kell tölteni!' });
+    }
+
+    const dolgozat = new Dolgozat({ cím, hallgato_ids, temavezeto_id, allapot: "benyújtva" });
 
     try {
         await dolgozat.save();
@@ -200,6 +206,7 @@ app.post('/api/dolgozatok', async (req, res) => {
         res.status(500).json({ error: 'Hiba történt a dolgozat mentésekor' });
     }
 });
+
 
 // Dolgozat módosítása
 app.put('/api/dolgozatok/:id', async (req, res) => {
@@ -266,6 +273,18 @@ app.delete('/api/dolgozatok/:id', async (req, res) => {
     } catch (error) {
         console.error("Hiba történt a felhasználó mentésekor:", error);
         res.status(500).json({ error: 'Hiba történt a felhasználó mentésekor' });
+    }
+});
+
+app.get('/api/felhasznalok/csoportok', async (req, res) => {
+    try {
+        const hallgatok = await Felhasznalo.find({ csoportok: { $in: ['hallgato'] } });
+        const temavezetok = await Felhasznalo.find({ csoportok: { $in: ['temavezeto'] } });
+
+        res.json({ hallgatok, temavezetok });
+    } catch (error) {
+        console.error('Hiba történt a csoportok szerinti felhasználók lekérésekor:', error);
+        res.status(500).json({ error: 'Hiba történt a felhasználók lekérésekor' });
     }
 });
 

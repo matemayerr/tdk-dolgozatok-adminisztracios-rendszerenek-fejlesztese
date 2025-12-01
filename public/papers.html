@@ -34,10 +34,13 @@
             <h2>Új dolgozat hozzáadása:</h2>
             <form id="dolgozat-form">
                 <input type="text" id="dolgozat-cim" placeholder="Dolgozat címe" required>
-                <select id="dolgozat-hallgato-id" required>
-                    <option value="">Válasszon hallgatót</option>
-                    <!-- Hallgatók betöltése JavaScriptből -->
-                </select>
+                <div class="dropdown">
+    <button class="dropbtn" onclick="toggleDropdown()">Hallgatók kiválasztása ▼</button>
+    <div id="hallgato-lista" class="dropdown-content">
+        <!-- Ide töltjük be a hallgatók checkboxait -->
+    </div>
+</div>
+
                 <select id="dolgozat-temavezeto-id" required>
                     <option value="">Válasszon témavezetőt</option>
                     <!-- Témavezetők betöltése JavaScriptből -->
