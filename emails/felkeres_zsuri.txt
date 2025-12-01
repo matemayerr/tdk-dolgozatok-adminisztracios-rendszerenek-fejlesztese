@@ -1,0 +1,12 @@
+Tisztelt {{NEV}},
+
+Felkérést kapott a(z) "{{SZEKCIO}}" szekcióban való részvételre, mint {{SZEREP}}.
+
+Kérjük, az alábbi linkekre kattintva jelezze döntését:
+
+Elfogadás: {{LINK_ELFOGADAS}}
+Elutasítás: {{LINK_ELUTASITAS}}
+
+Üdvözlettel,  
+TDK Adminisztrációs Rendszer
+

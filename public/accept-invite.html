@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>TDK Zsűri felkérés visszaigazolás</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background-color: #f4f6f8;
+    }
+    .box {
+      background: white;
+      max-width: 600px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Felkérés visszaigazolása</h1>
+    <p id="status">Kérés feldolgozása...</p>
+  </div>
+
+  <script>
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const sectionId = params.get('section');
+      const userId = params.get('user');
+      const action = params.get('action');
+
+      if (!sectionId || !userId || !action) {
+        document.getElementById('status').textContent = 'Érvénytelen vagy hiányos link.';
+        document.getElementById('status').classList.add('error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/sections/${sectionId}/judge-response?userId=${userId}&action=${action}`);
+        const text = await res.text();
+        document.getElementById('status').textContent = text;
+        document.getElementById('status').classList.add(res.ok ? 'success' : 'error');
+      } catch (err) {
+        document.getElementById('status').textContent = 'Hiba történt a feldolgozás során.';
+        document.getElementById('status').classList.add('error');
+      }
+    }
+    init();
+  </script>
+</body>
+</html>

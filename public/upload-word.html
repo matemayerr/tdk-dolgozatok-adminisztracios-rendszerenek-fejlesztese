@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Word feltöltés - Főoldal frissítése</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    #dropzone {
+      border: 2px dashed #007bff;
+      border-radius: 10px;
+      padding: 50px;
+      color: #555;
+      margin-top: 50px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #dropzone.dragover {
+      background-color: #eef5ff;
+      border-color: #0056b3;
+      color: #0056b3;
+    }
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Word dokumentum feltöltése a főoldalhoz</h1>
+  <p>Húzd ide a Word (.docx) fájlt, vagy kattints a zónára a kiválasztáshoz.</p>
+
+  <div id="dropzone">Húzd ide a fájlt vagy kattints ide a feltöltéshez</div>
+  <input type="file" id="fileInput" accept=".docx" style="display: none;">
+  <div id="status"></div>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const statusDiv = document.getElementById('status');
+
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    dropzone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      handleFile(e.dataTransfer.files[0]);
+    });
+
+    fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+    function handleFile(file) {
+      if (!file || !file.name.endsWith('.docx')) {
+        statusDiv.textContent = '❌ Kérlek, DOCX fájlt válassz.';
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+      statusDiv.textContent = '📤 Feltöltés folyamatban...';
+
+      fetch('/api/upload-homepage', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+          if (data.message) {
+            statusDiv.textContent = '✅ ' + data.message;
+          } else {
+            statusDiv.textContent = '⚠️ Hiba: ' + data.error;
+          }
+        })
+        .catch(() => {
+          statusDiv.textContent = '❌ Szerverhiba a feltöltés során.';
+        });
+    }
+  </script>
+</body>
+</html>

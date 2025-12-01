@@ -68,6 +68,24 @@
   </form>
 </div>
 
+<!-- Modal: zsüri hozzárendelése -->
+<div id="zsuri-modal" class="modal-form" style="display:none;">
+  <h3>Zsűri adminisztráció</h3>
+  <div id="zsuri-lista"></div>
+  <hr>
+  <h4>Új zsűritag hozzáadása</h4>
+  <label for="zsuri-felhasznalo">Válassz felhasználót:</label>
+  <select id="zsuri-felhasznalo"></select>
+  <label for="zsuri-szerep">Szerep:</label>
+  <select id="zsuri-szerep">
+    <option value="elnok">Zsűri elnök</option>
+    <option value="titkar">Zsűri titkár</option>
+    <option value="zsuri">Zsűri tag</option>
+  </select>
+  <button id="add-zsuri-btn" class="btn btn-success">Hozzáadás</button>
+  <button type="button" onclick="closeZsuriModal()" class="btn btn-secondary">Mégse</button>
+</div>
+
 
 
 <script src="sections.js"></script>

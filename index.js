@@ -1241,11 +1241,16 @@ app.get('/dolgozatok/:id', (req, res) => {
 const SectionSchema = new mongoose.Schema({
   name: { type: String, required: true },
   felev: { type: String, required: true },
-  kar: { type: String }, // pl. GIVK
-  elnokId: { type: mongoose.Schema.Types.ObjectId, ref: 'Felhasznalos' },
-  titkarId: { type: mongoose.Schema.Types.ObjectId, ref: 'Felhasznalos' },
-  zsuriIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Felhasznalos' }]
+  kar: { type: String },
+  zsuri: [
+    {
+      felhasznaloId: { type: mongoose.Schema.Types.ObjectId, ref: 'Felhasznalos' },
+      szerep: { type: String, enum: ['elnok', 'titkar', 'zsuri'] },
+      allapot: { type: String, enum: ['Elfogadás alatt', 'Elfogadva', 'Elutasítva'], default: 'Elfogadás alatt' }
+    }
+  ]
 });
+
 
 const Section = mongoose.model('Section', SectionSchema);
 
@@ -1257,7 +1262,10 @@ const Section = mongoose.model('Section', SectionSchema);
 app.get('/api/sections', async (req, res) => {
   try {
     const karok = await UniversityStructure.find({}).lean();  // karok: [{ nev, rovidites }]
-    const sections = await Section.find().populate('elnokId titkarId zsuriIds').lean();
+    const sections = await Section.find()
+  .populate('zsuri.felhasznaloId') // Minden zsűritaghoz tölti be a felhasználót
+  .lean();
+
 
     // A rövidítések alapján megkeressük a teljes nevet
     const enrichedSections = sections.map(section => {
@@ -1455,6 +1463,154 @@ app.put('/api/dolgozatok/:id/remove-from-section', async (req, res) => {
     console.error('Hiba a dolgozat szekcióból való eltávolításakor:', err);
     res.status(500).json({ error: 'Szerverhiba' });
   }
+});
+
+
+// Zsűritag / elnök / titkár hozzáadása egy szekcióhoz
+app.post('/api/sections/:id/add-judge', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { felhasznaloId, szerep } = req.body;
+
+    if (!felhasznaloId || !szerep)
+      return res.status(400).json({ error: 'Hiányzó adatok.' });
+
+    const section = await Section.findById(id);
+    if (!section) return res.status(404).json({ error: 'Szekció nem található.' });
+
+    // Ha már létezik ugyanaz a szerep / személy
+    const alreadyExists = section.zsuri.some(z => String(z.felhasznaloId) === String(felhasznaloId));
+    if (alreadyExists) return res.status(400).json({ error: 'Ez a felhasználó már zsűritag ebben a szekcióban.' });
+
+    section.zsuri.push({ felhasznaloId, szerep });
+    await section.save();
+
+    // Küldjünk e-mailt
+    const felhasznalo = await Felhasznalo.findById(felhasznaloId);
+    if (felhasznalo?.email) {
+      const emailSzoveg = betoltEmailSablon('felkeres_zsuri.txt', {
+        NEV: felhasznalo.nev,
+        SZEREP: szerep,
+        SZEKCIO: section.name,
+        LINK_ELFOGADAS: `http://localhost:3000/accept-invite.html?section=${id}&user=${felhasznaloId}&action=accept`,
+        LINK_ELUTASITAS: `http://localhost:3000/accept-invite.html?section=${id}&user=${felhasznaloId}&action=reject`
+      });
+
+      await transporter.sendMail({
+        from: 'TDK rendszer <m48625729@gmail.com>',
+        to: felhasznalo.email,
+        subject: `TDK zsűri felkérés (${section.name})`,
+        text: emailSzoveg
+      });
+    }
+
+    res.json({ message: 'Zsűritag hozzáadva és e-mail elküldve.', section });
+  } catch (err) {
+    console.error('Hiba zsűri hozzáadásakor:', err);
+    res.status(500).json({ error: 'Szerverhiba.' });
+  }
+});
+
+
+//zsüri tag eltávlítás a szekciókból
+
+app.delete('/api/sections/:sectionId/remove-judge/:userId', async (req, res) => {
+  try {
+    const { sectionId, userId } = req.params;
+    const section = await Section.findById(sectionId);
+    if (!section) return res.status(404).json({ error: 'Szekció nem található.' });
+
+    section.zsuri = section.zsuri.filter(z => String(z.felhasznaloId) !== String(userId));
+    await section.save();
+
+    res.json({ message: 'Zsűritag eltávolítva.', section });
+  } catch (err) {
+    console.error('Hiba zsűritag eltávolításakor:', err);
+    res.status(500).json({ error: 'Szerverhiba a zsűri törlésekor.' });
+  }
+});
+
+//Elfogadás / Elutasítás link -  e-mail visszaigazolással
+app.get('/api/sections/:sectionId/judge-response', async (req, res) => {
+  try {
+    const { sectionId } = req.params;
+    const { userId, action } = req.query;
+
+    const section = await Section.findById(sectionId);
+    if (!section) return res.status(404).send('Szekció nem található.');
+
+    const judge = section.zsuri.find(z => String(z.felhasznaloId) === String(userId));
+    if (!judge) return res.status(404).send('Zsűritag nem található.');
+
+    judge.allapot = action === 'accept' ? 'Elfogadva' : 'Elutasítva';
+    await section.save();
+
+    res.send(`Köszönjük, a felkérés ${judge.allapot.toLowerCase()} állapotba került.`);
+  } catch (err) {
+    res.status(500).send('Hiba a válasz feldolgozásakor.');
+  }
+});
+
+
+// -------------------------------
+// WORD feltöltés és főoldal frissítés (képekkel együtt)
+// -------------------------------
+const mammoth = require('mammoth');
+
+app.post('/api/upload-homepage', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nem érkezett fájl.' });
+    }
+
+    const buffer = fs.readFileSync(req.file.path);
+
+    // 🖼️ Képek beágyazása Base64 formátumban
+    const result = await mammoth.convertToHtml(
+      { buffer },
+      {
+        convertImage: mammoth.images.inline(async (image) => {
+  const imageBuffer = await image.read();
+  const base64 = imageBuffer.toString("base64");
+  const contentType = image.contentType;
+  // 🖼️ adjunk hozzá inline style-t a képhez
+  return {
+    src: `data:${contentType};base64,${base64}`,
+    alt: "Beágyazott kép",
+    style: "max-width:80%;height:auto;display:block;margin:20px auto;border-radius:6px;"
+  };
+}),
+
+      }
+    );
+
+    const outputPath = path.join(__dirname, 'public', 'homepage.html');
+
+    // 💾 A konvertált HTML mentése
+    fs.writeFileSync(outputPath, result.value, 'utf8');
+
+    // 🧹 Opcionálisan: törölheted a feltöltött Word fájlt
+    fs.unlinkSync(req.file.path);
+
+    res.json({ message: 'Főoldal frissítve a Word dokumentum alapján (képekkel együtt).' });
+  } catch (error) {
+    console.error('Hiba a Word konvertálás során:', error);
+    res.status(500).json({ error: 'Nem sikerült feldolgozni a Word dokumentumot.' });
+  }
+});
+
+// -------------------------------
+// Főoldal tartalmának betöltése (a legutóbb feltöltött Word alapján)
+// -------------------------------
+app.get('/api/homepage-content', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'homepage.html');
+
+  if (!fs.existsSync(filePath)) {
+    return res.send('<p>Még nem töltöttek fel Word dokumentumot a főoldalhoz.</p>');
+  }
+
+  const htmlContent = fs.readFileSync(filePath, 'utf8');
+  res.send(htmlContent);
 });
 
 

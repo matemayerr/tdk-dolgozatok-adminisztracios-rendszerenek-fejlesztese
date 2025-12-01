@@ -1803,4 +1803,43 @@ body.login-oldal {
     white-space: nowrap;   /* Ne törjön meg a gomb */
 }
 
+/* Főoldali Word-tartalom stílusai */
+#homepage-content {
+  font-family: "Segoe UI", Arial, sans-serif;
+  line-height: 1.6;
+  color: #222;
+}
+
+#homepage-content h1,
+#homepage-content h2,
+#homepage-content h3 {
+  color: #003366;
+  margin-top: 1.5em;
+}
+
+#homepage-content p {
+  font-size: 1rem;
+  margin: 0.5em 0;
+}
+
+#homepage-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+#homepage-content table td,
+#homepage-content table th {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
+#homepage-content img {
+  display: block;
+  margin: 20px auto;
+  max-width: 70%;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
 

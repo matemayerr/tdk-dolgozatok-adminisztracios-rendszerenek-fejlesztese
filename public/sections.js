@@ -96,6 +96,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const actionsCell = document.createElement('td');
         actionsCell.classList.add('actions-cell');
 
+        const zsuriButton = document.createElement('button');
+        zsuriButton.textContent = 'Zsűri adminisztráció';
+        zsuriButton.classList.add('btn', 'btn-info', 'me-2');
+        zsuriButton.addEventListener('click', () => openZsuriModal(section._id));
+        actionsCell.appendChild(zsuriButton);
+
         const assignButton = document.createElement('button');
         assignButton.textContent = 'Dolgozatok hozzáadása';
         assignButton.classList.add('btn', 'btn-secondary', 'me-2');
@@ -103,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         actionsCell.appendChild(assignButton);
 
         const editButton = document.createElement('button');
-        editButton.textContent = 'Módosítás';
+        editButton.textContent = 'Átnevezés';
         editButton.classList.add('btn', 'btn-warning', 'me-2');
         editButton.addEventListener('click', () => editSection(section));
         actionsCell.appendChild(editButton);
@@ -326,3 +332,102 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 });
+
+let currentSectionIdForZsuri = null;
+
+async function openZsuriModal(sectionId) {
+  currentSectionIdForZsuri = sectionId;
+  document.getElementById('zsuri-modal').style.display = 'block';
+
+  // Felhasználók betöltése
+  const userRes = await fetch('/api/felhasznalok');
+  const felhasznalok = await userRes.json();
+
+  const select = document.getElementById('zsuri-felhasznalo');
+  select.innerHTML = '';
+  felhasznalok.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f._id;
+    opt.textContent = `${f.nev} (${f.email})`;
+    select.appendChild(opt);
+  });
+
+  // Zsűritag hozzáadása gomb esemény
+document.getElementById('add-zsuri-btn').addEventListener('click', async () => {
+  const felhasznaloId = document.getElementById('zsuri-felhasznalo').value;
+  const szerep = document.getElementById('zsuri-szerep').value;
+
+  if (!felhasznaloId || !szerep) {
+    alert('Válassz felhasználót és szerepet!');
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/sections/${currentSectionIdForZsuri}/add-judge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ felhasznaloId, szerep })
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      alert('Zsűritag sikeresen hozzáadva.');
+      openZsuriModal(currentSectionIdForZsuri); // újratölti a listát
+    } else {
+      alert(data.error || 'Hiba történt a hozzáadás során.');
+    }
+  } catch (err) {
+    console.error('Hiba a zsűritag hozzáadásakor:', err);
+    alert('Szerverhiba a hozzáadás során.');
+  }
+});
+
+
+  // Aktuális zsűritagok betöltése
+  const sectionRes = await fetch(`/api/sections`);
+  const sections = await sectionRes.json();
+  const section = sections.find(s => s._id === sectionId);
+  renderZsuriList(section.zsuri);
+}
+
+function renderZsuriList(zsuriLista) {
+  const container = document.getElementById('zsuri-lista');
+  container.innerHTML = '<h4>Jelenlegi zsűritagok:</h4>';
+  if (!zsuriLista || zsuriLista.length === 0) {
+    container.innerHTML += '<p>Nincs hozzárendelt zsűritag.</p>';
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.innerHTML = `
+    <thead><tr><th>Név</th><th>Szerep</th><th>Állapot</th><th></th></tr></thead>
+    <tbody></tbody>`;
+  const tbody = table.querySelector('tbody');
+
+  zsuriLista.forEach(z => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${z.felhasznaloId?.nev || '-'}</td>
+      <td>${z.szerep}</td>
+      <td>${z.allapot}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeJudge('${z.felhasznaloId._id}')">Törlés</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  container.appendChild(table);
+}
+
+async function removeJudge(userId) {
+  if (!confirm('Biztosan eltávolítod ezt a zsűritagot?')) return;
+  const res = await fetch(`/api/sections/${currentSectionIdForZsuri}/remove-judge/${userId}`, { method: 'DELETE' });
+  if (res.ok) {
+    alert('Zsűritag eltávolítva.');
+    openZsuriModal(currentSectionIdForZsuri); // újratöltés
+  } else {
+    alert('Hiba a törlés során.');
+  }
+}
+
+
+

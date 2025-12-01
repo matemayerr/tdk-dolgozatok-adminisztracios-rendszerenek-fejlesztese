@@ -1,61 +1,42 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDK Adminisztrációs Rendszer</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TDK Adminisztrációs Rendszer</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <h1>TDK Adminisztrációs Rendszer</h1>
-        <nav>
-            <ul>
-              <li><a href="index.html">Főoldal</a></li>
-              <li><a href="users.html">Felhasználók kezelése</a></li>
-              <li class="dropdown">
-                <a href="#" class="dropbtn">Dolgozatok kezelése</a>
-                <div class="dropdown-content">
-                  <a href="papers.html">Jelentkezés új dolgozattal</a>
-                  <a href="completed-papers.html">Dolgozat feltöltése</a>
-                  <a href="review-papers.html">Dolgozat értékelése</a>
-                </div>
-              </li>
-              <li><a href="statistics.html">Statisztikák</a></li>
-              <li><a href="#" id="logout-link">Kijelentkezés</a></li>
-            </ul>
-          </nav>
-    </header>
+  <header>
+    <h1>TDK Adminisztrációs Rendszer</h1>
+    <nav>
+      <ul>
+        <li><a href="index.html">Főoldal</a></li>
+        <li><a href="users.html">Felhasználók kezelése</a></li>
+        <li class="dropdown">
+          <a href="#" class="dropbtn">Dolgozatok kezelése</a>
+          <div class="dropdown-content">
+            <a href="papers.html">Jelentkezés új dolgozattal</a>
+            <a href="completed-papers.html">Dolgozat feltöltése</a>
+            <a href="review-papers.html">Dolgozat értékelése</a>
+          </div>
+        </li>
+        <li><a href="upload-word.html">Word feltöltés (főoldalhoz)</a></li>
+        <li><a href="statistics.html">Statisztikák</a></li>
+        <li><a href="#" id="logout-link">Kijelentkezés</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <main>
-        <section>
-            <p><h2>Üdvözöljük a TDK Adminisztrációs Rendszerben!</h2>
-            <p>A TDK dolgozatok adminisztrációs rendszere lehetővé teszi a hallgatók dolgozatainak kezelését, a dolgozatok bírálatát, és a bírálati folyamat teljes követését.</p>
-            <p>Kérjük, válasszon az alábbi menüpontok közül a felhasználók és a dolgozatok kezeléséhez!</p>
-            <h3>Mi a TDK?</h3>
-            <p>Széchenyi István Egyetem Tudományos és Művészeti Diákkör (SZETDK)</p>
+  <main id="homepage-content" style="padding: 20px;"></main>
 
-<p>A Tudományos és Művészeti Diákkör (TDK) a tehetséggondozás legfontosabb, legjelentősebb formája a hazai felsőoktatásban, a minőségi értelmiségi képzés kiemelt területe. Célja, hogy a tehetséges hallgatók a képességeiknek megfelelően készülhessenek fel életpályájukra, megismerjék a tudományos kutatómunka és művészi tevékenység alapjait, módszereit, bekapcsolódjanak egy-egy tudományterület kutatásaiba, illetve a művészeti életbe. A hallgatói kutatómunkát, illetve a művészeti alkotótevékenységet elősegítő, ennek nyilvánosságot is biztosító önképzőköri forma. A felkészülés legmagasabb szintje a doktori iskolát megelőző szakaszban, s mint ilyen, a doktori képzés (PhD, illetve DLA) egyik legjobb előiskolája.</p>
-
-<p>A hallgatók TDK munkája oktató(k) vezetésével történik, folyamatos tutoriális (mentor) jellegű hallgató-tanár műhelymunka, amely az adott tudományterület vagy művészeti terület mélyebb megismerését, a kutatási módszerek elsajátítását, a hallgatók képességeinek kibontakoztatását segíti elő. A TDK keretei között a hallgatók mindenkori tanulmányi alapfeladatukat meghaladó, illetve kiegészítő ismeretek elérésére törekednek. Munkájuk eredményét a tudományos/művészeti publikációk és szakmai dokumentumok tartalmi és formai követelményeinek megfelelő dolgozatban foglalják össze, illetve művészeti előadásban mutatják be az intézményi és az országos konferenciákon.</p>
-
-<p>A TDK tevékenység során megszerezhető kompetenciák és ismeretek azonosak azokkal, amelyeket a munkáltatók is elvárnak:</p>
-
-<li>javul a problémamegoldó képességed,</li>
-<li>szélesedik a látóköröd,</li>
-<li>bővül a kapcsolati hálód, hiszen nemcsak a konzulenssel alakítható ki intenzívebb együttműködés, hanem a zsűri tagjai gyakran felajánlják további segítségüket,</li>
-<li>tapasztalatot szerzel a stresszhelyzetek kezelésében (pl. amikor a TDK bizottság a témával kapcsolatban kérdéseket fogalmaz meg, amire nem lehet előre felkészülni),</li>
-<li>gyakorlottabb leszel az előadások tartásában,</li>
-<li>a TDK tevékenység megtanít érvelni, mások igazát megismerni, elfogadni, örülni mások sikereinek, eredményeinek,</li>
-<li>igényességre, becsületességre, a felfedezés örömére, az új melletti kiállásra, de együttműködésre és toleranciára is nevel.</li><p>
-Bekapcsolódni bármely alap és mester szakos hallgatónak lehet.
-
-        </p>
-        </section>
-    </main>
-  <script src="app.js"></script>
-  <script src="auth.js"></script>
+  <script>
+    async function loadHomepageContent() {
+      const res = await fetch('/api/homepage-content');
+      const html = await res.text();
+      document.getElementById('homepage-content').innerHTML = html;
+    }
+    loadHomepageContent();
+  </script>
 </body>
 </html>
-
