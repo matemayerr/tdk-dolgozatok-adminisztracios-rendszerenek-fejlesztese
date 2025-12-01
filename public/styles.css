@@ -1712,3 +1712,54 @@ body.login-oldal {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/*Szekció tablazat igazítása*/
+.actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.actions-cell button {
+  margin-left: 5px;
+}
+
+.actions-cell .btn {
+  margin-left: 6px;
+}
+.actions-cell .btn:first-child {
+  margin-left: 0;
+}
+
+
+#sections-table td:nth-child(2),
+#sections-table th:nth-child(2) {
+  width: 0%;
+}
+
+
+/* Modal ablak középre helyezése */
+#assign-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border: 1px solid #ccc;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  backdrop-filter: blur(5px);
+}
+
+/* Checkbox lista egyesével egymás alá */
+#assign-papers-list label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<title>Szekciók kezelése</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>TDK Adminisztrációs Rendszer</h1>
+        <nav>
+            <ul>
+              <li><a href="index.html">Főoldal</a></li>
+              <li><a href="users.html">Felhasználók kezelése</a></li>
+              <li class="dropdown">
+                <a href="#" class="dropbtn">Dolgozatok kezelése</a>
+                <div class="dropdown-content">
+                  <a href="papers.html">Jelentkezés új dolgozattal</a>
+                  <a href="completed-papers.html">Dolgozat feltöltése</a>
+                  <a href="review-papers.html">Dolgozat értékelése</a>
+                </div>
+              </li>
+              <li><a href="statistics.html">Statisztikák</a></li>
+              <li><a href="#" id="logout-link">Kijelentkezés</a></li>
+            </ul>
+          </nav>
+</header>
+
+<main>
+
+<div class="container mt-4">
+  <h2 class="mb-3">Szekciók kezelése</h2>
+
+  <form id="section-form" class="d-flex gap-2 mb-4">
+    <input type="text" id="section-name" class="form-control" placeholder="Új szekció neve">
+    <button type="submit" class="btn btn-primary">Hozzáadás</button>
+  </form>
+
+  <table id="sections-table">
+    <thead>
+      <tr>
+        <th>Név</th>
+        <th>Műveletek</th>
+      </tr>
+    </thead>
+    <tbody id="sections-table-body"></tbody>
+  </table>
+</div>
+
+<!-- Modal: dolgozatok hozzárendelése -->
+<div id="assign-modal">
+  <h3>Dolgozatok hozzárendelése a szekcióhoz</h3>
+  <form id="assign-form">
+    <div id="assign-papers-list"></div>
+    <button type="submit" class="btn btn-success mt-3">Mentés</button>
+    <button type="button" onclick="closeAssignModal()" class="btn btn-secondary mt-3">Mégse</button>
+  </form>
+</div>
+
+
+
+<script src="sections.js"></script>
+</body>
+</html>
+
+
+
+</main>

@@ -1198,6 +1198,94 @@ app.get('/dolgozatok/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'review-thesis.html'));
 });
 
+
+
+// -----------------------------
+// Sections API végpontok
+// -----------------------------
+
+// Összes szekció lekérése
+app.get('/api/sections', async (req, res) => {
+  try {
+    const sections = await mongoose.connection.collection('sections').find().toArray();
+    res.json(sections);
+  } catch (err) {
+    console.error('Hiba a szekciók lekérdezésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a szekciók lekérdezésénél' });
+  }
+});
+
+// Új szekció létrehozása
+app.post('/api/sections', async (req, res) => {
+  const { name } = req.body;
+
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: 'A szekció neve kötelező' });
+  }
+
+  try {
+    const result = await mongoose.connection.collection('sections').insertOne({ name: name.trim() });
+    res.status(201).json({ message: 'Szekció létrehozva', id: result.insertedId });
+  } catch (err) {
+    console.error('Hiba a szekció létrehozásakor:', err);
+    res.status(500).json({ error: 'Szerverhiba a létrehozás során' });
+  }
+});
+
+// Szekció nevének módosítása
+app.put('/api/sections/:id', async (req, res) => {
+  const { name } = req.body;
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: 'A név nem lehet üres' });
+  }
+
+  try {
+    await mongoose.connection.collection('sections').updateOne(
+      { _id: new mongoose.Types.ObjectId(req.params.id) },
+      { $set: { name: name.trim() } }
+    );
+    res.json({ message: 'Szekció frissítve' });
+  } catch (err) {
+    console.error('Hiba a szekció módosításakor:', err);
+    res.status(500).json({ error: 'Szerverhiba a módosítás során' });
+  }
+});
+
+// Szekció törlése
+app.delete('/api/sections/:id', async (req, res) => {
+  try {
+    await mongoose.connection.collection('sections').deleteOne({
+      _id: new mongoose.Types.ObjectId(req.params.id)
+    });
+    res.json({ message: 'Szekció törölve' });
+  } catch (err) {
+    console.error('Hiba a szekció törlésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a törlés során' });
+  }
+});
+
+// Egy szekcióhoz dolgozatokat rendel
+app.post('/api/sections/:id/add-papers', async (req, res) => {
+  const sectionId = req.params.id;
+  const paperIds = req.body.paperIds; // Tömb: [id1, id2, id3]
+
+  try {
+    const objectIds = paperIds.map(id => new mongoose.Types.ObjectId(id));
+
+    await mongoose.connection.collection('dolgozats').updateMany(
+      { _id: { $in: objectIds } },
+      { $set: { szekcioId: new mongoose.Types.ObjectId(sectionId) } }
+    );
+
+    res.json({ message: 'Dolgozatok sikeresen hozzárendelve a szekcióhoz.' });
+  } catch (err) {
+    console.error('Hiba a dolgozatok szekcióhoz rendelésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba' });
+  }
+});
+
+
+
 // Szerver indítása megadott porton
 app.listen(port, () => {
     console.log(`Server started on port ${port}`);
