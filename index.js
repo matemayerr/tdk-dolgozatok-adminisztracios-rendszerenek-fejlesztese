@@ -457,6 +457,33 @@ app.delete('/api/felhasznalok/:id', async (req, res) => {
     }
 });
 
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Hiányzó token' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, secretKey);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(403).json({ error: 'Érvénytelen token' });
+  }
+};
+
+app.get('/api/felhasznalok/jelenlegi', authMiddleware, async (req, res) => {
+  try {
+    const felhasznalo = await Felhasznalo.findById(req.user.id);
+    if (!felhasznalo) return res.status(404).json({ error: 'Felhasználó nem található' });
+    res.json({ nev: felhasznalo.nev, email: felhasznalo.email });
+  } catch (err) {
+    res.status(500).json({ error: 'Szerverhiba' });
+  }
+});
+
+
 
 // Fájl feltöltése és értesítés küldése a témavezetőnek
 app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res) => {
@@ -728,17 +755,21 @@ app.post('/api/ertekelesek', async (req, res) => {
 });
 
 
-// Egy dolgozat lekérése ID alapján
+// Egy dolgozat lekérése ID alapján (bíráló névvel együtt)
 app.get('/api/papers/:id', async (req, res) => {
   try {
-    const paper = await mongoose.connection.collection('dolgozats').findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
+    const paper = await mongoose.connection.collection('dolgozats').findOne({
+      _id: new mongoose.Types.ObjectId(req.params.id)
+    });
 
     if (!paper) {
       return res.status(404).json({ error: 'A dolgozat nem található.' });
     }
 
+    // Felhasználók lekérdezése (hallgatók, témavezetők, bírálók)
     const felhasznalok = await mongoose.connection.collection('felhasznalos').find({}).toArray();
 
+    // Hallgatók adatai
     const szerzok = (paper.hallgato_ids || []).map(neptun => {
       const felhasznalo = felhasznalok.find(f => f.neptun === neptun);
       return {
@@ -748,15 +779,24 @@ app.get('/api/papers/:id', async (req, res) => {
       };
     });
 
+    // 🔹 Bíráló adatai (ha van a dokumentumban biralo_ids mező)
+    let biraloNev = '';
+    if (paper.biralo_ids && paper.biralo_ids.length > 0) {
+      const biralo = felhasznalok.find(f => f.neptun === paper.biralo_ids[0]);
+      biraloNev = biralo?.nev || '';
+    }
+
     res.json({
       cim: paper["cím"],
-      szerzok
+      szerzok,
+      biralo: biraloNev
     });
   } catch (err) {
     console.error('Hiba a dolgozat lekérdezésekor:', err);
     res.status(500).json({ error: 'Szerverhiba' });
   }
 });
+
 
 
 

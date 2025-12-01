@@ -244,8 +244,8 @@
   </div>
 
   <div style="margin-top: 1rem; text-align: right;">
-    <label for="elnok">Bíráló:</label><br>
-    <input type="text" id="biralo" style="width: 25%;">
+    <label for="biralo">Bíráló:</label><br>
+    <input type="text" id="biralo" name="biralo" style="width: 25%;">
   </div>
 </div>
 
@@ -288,7 +288,7 @@ function handleFile(e) {
     const onlyDate = rawDatum.match(/\d{4}\.\d{2}\.\d{2}\./)?.[0] || '';
     document.getElementById("datum").value = onlyDate;
 
-    document.getElementById("elnok").value = sheet["C24"]?.v || '';
+    document.getElementById("biralo").value = sheet["C24"]?.v || '';
 
     // 🎯 Összpontszám
     document.getElementById("totalScore").textContent = sheet["C22"]?.v || '0';
@@ -473,6 +473,31 @@ const urlParams = new URLSearchParams(window.location.search);
       feltoltesUtmutato.style.display = 'none';
     }
   }
+
+  // Bíráló név betöltése
+document.addEventListener('DOMContentLoaded', async function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const id = urlParams.get('id');
+  const readonly = urlParams.get('readonly') === 'true';
+  const biraloInput = document.getElementById('biralo');
+
+  try {
+    // Lekérjük a dolgozatot, és abból a bíráló nevét
+    const response = await fetch(`/api/papers/${id}`);
+    const paper = await response.json();
+
+    if (biraloInput && !biraloInput.value.trim()) {
+      biraloInput.value = paper.biralo || '';
+    }
+
+    if (readonly) {
+      biraloInput.setAttribute('readonly', true);
+    }
+
+  } catch (err) {
+    console.error('Nem sikerült betölteni a dolgozat vagy bíráló adatait:', err);
+  }
+});
 
 </script>
 
