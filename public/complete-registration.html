@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Regisztráció befejezése</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="modal-form">
+        <h2>Regisztráció befejezése</h2>
+        <form id="complete-registration-form">
+            <label for="nev">Név:</label>
+            <input type="text" id="nev" required>
+
+            <label for="email">E-mail cím:</label>
+            <input type="email" id="email" disabled>
+
+            <label for="jelszo">Jelszó:</label>
+            <input type="password" id="jelszo" required>
+
+            <label for="jelszo2">Jelszó újra:</label>
+            <input type="password" id="jelszo2" required>
+
+            <button type="submit">Regisztráció</button>
+        </form>
+        <p id="hiba-uzenet" style="color: red;"></p>
+    </div>
+
+    <script src="complete-registration.js"></script>
+</body>
+</html>

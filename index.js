@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 const path = require('path');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+const resetTokens = {}; // egyszerű token tárolás memóriában (indítás után elveszik)
+
 
 // Alkalmazás és port inicializálása
 const app = express();
@@ -38,11 +41,12 @@ const bcrypt = require('bcrypt');
 // Felhasznalo modell
 const Felhasznalo = mongoose.model('felhasznalos', new mongoose.Schema({
     nev: { type: String, required: true },
-    neptun: { type: String, required: true, unique: true },
+    neptun: { type: String, required: false, unique: false }, // opcionális
     email: { type: String, required: true },
-    csoportok: { type: [String], required: true }, // Tömb több csoporthoz
+    csoportok: { type: [String], required: true },
     password: { type: String, required: false }
 }));
+
 
 
 // Ellenörzöm a Neptun-kod és jelszo helyesseget, majd egy JWT tokent adok vissza
@@ -50,15 +54,15 @@ const jwt = require('jsonwebtoken');
 const secretKey = 'titkosKulcs123'; // Titkos kulcs a tokenhez (ezt .env-be kellene tenni)
 
 app.post('/api/login', async (req, res) => {
-    const { neptun, jelszo } = req.body;
+    const { email, jelszo } = req.body;
 
     try {
-        console.log("Bejelentkezési próbálkozás:", neptun);
+        console.log("Bejelentkezési próbálkozás:", email);
 
-        const felhasznalo = await Felhasznalo.findOne({ neptun });
+        const felhasznalo = await Felhasznalo.findOne({ email });
         if (!felhasznalo) {
-            console.error("Nincs ilyen felhasználó:", neptun);
-            return res.status(400).json({ error: 'Hibás Neptun-kód vagy jelszó' });
+            console.error("Nincs ilyen felhasználó:", email);
+            return res.status(400).json({ error: 'Hibás E-mail cím vagy jelszó' });
         }
 
         console.log("Felhasználó megtalálva:", felhasznalo);
@@ -78,7 +82,7 @@ app.post('/api/login', async (req, res) => {
         const isMatch = await bcrypt.compare(jelszo, felhasznalo.password);
         if (!isMatch) {
             console.error("Helytelen jelszó:", jelszo);
-            return res.status(400).json({ error: 'Hibás Neptun-kód vagy jelszó' });
+            return res.status(400).json({ error: 'Hibás E-mail cím vagy jelszó' });
         }
 
         console.log("Jelszó egyezik, token generálás...");
@@ -120,8 +124,8 @@ const transporter = nodemailer.createTransport({
     host: 'smtp.sendgrid.net',
     port: 587,
     auth: {
-        user: 'apikey', // SendGrid fix felhasználónév
-        pass: 'API_KEY_HERE' // SendGrid API kulcsod helye
+        user: 'apikey', // ez a fix felhasználónév a SendGrid-ben
+        pass: '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'
     }
 });
 
@@ -506,6 +510,135 @@ app.get('/api/dolgozatok/ertekeleshez', async (req, res) => {
         res.json(dolgozatok);
     } catch (error) {
         res.status(500).json({ error: 'Hiba történt az értékelhető dolgozatok lekérésekor' });
+    }
+});
+
+
+//Jelszó visszaállítás e-mail küldés tokennel
+app.post('/api/reset-jelszo-kerelem', async (req, res) => {
+    const { email } = req.body;
+
+    const felhasznalo = await Felhasznalo.findOne({ email });
+    if (!felhasznalo) {
+        return res.status(200).json({ message: 'Ha létezik ilyen fiók, küldtünk emailt.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    resetTokens[token] = felhasznalo._id;
+
+    const resetLink = `http://localhost:3000/reset.html?token=${token}`;
+
+    try {
+        await transporter.sendMail({
+            from: 'TDK rendszer <m48625729@gmail.com>',
+            to: email,
+            subject: 'Jelszó visszaállítás',
+            html: `
+                <p>Kedves felhasználó!</p>
+                <p>Ha Ön kérte a jelszó visszaállítását, kattintson az alábbi linkre:</p>
+                <a href="${resetLink}">${resetLink}</a>
+                <p>Ha nem Ön kérte, kérjük hagyja figyelmen kívül ezt az e-mailt.</p>
+            `
+        });
+
+        res.status(200).json({ message: 'Email elküldve, ha a fiók létezik.' });
+    } catch (error) {
+        console.error('Hiba az e-mail küldés során:', error);
+        res.status(500).json({ error: 'Nem sikerült e-mailt küldeni.' });
+    }
+});
+
+
+//Új jelszó mentése token alapján
+app.post('/api/reset-jelszo', async (req, res) => {
+    const { token, jelszo } = req.body;
+    const felhasznaloId = resetTokens[token];
+  
+    if (!felhasznaloId) {
+      return res.status(400).json({ error: "Érvénytelen vagy lejárt link." });
+    }
+  
+    try {
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(jelszo, salt);
+  
+      await Felhasznalo.findByIdAndUpdate(felhasznaloId, { password: hash });
+      delete resetTokens[token];
+  
+      res.status(200).json({ message: "Jelszó frissítve." });
+    } catch (err) {
+      console.error("Hiba jelszó módosítás során:", err);
+      res.status(500).json({ error: "Szerverhiba." });
+    }
+  });
+
+
+  // token generálás és e-mail küldés a regisztrációhoz
+  const regisztraciosTokenek = {}; // vagy külön adatbázisba is lehet
+
+app.post('/api/emailes-regisztracio', async (req, res) => {
+    const { email } = req.body;
+
+    const letezo = await Felhasznalo.findOne({ email });
+    if (letezo) {
+        return res.status(400).json({ error: 'Ez az e-mail cím már regisztrálva van.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    regisztraciosTokenek[token] = email;
+
+    const link = `http://localhost:3000/complete-registration.html?token=${token}`;
+
+    await transporter.sendMail({
+        from: 'TDK rendszer <m48625729@gmail.com>',
+        to: email,
+        subject: 'TDK Regisztráció',
+        html: `<p>Kattints az alábbi linkre a regisztráció folytatásához:</p>
+               <a href="${link}">${link}</a>`
+    });
+
+    res.status(200).json({ message: 'Regisztrációs link elküldve.' });
+});
+
+
+//regisztráció
+app.get('/api/regisztracios-email', (req, res) => {
+    const { token } = req.query;
+    const email = regisztraciosTokenek[token];
+
+    if (!email) {
+        return res.status(400).json({ error: 'Érvénytelen vagy lejárt link.' });
+    }
+
+    res.status(200).json({ email });
+});
+
+app.post('/api/regisztracio-befejezes', async (req, res) => {
+    const { token, nev, jelszo } = req.body;
+    const email = regisztraciosTokenek[token];
+
+    if (!email) {
+        return res.status(400).json({ error: 'Érvénytelen vagy lejárt link.' });
+    }
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(jelszo, salt);
+
+        const ujFelhasznalo = new Felhasznalo({
+            nev,
+            email,
+            jelszo: hash,
+            csoportok: ['hallgato']
+        });
+
+        await ujFelhasznalo.save();
+        delete regisztraciosTokenek[token];
+
+        res.status(201).json({ message: 'Regisztráció sikeres' });
+    } catch (err) {
+        console.error("Hiba regisztrációnál:", err);
+        res.status(500).json({ error: 'Szerverhiba' });
     }
 });
 

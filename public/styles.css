@@ -776,4 +776,17 @@ body.login-oldal {
     width: 100%;
     box-sizing: border-box;
   }
+
   
+  #login-form button {
+    background-color: green;
+    color: white;
+    font-weight: bold;
+    transition: all 0.2s ease-in-out;
+}
+
+#login-form button:hover {
+    border: 2px solid green; /* Zöld szegély */
+    background-color: white;
+    color: green;
+}

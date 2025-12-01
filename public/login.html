@@ -16,43 +16,43 @@
           <div class="form-container" id="login-container">
             <h2>Bejelentkezés</h2>
             <form id="login-form">
-                <input type="text" id="neptun" placeholder="Neptun-kód" required>
+                <input type="email" id="email" name="email" required placeholder="E-mail">
                 <input type="password" id="jelszo" placeholder="Jelszó" required>
                 <button type="submit">Bejelentkezés</button>
             </form>
             <p>Még nincs fiókod? <a href="#" id="open-register-modal">Regisztráció</a></p>
             <p id="login-error" style="color: red; display: none;">Hibás Neptun-kód vagy jelszó!</p>
+            <p style="text-align:left;">
+              <a href="#" id="forgot-password-link">Elfelejtettem a jelszavam</a>
+            </p>
           </div>
         </section>
-        
+
 
             <!-- Regisztrációs modal -->
-        <div id="register-container" class="form-container" style="display: none;">
-          <h3>Regisztráció</h3>
-        <form id="register-form">
-        <label for="reg-nev">Név:</label>
-        <input type="text" id="reg-nev" placeholder="Teljes név" required>
-  
-        <label for="reg-neptun">Neptun-kód (opcionális):</label>
-        <input type="text" id="reg-neptun" placeholder="Neptun-kód">
-  
-        <label for="reg-email">E-mail:</label>
-        <input type="email" id="reg-email" placeholder="E-mail" required>
-  
-        <label for="reg-jelszo">Jelszó:</label>
-        <input type="password" id="reg-jelszo" placeholder="Jelszó" required>
-  
-        <div class="modal-buttons">
-          <button type="submit">Regisztráció</button>
-          <button type="button" id="close-register-modal">Mégse</button>
-        </div>
-      </form>
-      <p id="register-error" style="color: red; display: none;"></p>
+            <div id="register-container" class="form-container" style="display: none;">
+              <h3>Regisztráció</h3>
+              <input type="email" id="reg-email" placeholder="E-mail címed">
+              <div class="gombok-kozeppontban">
+                <button id="reg-link-gomb">Regisztrációs link kérése</button>
+                <button id="close-register-modal" type="button">Mégse</button>
+              </div>
+            </div>
+            
+            
+
+  <div id="forgot-password-modal" class="modal-form" style="display:none;">
+    <h3>Jelszó visszaállítása</h3>
+    <input type="email" id="reset-email" placeholder="E-mail" required>
+    <div class="gombok-kozeppontban">
+      <button id="send-reset-link">Elküldés</button>
+      <button id="close-reset-modal">Mégse</button>
     </div>
+    <p id="reset-feedback" style="color:red; display:none;"></p>
   </div>
+  <div id="reset-blur" class="blur-layer" style="display: none;"></div>  
 
     </main>
-  
 
     <script src="login.js"></script>
 </body>
