@@ -36,71 +36,73 @@
           
  <button id="uj-felhasznalo-gomb">Új felhasználó hozzáadása</button>
 
+
 <!-- Felhasználó hozzáadás űrlap -->
 <form id="felhasznalo-form" class="modal-form uj-felhasznalo-form-modern" style="display:none;">
   <h3>Új felhasználó hozzáadása</h3>
 
   <div class="form-grid">
-    <div>
-      <label>Név</label>
+
+    <div class="form-group">
+      <label for="felhasznalo-nev">Név</label>
       <input type="text" id="felhasznalo-nev" placeholder="Teljes név" required>
     </div>
 
-    <div>
-      <label>Neptun-kód</label>
+    <div class="form-group">
+      <label for="felhasznalo-neptun">Neptun-kód</label>
       <input type="text" id="felhasznalo-neptun" placeholder="Pl. ABC123">
     </div>
 
-    <div>
-      <label>E-mail</label>
+    <div class="form-group">
+      <label for="felhasznalo-email">E-mail</label>
       <input type="email" id="felhasznalo-email" placeholder="felhasznalo@uni.sze.hu" required>
     </div>
 
-      <div class="form-group">
-    <label>Jelszó</label>
-    <input type="password" id="felhasznalo-jelszo" placeholder="********" required>
-  </div>
+    <div class="form-group">
+      <label for="felhasznalo-jelszo">Jelszó</label>
+      <input type="password" id="felhasznalo-jelszo" placeholder="********" required>
+    </div>
 
-    <div>
-      <label>Kar</label>
+    <div class="form-group">
+      <label for="felhasznalo-kar">Kar</label>
       <select id="felhasznalo-kar">
         <option value="">-- Válassz kart --</option>
       </select>
     </div>
 
-    <div>
-      <label>Szak</label>
+    <div class="form-group">
+      <label for="felhasznalo-szak">Szak</label>
       <select id="felhasznalo-szak">
-  <option value="">-- Válassz szakot --</option>
-</select>
+        <option value="">-- Válassz szakot --</option>
+      </select>
     </div>
-    
-    <div>
-      <label>Évfolyam</label>
+
+    <div class="form-group">
+      <label for="felhasznalo-evfolyam">Évfolyam</label>
       <input type="text" id="felhasznalo-evfolyam" placeholder="Pl. 2025">
     </div>
-  </div>
 
-  <div class="form-group">
-    <label>Csoport(ok)</label>
-    <div class="user-dropdown">
-      <button type="button" class="dropdown-btn">Csoport kiválasztása ▼</button>
-      <div class="dropdown-content scrollable-list" id="felhasznalo-csoport">
-        <input type="text" class="lista-kereso" placeholder="Keresés...">
-        <label><input type="checkbox" value="hallgato"> Hallgató</label>
-        <label><input type="checkbox" value="temavezeto"> Témavezető</label>
-        <label><input type="checkbox" value="biralo"> Bíráló</label>
-        <label><input type="checkbox" value="zsuri"> Zsűri</label>
-        <label><input type="checkbox" value="kariadmin"> Kari adminisztrátor</label>
-        <label><input type="checkbox" value="egyetemiadmin"> Egyetemi adminisztrátor</label>
-        <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
+    <div class="form-group">
+      <label for="felhasznalo-csoport">Csoport(ok)</label>
+      <div class="user-dropdown">
+        <button type="button" class="dropdown-btn">Csoport kiválasztása ▼</button>
+        <div class="dropdown-content scrollable-list" id="felhasznalo-csoport">
+          <label><input type="checkbox" value="hallgato"> Hallgató</label>
+          <label><input type="checkbox" value="temavezeto"> Témavezető</label>
+          <label><input type="checkbox" value="biralo"> Bíráló</label>
+          <label><input type="checkbox" value="zsuri"> Zsűri</label>
+          <label><input type="checkbox" value="kariadmin"> Kari adminisztrátor</label>
+          <label><input type="checkbox" value="egyetemiadmin"> Egyetemi adminisztrátor</label>
+          <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
+        </div>
       </div>
     </div>
+
   </div>
 
   <div class="gombok-kozeppontban">
-    <button id="felhasznalo-hozzaadas-gomb">Hozzáadás</button>
-    <button id="felhasznalo-megse-gomb" type="button">Mégse</button>
+    <button id="felhasznalo-hozzaadas-gomb" class="btn btn-primary">Hozzáadás</button>
+    <button id="felhasznalo-megse-gomb" type="button" class="btn btn-secondary">Mégse</button>
   </div>
 </form>
 
@@ -111,52 +113,65 @@
 <div id="felhasznalo-homaly" class="blur-layer" style="display: none;"></div>
 
 <!-- Felhasználó módosítás modal -->
-<div id="modosit-felhasznalo-modal" class="modal-form" style="display: none;">
-    <h3>Felhasználó módosítása:</h3>
+<div id="modosit-felhasznalo-modal" class="modal-form uj-felhasznalo-form-modern" style="display: none;">
+  <h3>Felhasználó módosítása:</h3>
 
-    <label for="modosit-nev">Név:</label>
-    <input type="text" id="modosit-nev" placeholder="Név">
-
-    <label for="modosit-neptun">Neptun-kód:</label>
-    <input type="text" id="modosit-neptun" placeholder="Neptun kód">
-
-    <label for="modosit-email">E-mail cím:</label>
-    <input type="email" id="modosit-email" placeholder="E-mail">
+  <div class="form-grid">
+    <div class="form-group">
+      <label for="modosit-nev">Név:</label>
+      <input type="text" id="modosit-nev" placeholder="Név">
+    </div>
 
     <div class="form-group">
-  <input type="text" id="modosit-szak" placeholder="Szak (pl. Villamosmérnök BSc)">
-</div>
-<div class="form-group">
-  <input type="text" id="modosit-evfolyam" placeholder="Évfolyam (pl. 3. vagy 2025)">
-</div>
-
-
+      <label for="modosit-neptun">Neptun-kód:</label>
+      <input type="text" id="modosit-neptun" placeholder="Neptun kód">
+    </div>
 
     <div class="form-group">
-        <label for="felhasznalo-kar">Kar (opcionális):</label>
-        <select id="modosit-kar">
-            <option value="">-- Válassz kart --</option>
-          </select>
-      </div>
-      
-    <div class="user-dropdown">
-        <button type="button" class="dropdown-btn">Csoport(ok) kiválasztása ▾</button>
-        <div class="dropdown-content" id="modosit-csoport-lista">
-            <label><input type="checkbox" value="hallgato"> Hallgató</label>
-            <label><input type="checkbox" value="temavezeto"> Témavezető</label>
-            <label><input type="checkbox" value="biralo"> Bíráló</label>
-            <label><input type="checkbox" value="zsuri"> Zsűri</label>
-            <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
-            <label><input type="checkbox" value="kariadmin"> Kari adminisztrátor</label>
-            <label><input type="checkbox" value="egyetemiadmin"> Egyetemi adminisztrátor</label>
+      <label for="modosit-email">E-mail cím:</label>
+      <input type="email" id="modosit-email" placeholder="E-mail">
+    </div>
+
+    <div class="form-group">
+      <label for="modosit-kar">Kar:</label>
+      <select id="modosit-kar">
+        <option value="">-- Válassz kart --</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="modosit-szak">Szak:</label>
+      <input type="text" id="modosit-szak" placeholder="Szak (pl. Villamosmérnök BSc)">
+    </div>
+
+    <div class="form-group">
+      <label for="modosit-evfolyam">Évfolyam:</label>
+      <input type="text" id="modosit-evfolyam" placeholder="Évfolyam (pl. 3. vagy 2025)">
+    </div>
+
+    <div class="form-group">
+      <label for="modosit-csoport">Csoport(ok):</label>
+      <div class="user-dropdown">
+        <button type="button" class="dropdown-btn">Csoport kiválasztása ▼</button>
+        <div class="dropdown-content scrollable-list" id="modosit-csoport-lista">
+          <label><input type="checkbox" value="hallgato"> Hallgató</label>
+          <label><input type="checkbox" value="temavezeto"> Témavezető</label>
+          <label><input type="checkbox" value="biralo"> Bíráló</label>
+          <label><input type="checkbox" value="zsuri"> Zsűri</label>
+          <label><input type="checkbox" value="kariadmin"> Kari adminisztrátor</label>
+          <label><input type="checkbox" value="egyetemiadmin"> Egyetemi adminisztrátor</label>
+          <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
         </div>
+      </div>
     </div>
+  </div>
 
-    <div class="gombok-kozeppontban">
-        <button id="modosit-mentes">Mentés</button>
-        <button id="modosit-megse">Mégse</button>
-    </div>
+  <div class="gombok-kozeppontban">
+    <button id="modosit-mentes" class="btn btn-primary">Mentés</button>
+    <button id="modosit-megse" type="button" class="btn btn-secondary">Mégse</button>
+  </div>
 </div>
+
 
 
 <!-- Homályosító -->
