@@ -1,0 +1,10 @@
+Kedves {{HALLGATONEV}},
+
+Témavezetőd elfogadta a dolgozatodat a következő címmel:
+
+{{CIM}}
+
+A dolgozat státusza: elfogadva - témavezető által.
+
+További lépések hamarosan.
+

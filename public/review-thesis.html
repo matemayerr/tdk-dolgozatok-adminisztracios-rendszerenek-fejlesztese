@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Dolgozat elbírálása</title>
+</head>
+<body>
+  <h1>Dolgozat elbírálása</h1>
+  <p><strong>Cím:</strong> <span id="title"></span></p>
+  <p><strong>Hallgató neve:</strong> <span id="hallgato"></span></p>
+  <p><strong>Neptun-kód:</strong> <span id="neptun"></span></p>
+
+  <button id="btn-view-pdf">📄 Dolgozat megtekintése</button>
+
+  <hr>
+  <h3>Döntés</h3>
+  <button id="btn-accept">✅ Elfogadás</button>
+  <button id="btn-show-reject">❌ Elutasítás</button>
+
+  <div id="reject-section" style="display: none;">
+    <textarea id="indoklas" rows="4" cols="50" placeholder="Indoklás elutasítás esetén..."></textarea>
+    <br>
+    <button id="btn-reject">Elutasítás elküldése</button>
+  </div>
+
+  <script src="/review-thesis.js"></script>
+</body>
+</html>

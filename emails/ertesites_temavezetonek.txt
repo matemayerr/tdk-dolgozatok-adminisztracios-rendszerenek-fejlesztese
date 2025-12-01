@@ -1,0 +1,14 @@
+Tisztelt {{TEMAVEZETONEV}}!
+
+A(z) "{{DOLGOZATCIM}}" című dolgozatot a hallgató feltöltötte a rendszerbe.
+Kérjük, tekintse át, és a rendszerben adja meg, hogy elfogadja vagy elutasítja a dolgozatot.
+
+Hallgató neve: {{HALLGATONEV}}
+Neptun-kód: {{NEPTUNKOD}}
+
+A dolgozatot az alábbi linken tekintheti meg:
+{{DOLGOZAT_LINK}}
+
+Tisztelettel:
+TDK Adminisztrációs Rendszer
+

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Dolgozatok lekérdezése
     async function listazDolgozatok() {
         try {
-            const response = await fetch('/api/dolgozatok/kesz');
+            const response = await fetch('/api/dolgozatok/feltoltheto');
             dolgozatok = await response.json();
             megjelenitDolgozatok();
         } catch (err) {
@@ -20,10 +20,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Dolgozatok megjelenítése
     function megjelenitDolgozatok() {
         const filteredDolgozatok = dolgozatok.filter(dolgozat => 
-            dolgozat.cím.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-            dolgozat.hallgato_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-            dolgozat.temavezeto_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-            dolgozat.allapot.toLowerCase().includes(searchInput.value.toLowerCase())
+            (dolgozat.cím && dolgozat.cím.toLowerCase().includes(searchInput.value.toLowerCase())) ||
+            (dolgozat.hallgato_ids && dolgozat.hallgato_ids.join(', ').toLowerCase().includes(searchInput.value.toLowerCase())) ||
+            (dolgozat.temavezeto_ids && dolgozat.temavezeto_ids.join(', ').toLowerCase().includes(searchInput.value.toLowerCase())) ||
+            (dolgozat.allapot && dolgozat.allapot.toLowerCase().includes(searchInput.value.toLowerCase()))
         );
 
         const start = (currentPage - 1) * itemsPerPage;
@@ -34,14 +34,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${dolgozat.cím || 'N/A'}</td>
-                <td>${dolgozat.hallgato_id || 'N/A'}</td>
-                <td>${dolgozat.temavezeto_id || 'N/A'}</td>
+                <td>${dolgozat.hallgato_ids ? dolgozat.hallgato_ids.join(', ') : 'N/A'}</td>
+                <td>${dolgozat.temavezeto_ids ? dolgozat.temavezeto_ids.join(', ') : 'N/A'}</td>
                 <td>${dolgozat.allapot || 'N/A'}</td>
                 <td>
-                    ${dolgozat.allapot === 'elfogadva' ? 
-                        `<button onclick="feltoltes('${dolgozat._id}')">Feltöltés</button>` : 
-                        ''
-                    }
+                    ${dolgozat.allapot === 'jelentkezett' ? 
+    `<button onclick="feltoltes('${dolgozat._id}')">Feltöltés</button>` : 
+    ''
+}
                     ${dolgozat.filePath && (dolgozat.allapot === 'feltöltve' || dolgozat.allapot === 'értékelve') ? 
                         `<button onclick="megtekintes('${dolgozat.filePath}')">Megtekintés</button>` : 
                         ''
@@ -126,13 +126,11 @@ document.addEventListener('DOMContentLoaded', function () {
     listazDolgozatok();
 
     const sorokSzamaSelect = document.getElementById('sorokSzama');
-if (sorokSzamaSelect) {
-    sorokSzamaSelect.addEventListener('change', function () {
-        itemsPerPage = parseInt(this.value);
-        currentPage = 1;
-        megjelenitDolgozatok();
-    });
-}
-
+    if (sorokSzamaSelect) {
+        sorokSzamaSelect.addEventListener('change', function () {
+            itemsPerPage = parseInt(this.value);
+            currentPage = 1;
+            megjelenitDolgozatok();
+        });
+    }
 });
-

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <title>TMDK Pontozólap – Írásbeli</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: auto;
+      padding: 2rem;
+    }
+
+    h1, h2 {
+      margin-top: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    td, th {
+      padding: 6px;
+      vertical-align: top;
+    }
+
+    textarea {
+      width: 100%;
+      height: 80px;
+      resize: vertical;
+    }
+
+    input[type="number"] {
+      width: 60px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+    }
+
+    .score {
+      width: 80px;
+      text-align: center;
+    }
+
+    .total {
+      font-weight: bold;
+      font-size: 1.2em;
+      text-align: right;
+      margin-top: 1rem;
+    }
+
+    .row-flex {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .row-flex label {
+      flex: 1;
+    }
+
+    .szerzo-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .szerzo-row input {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tudományos és Művészeti Diákköri Konferencia</h1>
+  <h2>Pontozólap a dolgozat bírálatához</h2>
+
+  <h3>Szerző(k) adatai</h3>
+  <div id="szerzok-container">
+    <!-- 4 sor alapból -->
+    <div class="szerzo-row">
+      <input type="text" placeholder="Szerző neve">
+      <input type="text" placeholder="Szak">
+      <input type="text" placeholder="Évfolyam">
+    </div>
+    <div class="szerzo-row">
+      <input type="text" placeholder="Szerző neve">
+      <input type="text" placeholder="Szak">
+      <input type="text" placeholder="Évfolyam">
+    </div>
+    <div class="szerzo-row">
+      <input type="text" placeholder="Szerző neve">
+      <input type="text" placeholder="Szak">
+      <input type="text" placeholder="Évfolyam">
+    </div>
+    <div class="szerzo-row">
+      <input type="text" placeholder="Szerző neve">
+      <input type="text" placeholder="Szak">
+      <input type="text" placeholder="Évfolyam">
+    </div>
+  </div>
+
+  <!-- Módosított rész -->
+  <div class="row-flex" style="flex-direction: column;">
+    <label>A dolgozat címe:<br><input type="text" id="cim" /></label>
+    <label>A szekció neve:<br><input type="text" id="szekcio" /></label>
+  </div>
+
+  <h2>Értékelési szempontok</h2>
+
+  <table>
+    <tbody>
+      <tr>
+        <td>1. A dolgozat szerkesztése, stílusa (max. 9 pont)</td>
+        <td><textarea id="text1"></textarea></td>
+        <td class="score"><input type="number" id="score1" min="0" max="9" /></td>
+      </tr>
+      <tr>
+        <td>2. Irodalmi feldolgozás (max. 9 pont)</td>
+        <td><textarea id="text2"></textarea></td>
+        <td class="score"><input type="number" id="score2" min="0" max="9" /></td>
+      </tr>
+      <tr>
+        <td>3. A téma kidolgozásának színvonala (max. 9 pont)</td>
+        <td><textarea id="text3"></textarea></td>
+        <td class="score"><input type="number" id="score3" min="0" max="9" /></td>
+      </tr>
+      <tr>
+        <td>4. Eredmények kiértékelése (max. 9 pont)</td>
+        <td><textarea id="text4"></textarea></td>
+        <td class="score"><input type="number" id="score4" min="0" max="9" /></td>
+      </tr>
+      <tr>
+        <td>5. A kapott eredmények alkalmazhatósága (max. 9 pont)</td>
+        <td><textarea id="text5"></textarea></td>
+        <td class="score"><input type="number" id="score5" min="0" max="9" /></td>
+      </tr>
+    </tbody>
+  </table>
+
+<div class="total">
+  Elérhető maximális pontszám: 45 pont<br>
+  A dolgozatra kapott összpontszám: <span id="totalScore">0</span>
+</div>
+
+<div style="margin-top: 2rem;">
+  <div style="display: flex; align-items: center; gap: 1rem;">
+    <label for="datum" style="white-space: nowrap;">Dátum: Győr,</label>
+    <input type="text" id="datum" style="width: 150px;">
+  </div>
+
+  <div style="margin-top: 1rem; text-align: right;">
+    <label for="elnok">A zsűri elnöke:</label><br>
+    <input type="text" id="elnok" style="width: 25%;">
+  </div>
+</div>
+
+<hr><br>
+<input type="file" id="upload" accept=".xlsx, .xls" />
+
+<script>
+  document.getElementById("upload").addEventListener("change", handleFile, false);
+
+  function handleFile(e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      // Szerző(k), szak, évfolyam (4 sor)
+      for (let i = 0; i < 4; i++) {
+        const nameCell = sheet[`A${4 + i}`];
+        const szakCell = sheet[`B${4 + i}`];
+        const evfCell = sheet[`C${4 + i}`];
+
+        const row = document.querySelectorAll("#szerzok-container .szerzo-row")[i];
+        if (row) {
+          row.children[0].value = nameCell ? nameCell.v : "";
+          row.children[1].value = szakCell ? szakCell.v : "";
+          row.children[2].value = evfCell ? evfCell.v : "";
+        }
+      }
+
+      // Dolgozat címe és szekció
+      const cimCell = sheet["A9"];
+      const szekcioCell = sheet["A11"];
+      document.getElementById("cim").value = cimCell ? cimCell.v : "";
+      document.getElementById("szekcio").value = szekcioCell ? szekcioCell.v : "";
+
+      // Szempontok szövegei és pontszámok
+      const texts = [13, 15, 17, 19, 21];
+      const scores = [12, 14, 16, 18, 20];
+      for (let i = 0; i < 5; i++) {
+        const textCell = sheet[`A${texts[i]}`];
+        const scoreCell = sheet[`C${scores[i]}`];
+        document.getElementById(`text${i + 1}`).value = textCell ? textCell.v : "";
+        document.getElementById(`score${i + 1}`).value = scoreCell ? scoreCell.v : "";
+      }
+
+      // Összpontszám (C22)
+      const totalCell = sheet["C22"];
+      if (totalCell) {
+        document.getElementById("totalScore").textContent = totalCell.v;
+      }
+
+      // Dátum (A24, de csak a vessző utáni rész)
+      const datumCell = sheet["A24"];
+      if (datumCell) {
+        const parts = datumCell.v.split(",");
+        if (parts.length > 1) {
+          document.getElementById("datum").value = parts[1].trim();
+        } else {
+          document.getElementById("datum").value = datumCell.v.trim();
+        }
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+</script>
+</body>
+</html>

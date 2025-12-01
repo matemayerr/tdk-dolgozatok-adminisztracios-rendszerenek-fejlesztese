@@ -27,7 +27,7 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     leiras: { type: String },
     hallgato_ids: { type: [String], required: true }, // Több hallgató támogatása
     temavezeto_ids: { type: [String], required: true }, // Több témavezető támogatása
-    allapot: { type: String, default: 'benyújtva' },
+    allapot: { type: String, default: 'jelentkezett' },
     filePath: { type: String },
     pontszam: { type: String, default: '' },
     ertekelesFilePath: { type: String },
@@ -131,18 +131,43 @@ app.post('/api/register', async (req, res) => {
 });
 
 
-
-
-
-// Nodemailer beállítása SendGrid SMTP szerverrel az e-mail küldéshez
 const transporter = nodemailer.createTransport({
-    host: 'smtp.sendgrid.net',
-    port: 587,
-    auth: {
-        user: 'apikey', // ez a fix felhasználónév a SendGrid-ben
-        pass: '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'
-    }
+  service: 'gmail',
+  auth: {
+    user: 'm48625729@gmail.com',   // ide a saját Gmail címed
+    pass: 'uxjraaxejiswddjn '       // ide az alkalmazásjelszavad, szóköz nélkül
+  }
 });
+
+
+async function kuldErtesitesTemavezetonek(temavezetoEmail, dolgozat) {
+    const temavezeto = await Felhasznalo.findOne({ neptun: dolgozat.temavezeto_ids[0] });
+    const hallgato = await Felhasznalo.findOne({ neptun: dolgozat.hallgato_ids[0] });
+
+    const emailSzoveg = betoltEmailSablon('ertesites_temavezetonek.txt', {
+        TEMAVEZETONEV: temavezeto?.nev || 'Tisztelt témavezető',
+        DOLGOZATCIM: dolgozat.cím,
+        HALLGATONEV: hallgato?.nev || 'Ismeretlen hallgató',
+        NEPTUNKOD: hallgato?.neptun || '',
+        DOLGOZAT_LINK: `http://localhost:3000/dolgozatok/${dolgozat._id}`
+    });
+
+    const mailOptions = {
+        from: 'm48625729@gmail.com',
+        to: temavezetoEmail,
+        subject: 'Új dolgozat érkezett elfogadásra',
+        text: emailSzoveg
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Értesítés sikeresen elküldve a témavezetőnek.');
+    } catch (error) {
+        console.error('Hiba történt az értesítés küldésekor:', error);
+    }
+}
+
+
 
 // Szöveges értékelés és jegy mentése
 app.post('/api/dolgozatok/ertekeles/:id', async (req, res) => {
@@ -167,25 +192,7 @@ app.post('/api/dolgozatok/ertekeles/:id', async (req, res) => {
     }
 });
 
-// Értesítés küldése bírálónak e-mailben
-async function kuldErtesitesBiralonak(biraloEmail, dolgozat) {
-    const mailOptions = {
-        from: 'm48625729@gmail.com',
-        to: biraloEmail,
-        subject: 'Új dolgozat érkezett értékelésre',
-        text: betoltEmailSablon('ertesites_biralonak.txt', {
-            cim: dolgozat.cím,
-            hallgatok: dolgozat.hallgato_ids.join(', ')
-        })
-    };
-        
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log('Értesítés sikeresen elküldve a bírálónak.');
-    } catch (error) {
-        console.error('Hiba történt az értesítés küldésekor:', error);
-    }
-}
+
 
 // Multer beállítása fájlok feltöltéséhez
 const storage = multer.diskStorage({
@@ -216,23 +223,31 @@ app.get('/api/dolgozatok', async (req, res) => {
     }
 });
 
-// Csak a kész dolgozatok lekérdezése
-app.get('/api/dolgozatok/kesz', async (req, res) => {
+// Feltöltéshez elérhető dolgozatok lekérdezése
+app.get('/api/dolgozatok/feltoltheto', async (req, res) => {
     try {
-        const keszDolgozatok = await Dolgozat.find({
-            allapot: { $in: ['elfogadva','feltöltve'] }
+        const feltolthetoDolgozatok = await Dolgozat.find({
+            allapot: { $in: ['jelentkezett','feltöltve - témavezető válaszára vár','elfogadva - témavezető által',
+                    'elutasítva - témavezető által'] }
         });
-        res.json(keszDolgozatok);
+        res.json(feltolthetoDolgozatok);
     } catch (error) {
-        res.status(500).json({ error: 'Hiba történt a kész dolgozatok lekérésekor' });
+        res.status(500).json({ error: 'Hiba történt a feltölthető dolgozatok lekérésekor' });
     }
 });
 
-  // Új dolgozat hozzáadása
+
+// Új dolgozat hozzáadása
 app.post('/api/dolgozatok', async (req, res) => {
-    const { cím, hallgato_ids, temavezeto_ids, allapot, leiras } = req.body;
+    const { cím, hallgato_ids, temavezeto_ids, leiras } = req.body;
     try {
-        const dolgozat = new Dolgozat({ cím, hallgato_ids, temavezeto_ids, allapot, leiras });
+        const dolgozat = new Dolgozat({ 
+            cím, 
+            hallgato_ids, 
+            temavezeto_ids, 
+            leiras, 
+            allapot: 'jelentkezett'   // 🔹 Mindig alapértelmezett
+        });
         await dolgozat.save();
         res.status(201).json(dolgozat);
     } catch (error) {
@@ -240,6 +255,7 @@ app.post('/api/dolgozatok', async (req, res) => {
         res.status(500).json({ error: 'Hiba történt a dolgozat hozzáadásakor' });
     }
 });
+
 
 
 // Dolgozat módosítása
@@ -275,6 +291,52 @@ app.delete('/api/dolgozatok/:id', async (req, res) => {
         res.status(500).json({ error: 'Hiba történt a dolgozat törlése során' });
     }
 });
+
+// Dolgozat státusz frissítése
+app.put('/api/dolgozatok/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { allapot } = req.body;
+
+        if (!allapot) {
+            return res.status(400).json({ error: 'Hiányzik az új állapot.' });
+        }
+
+        // Engedélyezett státuszok
+        const allowedStatuses = [
+        'jelentkezett',
+        'feltöltve',
+        'feltöltve - témavezető válaszára vár',
+        'nem nyilatkozott még',
+        'elfogadva',
+        'elutasítva',
+        'bírálat alatt',
+        'értékelve',
+        'zsűrizésre kész'
+        ];
+
+
+        if (!allowedStatuses.includes(allapot)) {
+            return res.status(400).json({ error: 'Érvénytelen állapot.' });
+        }
+
+        const updatedDolgozat = await Dolgozat.findByIdAndUpdate(
+            id,
+            { allapot },
+            { new: true }
+        );
+
+        if (!updatedDolgozat) {
+            return res.status(404).json({ error: 'Dolgozat nem található.' });
+        }
+
+        res.json(updatedDolgozat);
+    } catch (error) {
+        console.error('Hiba a státusz frissítésekor:', error);
+        res.status(500).json({ error: 'Szerverhiba a státusz frissítésekor' });
+    }
+});
+
 
 // Felhasználó CRUD műveletek
 
@@ -369,15 +431,15 @@ app.delete('/api/felhasznalok/:id', async (req, res) => {
         }
 
         // Dolgozatok frissítése, ha hallgató vagy témavezető volt
-        await Dolgozat.updateMany(
-            { hallgato_id: felhasznalo.neptun },
-            { hallgato_id: "Nincs kijelölt személy. Kérjük válasszon másikat!" }
-        );
+     await Dolgozat.updateMany(
+    { hallgato_ids: felhasznalo.neptun },
+    { $pull: { hallgato_ids: felhasznalo.neptun } }
+);
 
-        await Dolgozat.updateMany(
-            { temavezeto_id: felhasznalo.neptun },
-            { temavezeto_id: "Nincs kijelölt személy. Kérjük válasszon másikat!" }
-        );
+    await Dolgozat.updateMany(
+    { temavezeto_ids: felhasznalo.neptun },
+    { $pull: { temavezeto_ids: felhasznalo.neptun } }
+);
 
         res.json({ message: 'Felhasználó sikeresen törölve' });
     } catch (error) {
@@ -386,11 +448,10 @@ app.delete('/api/felhasznalok/:id', async (req, res) => {
 });
 
 
-
-// Fájl feltöltése és értesítés küldése a bírálónak
+// Fájl feltöltése és értesítés küldése a témavezetőnek
 app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res) => {
     const { id } = req.params;
-    const alapertelmezettEmail = 'mayer.mate@outlook.com'; // Fix e-mail cím
+    const alapertelmezettEmail = 'mayer.mate@outlook.com'; // ideiglenes email
 
     if (!req.file) {
         return res.status(400).json({ error: 'Fájl nem lett kiválasztva!' });
@@ -402,18 +463,41 @@ app.post('/api/dolgozatok/feltoltes/:id', upload.single('file'), async (req, res
             return res.status(404).json({ error: 'Dolgozat nem található' });
         }
 
+        if (dolgozat.allapot !== 'jelentkezett') {
+            return res.status(400).json({ error: 'Csak jelentkezett állapotú dolgozathoz tölthető fel fájl.' });
+        }
+
         dolgozat.filePath = `/uploads/${req.file.filename}`;
-        dolgozat.allapot = 'feltöltve';
+        dolgozat.allapot = 'feltöltve - témavezető válaszára vár';
         await dolgozat.save();
 
-        const temavezeto = await Felhasznalo.findOne({ neptun: dolgozat.temavezeto_id });
-        const biraloEmail = temavezeto ? temavezeto.email : alapertelmezettEmail;
+        // küldünk értesítést a témavezetőnek
+        const temavezeto = await Felhasznalo.findOne({ neptun: dolgozat.temavezeto_ids[0] });
+        const emailCim = temavezeto ? temavezeto.email : alapertelmezettEmail;
 
-        await kuldErtesitesBiralonak(biraloEmail, dolgozat);
-        res.status(200).json({ message: 'Fájl sikeresen feltöltve és e-mail elküldve.', filePath: dolgozat.filePath });
+        await kuldErtesitesTemavezetonek(emailCim, dolgozat);
+
+        res.status(200).json({ 
+            message: 'Fájl sikeresen feltöltve, a témavezető értesítve lett.',
+            filePath: dolgozat.filePath 
+        });
     } catch (error) {
         console.error('Hiba történt a fájl mentése során:', error);
         res.status(500).json({ error: 'Hiba történt a fájl mentésekor' });
+    }
+});
+
+
+  // Csak a kész (feltölthető) dolgozatok lekérdezése
+app.get('/api/dolgozatok/kesz', async (req, res) => {
+    try {
+        const keszDolgozatok = await Dolgozat.find({
+            allapot: { $in: ['jelentkezett', 'elfogadva', 'feltöltve - témavezető válaszára vár'] }
+        });
+        res.json(keszDolgozatok);
+    } catch (error) {
+        console.error('Hiba a kész dolgozatok lekérésekor:', error);
+        res.status(500).json({ error: 'Hiba történt a kész dolgozatok lekérésekor' });
     }
 });
 
@@ -437,8 +521,8 @@ app.post('/api/dolgozatok/ertekeles-feltoltes/:id', upload.single('file'), async
         dolgozat.allapot = 'értékelve';
         await dolgozat.save();
 
-        const hallgato = await Felhasznalo.findOne({ neptun: dolgozat.hallgato_id });
-        const temavezeto = await Felhasznalo.findOne({ neptun: dolgozat.temavezeto_id });
+        const hallgato = await Felhasznalo.findOne({ neptun: dolgozat.hallgato_ids[0] });
+        const temavezeto = await Felhasznalo.findOne({ neptun: dolgozat.temavezeto_ids[0] });
 
         if (hallgato && hallgato.email) {
             await kuldErtesitesHallgatonakEsTemavezetonek(hallgato.email, dolgozat, "hallgató");
@@ -453,6 +537,61 @@ app.post('/api/dolgozatok/ertekeles-feltoltes/:id', upload.single('file'), async
         res.status(500).json({ error: 'Hiba történt az értékelés mentése során' });
     }
 });
+
+app.put('/api/dolgozatok/:id/temavezeto-nyilatkozat', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { dontes, elutasitas_oka } = req.body;
+
+    if (!['elfogadva', 'elutasítva'].includes(dontes)) {
+      return res.status(400).json({ error: 'Érvénytelen döntés. Csak elfogadás vagy elutasítás lehetséges.' });
+    }
+
+    const updateData = { 
+      allapot: dontes === 'elfogadva' 
+        ? 'elfogadva - témavezető által' 
+        : 'elutasítva - témavezető által'
+    };
+
+    if (dontes === 'elutasítva' && elutasitas_oka) {
+      updateData.elutasitas_oka = elutasitas_oka;
+    }
+
+    const updatedDolgozat = await Dolgozat.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!updatedDolgozat) {
+      return res.status(404).json({ error: 'Dolgozat nem található.' });
+    }
+
+    // 🔔 Értesítés a hallgatónak
+    const hallgato = await Felhasznalo.findOne({ neptun: updatedDolgozat.hallgato_ids[0] });
+
+    if (hallgato && hallgato.email) {
+      const sablon = dontes === 'elfogadva'
+        ? 'temavezeto_elfogadas.txt'
+        : 'temavezeto_elutasitas.txt';
+
+      const szoveg = betoltEmailSablon(sablon, {
+        HALLGATONEV: hallgato.nev,
+        CIM: updatedDolgozat.cím,
+        INDOKLAS: updateData.elutasitas_oka || 'Nincs megadva.'
+      });
+
+      await transporter.sendMail({
+        from: 'TDK rendszer <m48625729@gmail.com>',
+        to: hallgato.email,
+        subject: 'Témavezetői döntés a dolgozatodról',
+        text: szoveg
+      });
+    }
+
+    res.json(updatedDolgozat);
+  } catch (error) {
+    console.error('Hiba a témavezető nyilatkozat frissítésekor:', error);
+    res.status(500).json({ error: 'Szerverhiba a nyilatkozat frissítésekor' });
+  }
+});
+
 
 // Értesítés küldése a hallgatónak és a témavezetőnek az értékelésről
 async function kuldErtesitesHallgatonakEsTemavezetonek(cimzettEmail, dolgozat, szerep) {
@@ -649,6 +788,33 @@ app.post('/api/regisztracio-befejezes', async (req, res) => {
     }
 });
 
+
+
+// Egy adott dolgozat részleteinek lekérdezése ID alapján
+app.get('/api/dolgozatok/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const dolgozat = await Dolgozat.findById(id);
+        if (!dolgozat) return res.status(404).json({ error: 'Dolgozat nem található' });
+
+        // Hallgató és témavezető nevének kinyerése
+        const hallgato = await Felhasznalo.findOne({ neptun: dolgozat.hallgato_ids[0] });
+        const hallgatoNev = hallgato ? hallgato.nev : 'Ismeretlen';
+
+        res.json({
+            cim: dolgozat.cím,
+            hallgato_nev: hallgatoNev,
+            neptun: dolgozat.hallgato_ids[0],
+            fileUrl: dolgozat.filePath
+        });
+    } catch (err) {
+        console.error('Hiba a dolgozat lekérdezésekor:', err);
+        res.status(500).json({ error: 'Szerverhiba' });
+    }
+});
+
+
+
 //Statisztikai lekérdezések
 
 // 1. Összes dolgozat kilistázása kapcsolt nevekkel
@@ -707,6 +873,11 @@ app.get('/api/stats/szemelyek', async (req, res) => {
     }
   });
   
+
+
+app.get('/dolgozatok/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'review-thesis.html'));
+});
 
 
 // Szerver indítása megadott porton

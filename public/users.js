@@ -69,6 +69,8 @@ if (!jelszo || !jelszoIsmet || jelszo !== jelszoIsmet) {
 
     const neptun = document.getElementById('felhasznalo-neptun').value;
     const email = document.getElementById('felhasznalo-email').value;
+    const szak = document.getElementById("felhasznalo-szak").value;
+    const evfolyam = document.getElementById("felhasznalo-evfolyam").value;
     const checkboxes = document.querySelectorAll('#felhasznalo-csoport input[type="checkbox"]:checked');
     const csoportok = Array.from(checkboxes).map(checkbox => checkbox.value);
     const kar = document.getElementById('felhasznalo-kar').value;

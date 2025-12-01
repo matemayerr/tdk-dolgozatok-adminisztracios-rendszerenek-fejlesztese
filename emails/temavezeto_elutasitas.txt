@@ -1,0 +1,11 @@
+Kedves {{HALLGATONEV}},
+
+Sajnálattal értesítünk, hogy a dolgozatod elutasításra került a témavezető által.
+
+Cím: {{CIM}}
+
+Indoklás:
+{{INDOKLAS}}
+
+Kérjük, egyeztess a témavezetőddel a további lehetőségekről.
+
