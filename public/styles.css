@@ -449,9 +449,11 @@ nav ul li a.active {
 
 /* Aktív állapotban megjelenik */
 .dolgozat-details-panel.open {
-    max-height: 200px; /* vagy nagyobb, ha szükséges */
+    max-height: 500px; /* max magasság ha túl sok a tartalom */
     padding: 12px 16px;
+    overflow-y: auto;   /* görgethetővé teszi */
 }
+
 
 
 #uj-felhasznalo-gomb {
@@ -464,6 +466,17 @@ nav ul li a.active {
   margin-bottom: 15px;
 }
 
+/* A dolgozat leírás formázása */
+.dolgozat-leiras {
+    max-width: 80%;
+    text-align: left;
+    line-height: 1.6;
+    padding: 10px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+  
 
 
 

@@ -81,6 +81,32 @@
             </table>
             <div id="dolgozat-pagination"></div>
         </section>
+
+    <!-- Módosító űrlap -->
+<form id="modosit-dolgozat-form" class="modal-form uj-dolgozat-form" style="display: none;">
+    <input type="text" id="modosit-dolgozat-cim" placeholder="Dolgozat címe">
+    <textarea id="modosit-dolgozat-leiras" placeholder="Rövid leírás"></textarea>
+
+    <div class="user-dropdown">
+        <button type="button" class="dropdown-btn">Hallgató(k) kiválasztása ▾</button>
+        <div class="dropdown-content" id="modosit-hallgato-lista"></div>
+    </div>
+
+    <div class="user-dropdown">
+        <button type="button" class="dropdown-btn">Témavezető kiválasztása ▾</button>
+        <div class="dropdown-content" id="modosit-temavezeto-lista"></div>
+    </div>
+
+    <select id="modosit-allapot">
+        <option value="bírálás alatt">Bírálás alatt</option>
+        <option value="elfogadva">Elfogadva</option>
+        <option value="elutasítva">Elutasítva</option>
+    </select>
+
+    <button type="submit" id="modosit-mentes-gomb">Mentés</button>
+    <button type="button" id="modosit-megse-gomb">Mégse</button>
+</form>
+
     </main>
 
     <script src="app.js"></script>

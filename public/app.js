@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const temavezetoSelect = document.getElementById('dolgozat-temavezeto-id');
     let dolgozatok = [];
     let currentPage = 1;
+    let aktualisModositandoId = null;
     const itemsPerPage = 10;
 
     // Felhasználók betöltése csoportok szerint
@@ -48,14 +49,27 @@ temavezetoLista.innerHTML = temavezetok.map(temavezeto => `
     }
 
 // Dolgozatok megjelenítése
-function megjelenitDolgozatok() {
+async function megjelenitDolgozatok() {
     const filteredDolgozatok = dolgozatok.filter(dolgozat => 
         dolgozat.cím.toLowerCase().includes(searchInput.value.toLowerCase()) ||
         (Array.isArray(dolgozat.hallgato_ids) && dolgozat.hallgato_ids.some(id => id.toLowerCase().includes(searchInput.value.toLowerCase()))) ||
         dolgozat.temavezeto_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
         dolgozat.allapot.toLowerCase().includes(searchInput.value.toLowerCase())
     );
-    
+
+    // Felhasználók lekérése a nevekhez
+let felhasznalokNevek = {};
+try {
+    const response = await fetch('/api/felhasznalok');
+    const felhasznalok = await response.json();
+    felhasznalok.forEach(f => {
+        felhasznalokNevek[f.neptun] = f.nev;
+    });
+} catch (error) {
+    console.error("Nem sikerült lekérni a felhasználókat", error);
+}
+
+
     const start = (currentPage - 1) * itemsPerPage;
     const paginatedDolgozatok = filteredDolgozatok.slice(start, start + itemsPerPage);
     
@@ -66,7 +80,15 @@ function megjelenitDolgozatok() {
         const tr = document.createElement('tr');
         tr.dataset.id = dolgozat._id;
         tr.innerHTML = `
-    <td class="clickable-title" onclick="toggleDetails('${dolgozat._id}')">${roviditettCim}</td>
+        <td class="clickable-title" onclick="toggleDetails('${dolgozat._id}')">
+    <div class="cim-es-ikon">
+        <span class="cim-szoveg" title="${dolgozat.cím}">${roviditettCim}</span>
+        <span class="toggle-icon" id="toggle-icon-${dolgozat._id}">▼</span>
+    </div>
+</td>
+
+
+</td>   
     <td>${dolgozat.allapot || 'N/A'}</td>
     <td>
         <button onclick="editDolgozat('${dolgozat._id}')">Módosítás</button>
@@ -80,17 +102,29 @@ detailTr.id = `details-${dolgozat._id}`;
 detailTr.innerHTML = `
     <td colspan="3">
         <div class="dolgozat-details-panel" id="panel-${dolgozat._id}">
-            <p><strong>Leírás:</strong> ${dolgozat.leiras || '—'}</p>
-            <p><strong>Hallgató(k):</strong> ${dolgozat.hallgato_ids ? dolgozat.hallgato_ids.join(', ') : '—'}</p>
-            <p><strong>Témavezető:</strong> ${dolgozat.temavezeto_id || '—'}</p>
+            <p class="dolgozat-leiras">
+  <span class="leiras-cimke">Leírás:</span><br>
+  <span class="leiras-szoveg">${dolgozat.leiras || '—'}</span>
+</p>
+            <p><strong>Hallgató(k):</strong> ${
+    dolgozat.hallgato_ids
+        ? dolgozat.hallgato_ids.map(id => `${felhasznalokNevek[id] || 'Ismeretlen'} (${id})`).join(', ')
+        : '—'
+}</p>
+<p><strong>Témavezető:</strong> ${
+    dolgozat.temavezeto_id
+        ? `${felhasznalokNevek[dolgozat.temavezeto_id] || 'Ismeretlen'} (${dolgozat.temavezeto_id})`
+        : '—'
+}</p>
+
         </div>
     </td>
 `;
 
-dolgozatTbody.appendChild(tr);
-dolgozatTbody.appendChild(detailTr);
 
-        dolgozatTbody.appendChild(tr);
+dolgozatTbody.appendChild(tr);        // A dolgozat fő sora felül
+dolgozatTbody.appendChild(detailTr);  // Először a részletek jönnek alulra
+
     });
 
     frissitPaginacio(filteredDolgozatok.length);
@@ -118,9 +152,11 @@ if (dolgozatForm) {
 
         const formData = {
             cím: document.getElementById('dolgozat-cim').value,
+            leiras: document.getElementById('dolgozat-leiras').value,
             hallgato_ids: selectedHallgatok,
             temavezeto_id: selectedTemavezeto.value,
-            allapot: "benyújtva"
+            allapot: "bírálás alatt"
+
         };
 
         if (!formData.cím || !formData.temavezeto_id || formData.hallgato_ids.length === 0) {
@@ -155,95 +191,86 @@ if (dolgozatForm) {
 
 
     // Dolgozat szerkesztése
-window.editDolgozat = async function (id) {
-    const dolgozat = dolgozatok.find(d => d._id === id);
-    const tr = document.querySelector(`tr[data-id="${id}"]`);
-
-    if (tr) {
-        const cells = tr.querySelectorAll('td');
-
-        // 🔥 Felhasználók betöltése módosításkor
+    window.editDolgozat = async function (id) {
+        aktualisModositandoId = id;
+        const dolgozat = dolgozatok.find(d => d._id === id);
+    
+        // Inputmezők feltöltése
+        document.getElementById('modosit-dolgozat-cim').value = dolgozat.cím || '';
+        document.getElementById('modosit-dolgozat-leiras').value = dolgozat.leiras || '';
+        document.getElementById('modosit-allapot').value = dolgozat.allapot || 'benyújtva';
+    
+        // Felhasználók lekérése
         const response = await fetch('/api/felhasznalok');
         const felhasznalok = await response.json();
-
         const hallgatok = felhasznalok.filter(f => f.csoportok.includes('hallgato'));
         const temavezetok = felhasznalok.filter(f => f.csoportok.includes('temavezeto'));
-
-        // Hallgatók dropdown
-        const hallgatoSelect = `
-            <select id="edit-hallgato-${id}">
-                ${hallgatok.map(h => `<option value="${h.neptun}" ${dolgozat.hallgato_id === h.neptun ? 'selected' : ''}>${h.nev} (${h.neptun})</option>`).join('')}
-            </select>
-        `;
-
-        // Témavezetők dropdown
-        const temaSelect = `
-            <select id="edit-temavezeto-${id}">
-                ${temavezetok.map(t => `<option value="${t.neptun}" ${dolgozat.temavezeto_id === t.neptun ? 'selected' : ''}>${t.nev} (${t.neptun})</option>`).join('')}
-            </select>
-        `;
-
-        // Táblázatba berakjuk a szerkeszthető elemeket
-        cells[0].innerHTML = `<input type="text" value="${dolgozat.cím}">`;
-        cells[1].innerHTML = hallgatoSelect;
-        cells[2].innerHTML = temaSelect;
-        cells[3].innerHTML = `
-            <select id="allapot-${id}">
-                <option value="benyújtva" ${dolgozat.allapot === 'benyújtva' ? 'selected' : ''}>Benyújtva</option>
-                <option value="bírálás alatt" ${dolgozat.allapot === 'bírálás alatt' ? 'selected' : ''}>Bírálás alatt</option>
-                <option value="elfogadva" ${dolgozat.allapot === 'elfogadva' ? 'selected' : ''}>Elfogadva</option>
-                <option value="elutasítva" ${dolgozat.allapot === 'elutasítva' ? 'selected' : ''}>Elutasítva</option>
-            </select>
-        `;
-
-        // Mentés és Mégse gomb
-        // Mentés és Mégse gombok
-const saveBtn = document.createElement('button');
-saveBtn.textContent = 'Mentés';
-saveBtn.addEventListener('click', async () => saveDolgozat(id, cells));
-
-const cancelBtn = document.createElement('button');
-cancelBtn.textContent = 'Mégse';
-cancelBtn.addEventListener('click', megjelenitDolgozatok);
-
-
-cells[5].innerHTML = '';
-cells[5].appendChild(saveBtn);
-cells[5].appendChild(cancelBtn);
-
-    }
-};
+    
+        // Hallgatók
+        const hallgatoLista = document.getElementById('modosit-hallgato-lista');
+        hallgatoLista.innerHTML = hallgatok.map(h => `
+            <label><input type="checkbox" value="${h.neptun}" ${dolgozat.hallgato_ids.includes(h.neptun) ? 'checked' : ''}> ${h.nev} (${h.neptun})</label>
+        `).join('');
+    
+        // Témavezető
+        const temavezetoLista = document.getElementById('modosit-temavezeto-lista');
+        temavezetoLista.innerHTML = temavezetok.map(t => `
+            <label><input type="radio" name="modosit-temavezeto" value="${t.neptun}" ${dolgozat.temavezeto_id === t.neptun ? 'checked' : ''}> ${t.nev} (${t.neptun})</label>
+        `).join('');
+    
+        // Megjelenítés
+        document.getElementById('modosit-dolgozat-form').style.display = 'block';
+        document.getElementById('homalyositas').style.display = 'block';
+        
+    };
+    
 
 
     // Dolgozat mentése szerkesztés után
-async function saveDolgozat(id, cells) {
-    const updatedDolgozat = {
-        cím: cells[0].querySelector('input').value,
-        hallgato_id: cells[1].querySelector('select').value,
-        temavezeto_id: cells[2].querySelector('select').value,
-        allapot: document.getElementById(`allapot-${id}`).value,
-    };
-
-    try {
-        const response = await fetch(`/api/dolgozatok/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedDolgozat)
-        });
-
-        if (response.ok) {
-            const updatedDolgozatResponse = await response.json();
-            const dolgozatIndex = dolgozatok.findIndex(d => d._id === id);
-            dolgozatok[dolgozatIndex] = updatedDolgozatResponse;
-            megjelenitDolgozatok();
-        } else {
-            console.error('Hiba történt a dolgozat módosítása során');
+    document.getElementById('modosit-megse-gomb').addEventListener('click', () => {
+        document.getElementById('modosit-dolgozat-form').style.display = 'none';
+        document.getElementById('homalyositas').style.display = 'none';
+    });    
+    
+    document.getElementById('modosit-mentes-gomb').addEventListener('click', async () => {
+        const cim = document.getElementById('modosit-dolgozat-cim').value;
+        const leiras = document.getElementById('modosit-dolgozat-leiras').value;
+        const allapot = document.getElementById('modosit-allapot').value;
+        const hallgato_ids = Array.from(document.querySelectorAll('#modosit-hallgato-lista input[type="checkbox"]:checked')).map(cb => cb.value);
+        const temavezetoInput = document.querySelector('input[name="modosit-temavezeto"]:checked');
+    
+        if (!cim || !leiras || !hallgato_ids.length || !temavezetoInput) {
+            alert('Minden mező kitöltése kötelező!');
+            return;
         }
-    } catch (error) {
-        console.error('Hiba történt a dolgozat mentése során:', error);
-    }
-}
-
+    
+        const formData = {
+            cím: cim,
+            leiras: leiras,
+            hallgato_ids,
+            temavezeto_id: temavezetoInput.value,
+            allapot
+        };
+    
+        try {
+            const response = await fetch(`/api/dolgozatok/${aktualisModositandoId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+    
+            if (response.ok) {
+                document.getElementById('modosit-dolgozat-modal').style.display = 'none';
+                document.getElementById('modosit-homalyositas').style.display = 'none';
+                listazDolgozatok(); // újralistázás
+            } else {
+                console.error('Hiba történt a mentésnél.');
+            }
+        } catch (err) {
+            console.error('Mentési hiba:', err);
+        }
+    });
+    
 
     // Dolgozat törlése
     window.deleteDolgozat = async function (id) {
@@ -350,10 +377,13 @@ document.addEventListener('click', () => {
 
 window.toggleDetails = function (dolgozatId) {
     const panel = document.getElementById(`panel-${dolgozatId}`);
-    if (panel) {
-        panel.classList.toggle('open');
+    const icon = document.getElementById(`toggle-icon-${dolgozatId}`);
+    if (panel && icon) {
+        const isOpen = panel.classList.toggle('open');
+        icon.textContent = isOpen ? '▲' : '▼';
     }
 };
+
 
 
 
