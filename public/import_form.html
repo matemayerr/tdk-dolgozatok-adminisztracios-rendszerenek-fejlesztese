@@ -73,48 +73,48 @@
       flex: 1;
     }
 
-.rating-score {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
+    .rating-score {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
 
-.rating-score label {
-  flex: 1;
-}
+    .rating-score label {
+      flex: 1;
+    }
 
-.score-input {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  justify-content: flex-end;
-}
+    .score-input {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: flex-end;
+    }
 
-.score-input input {
-  width: 60px;
-}
+    .score-input input {
+      width: 60px;
+    }
 
-.rating-item {
-  margin-bottom: 2rem;
-}
+    .rating-item {
+      margin-bottom: 2rem;
+    }
 
-#mentesGomb {
-  padding: 5px 15px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-}
-#mentesGomb:hover {
-  background-color: #45a049;
-}
+    #mentesGomb {
+      padding: 5px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
 
-</style>
-
+    #mentesGomb:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
 <body>
+
 <div id="paperSelectWrapper" class="form-group" style="display: none;">
   <label for="paperSelect">Dolgozat kiválasztása:</label>
   <select id="paperSelect" class="form-control">
@@ -122,29 +122,28 @@
   </select>
 </div>
 
+<h1>Tudományos és Művészeti Diákköri Konferencia</h1>
+<h2>Pontozólap a dolgozat bírálatához</h2>
 
+<div id="biralat-deadline-box"
+     style="margin: 10px 0; padding: 8px 12px; border-radius: 4px;
+            background:#fff3cd; color:#856404; font-weight: bold;">
+  Bírálat leadásának (ajánlott) határideje:
+  <span id="biralat-deadline-text">nincs beállítva</span>
+</div>
 
-  <h1>Tudományos és Művészeti Diákköri Konferencia</h1>
-  <h2>Pontozólap a dolgozat bírálatához</h2>
+<hr>
 
-   <div id="biralat-deadline-box"
-       style="margin: 10px 0; padding: 8px 12px; border-radius: 4px;
-              background:#fff3cd; color:#856404; font-weight: bold;">
-    Bírálat leadásának (ajánlott) határideje:
-    <span id="biralat-deadline-text">nincs beállítva</span>
-  </div>
+<p id="feltoltes-utmutato">Az értékelő lap feltöltéséhez kérem kattintson a Browse gombra!</p>
+<p>
+  <input type="file" id="upload" accept=".xlsx, .xls">
+</p>
 
-  <hr>
-  <p id="feltoltes-utmutato">Az értékelő lap feltöltéséhez kérem kattintson a Browse gombra!</p>
-  <p><input type="file" id="upload" accept=".xlsx, .xls" </p>
-  <br>
-
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+<div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 10px;">
   <button id="mentesGomb" onclick="mentesErtekeles()">Értékelés mentése</button>
 </div>
 
-
-  <h3>Szerző(k) adatai</h3>
+<h3>Szerző(k) adatai</h3>
 <div class="szerzo-row" style="font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 4px;">
   <div style="flex:1">Név</div>
   <div style="flex:1">Szak</div>
@@ -155,14 +154,11 @@
   <!-- A JavaScript fogja majd feltölteni a megfelelő számú szerzői sort -->
 </div>
 
-
-  </div>
-
-  <!-- Módosított rész -->
-  <div class="row-flex" style="flex-direction: column; font-weight: bold;">
-    <label>A dolgozat címe:<br><input type="text" id="cim" /></label>
-    <label>A szekció neve:<br><input type="text" id="szekcio" /></label>
-  </div>
+<!-- Cím + szekció -->
+<div class="row-flex" style="flex-direction: column; font-weight: bold;">
+  <label>A dolgozat címe:<br><input type="text" id="cim" /></label>
+  <label>A szekció neve:<br><input type="text" id="szekcio" /></label>
+</div>
 
 <h2>Értékelési szempontok</h2>
 
@@ -223,9 +219,6 @@
   </div>
 </div>
 
-</div>
-
-
 <div class="total">
   Elérhető maximális pontszám: 45<br>
   A dolgozatra kapott összpontszám: <span id="totalScore">0</span>
@@ -239,8 +232,7 @@
 
 <!-- OTDK részvétel -->
 <div class="form-group">
-  
-<label for="otdk_reszvetel" style="margin-top: 12px; display: inline-block;">OTDK részvétel?</label>
+  <label for="otdk_reszvetel" style="margin-top: 12px; display: inline-block;">OTDK részvétel?</label>
   <select id="otdk_reszvetel" name="otdk_reszvetel" class="form-control">
     <option value="Igen">Igen</option>
     <option value="Nem">Nem</option>
@@ -257,10 +249,6 @@
     <label for="biralo">Bíráló:</label><br>
     <input type="text" id="biralo" name="biralo" style="width: 25%;">
   </div>
-</div>
-
-
-  <button id="mentesGomb" onclick="mentesErtekeles()">Értékelés mentése</button>
 
 
 <script>
@@ -269,12 +257,20 @@
   const readonlyMode = urlParams.get('readonly') === 'true';
   const paperIdFromUrl = urlParams.get('id');
 
-  // Excel feltöltés kezelése
-  const uploadInput = document.getElementById("upload");
-  if (uploadInput) {
-    uploadInput.addEventListener("change", handleFile, false);
-  }
+  // 🔹 Bíráló azonosítója URL-ből (e-mail linkről jön)
+  const biraloIdFromUrl =
+    urlParams.get('biraloId') ||
+    urlParams.get('reviewer') ||
+    urlParams.get('userId');
 
+  // Hallgatói nézet jelölése: ?student=1 vagy ?student=true vagy ?role=student
+  const studentParam = urlParams.get('student');
+  const isStudentView =
+    studentParam === '1' ||
+    studentParam === 'true' ||
+    urlParams.get('role') === 'student';
+
+  // Excel feltöltés kezelése
   function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -312,24 +308,64 @@
       document.getElementById("datum").value = onlyDate;
 
       // 🎯 Összpontszám
-      document.getElementById("totalScore").textContent = sheet["C22"]?.v || '0';
+      recalcTotal();
     };
 
     reader.readAsArrayBuffer(file);
   }
 
-  // DOM betöltődése után mindent indítunk
-  document.addEventListener('DOMContentLoaded', () => {
-    initReadonlyMode();
-    initPaperSelect();
-    loadReviewDeadline();
+  function recalcTotal() {
+    let total = 0;
+    for (let i = 1; i <= 5; i++) {
+      const val = Number(document.getElementById(`score${i}`).value) || 0;
+      total += val;
+    }
+    const totalSpan = document.getElementById('totalScore');
+    if (totalSpan) totalSpan.textContent = total;
+  }
 
-    if (readonlyMode && paperIdFromUrl) {
-      loadEvaluation(paperIdFromUrl);
+  document.addEventListener('DOMContentLoaded', async () => {
+    const uploadInput = document.getElementById("upload");
+    if (uploadInput) {
+      uploadInput.addEventListener("change", handleFile, false);
+    }
+
+    // pontszámok változására összpontszám frissítése
+    for (let i = 1; i <= 5; i++) {
+      const inp = document.getElementById(`score${i}`);
+      if (inp) inp.addEventListener('input', recalcTotal);
+    }
+
+    initReadonlyMode();
+
+    // 🔹 Hallgatói nézetben a pontszámokat ne mutassuk
+    if (isStudentView) {
+      hideScoresForStudents();
+    }
+
+    // Hallgatói nézetben NEM mutatjuk a dolgozatválasztót, csak az URL-ben kapott id alapján töltünk
+    if (!isStudentView) {
+      initPaperSelect();
+    } else {
+      const wrapper = document.getElementById('paperSelectWrapper');
+      if (wrapper) wrapper.style.display = 'none';
+    }
+
+    await loadReviewDeadline();
+
+    // Readonly nézetben a teljes bírálat (pontok + szövegek) betöltése
+    // (hallgatónál ez csak technikailag töltődik, a pontmezők eleve el vannak rejtve)
+    if (readonlyMode && paperIdFromUrl && !isStudentView) {
+      await loadEvaluation(paperIdFromUrl);
     }
 
     if (paperIdFromUrl) {
-      loadPaperHeader(paperIdFromUrl);
+      await loadPaperHeader(paperIdFromUrl);
+
+      // 🔹 Hallgatói bírálatok betöltése, ha student nézet
+      if (isStudentView) {
+        await loadStudentReviews(paperIdFromUrl);
+      }
     }
   });
 
@@ -342,18 +378,38 @@
       feltoltesUtmutato.style.display = 'none';
     }
 
+    // Hallgatói nézetben: csak a határidő dobozt rejtsük el,
+    // A PONTOZÓ RÉSZT NEM!
+    if (isStudentView) {
+      const box = document.getElementById('biralat-deadline-box');
+      if (box) box.style.display = 'none';
+    }
+
+    // MINDEN input/textarea/select csak olvasható legyen
     document.querySelectorAll('input, textarea, select').forEach(elem => {
-      if (elem.id === 'paperSelect') return; // dolgozatot továbbra is lehessen választani
+      // dolgozatválasztó mindig maradjon aktív (nem hallgatói nézetben)
+      if (elem.id === 'paperSelect') return;
+
+      // hallgatói módban a bírálót választó selectet és a szöveges bírálat textarea-t
+      // ne tiltsuk le, csak readonly legyen
+      if (isStudentView && (elem.id === 'biraloSelect' || elem.id === 'student-review-text')) {
+        elem.readOnly = true;
+        return;
+      }
+
       elem.readOnly = true;
       elem.disabled = true;
     });
 
-    document.querySelectorAll('button, input[type="submit"], input[type="file"]').forEach(btn => {
-      btn.style.display = 'none';
-    });
+    // GOMBOK ÉS FILE INPUT ELREJTÉSE – de célzottan
+    const mentes = document.getElementById('mentesGomb');
+    if (mentes) mentes.style.display = 'none';
+
+    const uploadInput = document.getElementById('upload');
+    if (uploadInput) uploadInput.style.display = 'none';
   }
 
-  // Dolgozatlista betöltése + select kezelése
+  // Dolgozatlista betöltése + select kezelése (BÍRÁLÓKNAK / ADMINNAK)
   function initPaperSelect() {
     const select = document.getElementById('paperSelect');
     const wrapper = document.getElementById('paperSelectWrapper');
@@ -394,24 +450,53 @@
     if (!id) return;
 
     await loadPaperHeader(id);
+
+    // Ha épp readonly módban vagyunk (pl. bíráló megtekintése),
+    // automatikusan töltsük be az értékelést is
+    if (readonlyMode && !isStudentView) {
+      await loadEvaluation(id);
+    }
+
+    if (isStudentView) {
+      await loadStudentReviews(id);
+    }
   }
 
   // Cím, szekció, szerzők, (opcionálisan) bíráló betöltése
   async function loadPaperHeader(id) {
     try {
       const response = await fetch(`/api/papers/${id}`);
+      if (!response.ok) throw new Error('Nem sikerült betölteni a dolgozatot.');
       const paper = await response.json();
 
       const cimInput = document.getElementById('cim');
       const szekcioInput = document.getElementById('szekcio');
-      const biraloInput = document.getElementById('biralo');
+            const biraloInput = document.getElementById('biralo');
 
       if (cimInput) cimInput.value = paper.cim || '';
       if (szekcioInput) szekcioInput.value = paper.szekcioNev || '';
 
-      if (biraloInput && !biraloInput.value.trim() && paper.biralo) {
-        biraloInput.value = paper.biralo;
+      if (biraloInput && !biraloInput.value.trim()) {
+        let megjelenoNev = '';
+
+        // 🔹 Ha URL-ben kaptunk biraloId-t, próbáljuk meg a hozzá tartozó nevet kivenni
+        if (biraloIdFromUrl && Array.isArray(paper.biralok)) {
+          const sajatBiralo = paper.biralok.find(b =>
+            String(b.id) === String(biraloIdFromUrl)
+          );
+          if (sajatBiralo && sajatBiralo.nev) {
+            megjelenoNev = sajatBiralo.nev;
+          }
+        }
+
+        // 🔙 Ha valamiért nem találtuk meg, essünk vissza a régi, összefűzött névlistára
+        if (!megjelenoNev && paper.biralo) {
+          megjelenoNev = paper.biralo;
+        }
+
+        biraloInput.value = megjelenoNev || '';
       }
+
 
       // Szerzők
       const szerzokContainer = document.getElementById('szerzok-container');
@@ -456,7 +541,7 @@
     }
   }
 
-  // Értékelés mentése
+  // Értékelés mentése (BÍRÁLÓKNAK)
   async function mentesErtekeles() {
     const select = document.getElementById('paperSelect');
     const id = select ? select.value : '';
@@ -479,7 +564,9 @@
       kerdesek: document.getElementById('bírálói_kérdések').value,
       otdk: document.getElementById('otdk_reszvetel').value,
       datum: document.getElementById('datum').value,
-      elnok: document.getElementById('biralo').value
+      elnok: document.getElementById('biralo').value,
+      // 🔹 bíráló azonosítója az URL-ből (ha van)
+      biraloId: biraloIdFromUrl
     };
 
     try {
@@ -498,14 +585,20 @@
     }
   }
 
-  // Readonly módban elmentett értékelés betöltése
+  // Readonly módban elmentett értékelés betöltése (BÍRÁLÓ / ADMIN MEGTEKINTÉS)
   async function loadEvaluation(id) {
     try {
-      const res = await fetch(`/api/papers/${id}/ertekeles`);
+      let url = `/api/papers/${id}/ertekeles`;
+      if (biraloIdFromUrl) {
+        url += `?biraloId=${encodeURIComponent(biraloIdFromUrl)}`;
+      }
+
+      const res = await fetch(url);
       if (!res.ok) {
         console.warn('Nincs elmentett értékelés ehhez a dolgozathoz.');
         return;
       }
+
       const data = await res.json();
 
       // 🎯 Pontszámok és szöveg
@@ -516,24 +609,143 @@
         if (textInput) textInput.value = data[`text${i}`] || '';
       }
 
-      document.getElementById('bírálói_kérdések').value = data.kerdesek || '';
-      document.getElementById('otdk_reszvetel').value = data.otdk || 'Nem';
-      document.getElementById('datum').value = data.datum || '';
-      const biraloInput = document.getElementById('biralo');
-      if (biraloInput) biraloInput.value = data.elnok || biraloInput.value;
+      const kerdesElem = document.getElementById('bírálói_kérdések');
+      if (kerdesElem) kerdesElem.value = data.kerdesek || '';
 
-      // 🎯 Összpontszám
-      const total = [1, 2, 3, 4, 5]
-        .map(i => Number(data[`score${i}`]) || 0)
-        .reduce((a, b) => a + b, 0);
-      document.getElementById('totalScore').textContent = total;
+      const otdkElem = document.getElementById('otdk_reszvetel');
+      if (otdkElem) otdkElem.value = data.otdk || 'Nem';
+
+      const datumElem = document.getElementById('datum');
+      if (datumElem) datumElem.value = data.datum || '';
+
+      // összpontszám frissítése
+      recalcTotal();
+
     } catch (err) {
-      console.error('Hiba az értékelés betöltésekor:', err);
+      console.error('Nem sikerült betölteni az értékelést:', err);
     }
   }
 
+let studentReviews = [];
 
-    async function loadReviewDeadline() {
+// Hallgatói endpointról bírálatok betöltése
+async function loadStudentReviews(id) {
+  if (!isStudentView) return;
+
+  try {
+    const res = await fetch(`/api/papers/${id}/ertekelesek-hallgato`);
+    if (!res.ok) {
+      console.warn('Nincs hallgatói bírálat ehhez a dolgozathoz vagy hiba történt.');
+      return;
+    }
+
+    const data = await res.json();
+    const reviews = data.reviews || [];
+    if (!reviews.length) {
+      console.warn('Nincs még bírálat a hallgatói nézethez.');
+      return;
+    }
+
+    studentReviews = reviews;
+
+    // Bíráló input lecserélése selectre
+    const biraloInput = document.getElementById('biralo');
+    if (biraloInput && biraloInput.parentElement) {
+      let biraloSelect = document.getElementById('biraloSelect');
+
+      if (!biraloSelect) {
+        biraloSelect = document.createElement('select');
+        biraloSelect.id = 'biraloSelect';
+        biraloSelect.style.width = '25%';
+
+        // az input helyére tesszük a selectet
+        biraloInput.parentElement.replaceChild(biraloSelect, biraloInput);
+      }
+
+      biraloSelect.innerHTML = '';
+      reviews.forEach((r, index) => {
+        const opt = document.createElement('option');
+        opt.value = r.biraloId;
+        opt.textContent = r.biraloNev || `Bíráló ${index + 1}`;
+        biraloSelect.appendChild(opt);
+      });
+
+      biraloSelect.addEventListener('change', () => {
+        showStudentReview(biraloSelect.value);
+      });
+
+      // első bírálat megjelenítése
+      if (reviews[0]) {
+        showStudentReview(reviews[0].biraloId);
+      }
+    }
+
+    // Régi "Szöveges bírálat" blokk biztosan maradjon elrejtve, ha még létezik
+    const block = document.getElementById('student-review-block');
+    if (block) block.style.display = 'none';
+
+  } catch (err) {
+    console.error('Hiba a hallgatói bírálatok betöltésekor:', err);
+  }
+}
+
+
+function showStudentReview(biraloId) {
+  if (!studentReviews.length) return;
+
+  const review = studentReviews.find(r => String(r.biraloId) === String(biraloId));
+  const form = review && review.form ? review.form : {};
+
+  // 1–5. szempont szövegei
+  for (let i = 1; i <= 5; i++) {
+    const textarea = document.getElementById(`text${i}`);
+    if (textarea) {
+      textarea.value = form[`text${i}`] || '';
+    }
+  }
+
+  // Bírálói kérdések
+  const kerdesElem = document.getElementById('bírálói_kérdések');
+  if (kerdesElem) {
+    kerdesElem.value = form.kerdesek || form['bírálói_kérdések'] || '';
+  }
+
+  // OTDK részvétel
+  const otdkElem = document.getElementById('otdk_reszvetel');
+  if (otdkElem) {
+    otdkElem.value = form.otdk || form.otdk_reszvetel || otdkElem.value;
+  }
+
+  // Dátum
+  const datumElem = document.getElementById('datum');
+  if (datumElem) {
+    datumElem.value = form.datum || '';
+  }
+}
+
+  // 🔹 Hallgatói nézet: csak a pontszámmezőket és az összpontszám blokkot rejtsük el
+  function hideScoresForStudents() {
+    // "Pontszám:" + input mezők
+    document.querySelectorAll('.score-input').forEach(el => {
+      el.style.display = 'none';
+    });
+
+    // Összpontszám blokk
+    const totalBlock = document.querySelector('.total');
+    if (totalBlock) {
+      totalBlock.style.display = 'none';
+    }
+  }
+
+  // Bírálati határidő betöltése
+  async function loadReviewDeadline() {
+    // Hallgatói nézetben nem mutatunk határidőt
+    if (isStudentView) {
+      const box = document.getElementById('biralat-deadline-box');
+      if (box) box.style.display = 'none';
+      return;
+    }
+
     try {
       const res = await fetch('/api/deadlines/biralat_hatarido');
       if (!res.ok) return; // ha nincs ilyen, nem csinálunk semmit
@@ -568,10 +780,7 @@
       console.error('Nem sikerült lekérni a bírálati határidőt:', err);
     }
   }
-
 </script>
-
-
 
 </body>
 </html>

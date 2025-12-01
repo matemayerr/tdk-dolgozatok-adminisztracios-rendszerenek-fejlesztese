@@ -31,7 +31,6 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
   hallgato_ids: { type: [String], required: true },
   temavezeto_ids: { type: [String], required: true },
 
-  // 🔹 A dolgozat karja – a dolgozatot felvevő hallgató kar-rövidítése (pl. GIVK, KGGK)
   kar: { type: String, default: '' },
 
   allapot: { type: String, default: 'jelentkezett' },
@@ -49,7 +48,24 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
   ertekelesFilePath: { type: String },
   elutasitas_oka: { type: String },
   szovegesErtekeles: { type: String },
+
+  // 🔹 régi "egy darab" értékelés objektum (kompatibilitás miatt meghagyjuk)
   ertekeles: { type: Object, default: {} },
+
+  // 🔹 ÚJ: bírálónkénti értékelések
+  ertekelesek: [
+    {
+      biraloId: { type: mongoose.Schema.Types.ObjectId, ref: 'Felhasznalos' },
+      pontszam: { type: Number },
+      szovegesErtekeles: { type: String },
+      form: { type: Object, default: {} },   // 🔹 teljes űrlap bírálónként
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
+
+  // 🔹 ÚJ: jelölés, hogy a két fő bírálat között > 12 pont különbség van
+  nagyElteres12: { type: Boolean, default: false },
+
   biralok: [
     {
       felhasznaloId: { type: mongoose.Schema.Types.ObjectId, ref: 'Felhasznalos' },
@@ -58,12 +74,15 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
         enum: ['Felkérve', 'Elfogadva', 'Elutasítva'],
         default: 'Felkérve'
       },
-            // ⬇️ mikor küldtünk neki utoljára emlékeztetőt
       lastReminderAt: { type: Date }
     }
   ],
-  szekcioId: { type: mongoose.Schema.Types.ObjectId, ref: 'Section', default: null }
+  szekcioId: { type: mongoose.Schema.Types.ObjectId, ref: 'Section', default: null },
+
+   // jelöljük, hogy a bírálatokat már kiküldtük-e a hallgatónak
+  reviewSentToStudentsAt: { type: Date, default: null }
 }));
+
 
 
 // 🔹 Határidők modell
@@ -326,6 +345,110 @@ app.get('/uploads/:filename', (req, res) => {
     const filePath = path.join(__dirname, 'uploads', req.params.filename);
     res.sendFile(filePath);
 });
+
+
+// 🔹 Segédfüggvény: userId kiolvasása az Authorization headerből (ha van)
+function getUserIdFromToken(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, secretKey);
+    return decoded.id || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+// 🔹 Segédfüggvény: bírálati állapot és pontszám frissítése egy dolgozatnál
+// 🔹 Segédfüggvény: bírálati állapot és pontszám frissítése egy dolgozatnál
+function frissitsBiralatiAllapot(dolgozat) {
+  const accepted = (dolgozat.biralok || []).filter(b => b.allapot === 'Elfogadva');
+  const acceptedIds = accepted.map(b => String(b.felhasznaloId));
+
+  const evaluations = (dolgozat.ertekelesek || []).filter(e => e.biraloId);
+  const doneEvals = evaluations.filter(e => acceptedIds.includes(String(e.biraloId)));
+
+  const totalAccepted = acceptedIds.length;
+  const completed = doneEvals.length;
+
+  // Alapállapot: nincs nagy eltérés jelölve
+  dolgozat.nagyElteres12 = false;
+
+  if (completed === 0) {
+    // még nincs bírálat – nem piszkáljuk az állapotot
+    return { totalAccepted, completed };
+  }
+
+  if (completed === 1) {
+    // első bírálat megvan → bírálat alatt
+    if (dolgozat.allapot !== 'bírálva') {
+      dolgozat.allapot = 'bírálat alatt';
+    }
+    return { totalAccepted, completed };
+  }
+
+  // Legalább 2 bírálat készen van
+  const sorted = doneEvals.slice().sort((a, b) => {
+    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return ta - tb;
+  });
+
+  const firstTwo = sorted.slice(0, 2);
+  const scores = firstTwo
+    .map(e => typeof e.pontszam === 'number' ? e.pontszam : parseInt(e.pontszam, 10))
+    .filter(s => !Number.isNaN(s));
+
+  if (scores.length === 2) {
+    const diff = Math.abs(scores[0] - scores[1]);
+
+    // ⬇⬇ Itt figyelünk 12 pontra (>= 12)
+    if (diff >= 12) {
+      // Ha MÉG nincs kész a 3. bírálat → jelöljük, hogy nagy eltérés van
+      if (!(completed >= 3 && totalAccepted >= 3)) {
+        dolgozat.nagyElteres12 = true;                // 👉 ezt látja a faculties.js
+        if (dolgozat.allapot !== 'bírálva') {
+          dolgozat.allapot = 'bírálat alatt';
+        }
+      } else {
+        // Itt már a 3. bíráló is kész → ez lesz a végleges
+        const thirdEval = sorted[2];
+        if (thirdEval && typeof thirdEval.pontszam !== 'undefined') {
+          dolgozat.nagyElteres12 = false;             // 👉 konfliktus megoldva, jelölés törölve
+          dolgozat.allapot = 'bírálva';
+          dolgozat.pontszam = String(thirdEval.pontszam);
+          dolgozat.ertekeles = {
+            ...(dolgozat.ertekeles || {}),
+            pontszam: thirdEval.pontszam,
+            szovegesErtekeles: thirdEval.szovegesErtekeles || ''
+          };
+        } else {
+          // ha valamiért nincs pont, marad bírálat alatt
+          if (dolgozat.allapot !== 'bírálva') {
+            dolgozat.allapot = 'bírálat alatt';
+          }
+        }
+      }
+    } else {
+      // 🟢 Két bírálat, különbség < 12 pont → átlagolt végső pontszám
+      const avg = Math.round((scores[0] + scores[1]) / 2);
+      dolgozat.nagyElteres12 = false;
+      dolgozat.allapot = 'bírálva';
+      dolgozat.pontszam = String(avg);
+      dolgozat.ertekeles = {
+        ...(dolgozat.ertekeles || {}),
+        pontszam: avg,
+        atlagoltBiralatokSzama: 2
+      };
+    }
+  }
+
+  return { totalAccepted, completed };
+}
+
+
 
 // CRUD műveletek a dolgozatokra
 
@@ -790,6 +913,7 @@ async function isGlobalDeadlineExpired(key) {
 
 
 // Értékelés mentése
+// 🔹 Többszörös bírálat mentése
 app.post('/api/papers/:id/ertekeles', async (req, res) => {
   const { id } = req.params;
   const ertekeles = req.body;
@@ -798,19 +922,96 @@ app.post('/api/papers/:id/ertekeles', async (req, res) => {
     const dolgozat = await Dolgozat.findById(id);
     if (!dolgozat) return res.status(404).send('Dolgozat nem található');
 
-    dolgozat.ertekeles = ertekeles;
+    // Mindig elmentjük a "legutóbbi" értékelés objektumot kompatibilitás miatt
+    dolgozat.ertekeles = ertekeles || {};
 
-    // ⬇️ Jelöljük, hogy a bírálat elkészült
-    dolgozat.allapot = 'bírálva';
+    // Megpróbáljuk kideríteni, KI a bíráló
+    const tokenUserId = getUserIdFromToken(req);
+    const bodyBiraloId = ertekeles.biraloId || ertekeles.biralo_id || null;
+    const biraloId = tokenUserId || bodyBiraloId;
+
+    // Ha nem tudjuk, ki a bíráló, visszaesünk a régi viselkedésre
+    if (!biraloId) {
+      console.warn('⚠ Nincs biraloId az értékelés mentésénél – régi mód szerint bírálva-ra állítjuk.');
+      dolgozat.allapot = 'bírálva';
+      await dolgozat.save();
+      return res.json({ message: 'Értékelés elmentve (biraloId nélkül)', dolgozat });
+    }
+
+    // Biztosítsuk, hogy ertekelesek tömb létezik
+    if (!Array.isArray(dolgozat.ertekelesek)) {
+      dolgozat.ertekelesek = [];
+    }
+
+    // 🔹 pontszám kinyerése / kiszámítása
+    let pontszam = ertekeles.pontszam;
+
+    if (pontszam === null || pontszam === undefined || pontszam === '') {
+      // Ha nincs külön megadva, számoljuk ki a score1..score5 mezőkből
+      const scores = [1, 2, 3, 4, 5].map(i => {
+        const raw = ertekeles[`score${i}`];
+        const n = parseInt(raw, 10);
+        return Number.isNaN(n) ? 0 : n;
+      });
+      pontszam = scores.reduce((sum, v) => sum + v, 0);
+    } else if (typeof pontszam === 'string') {
+      const parsed = parseInt(pontszam, 10);
+      pontszam = Number.isNaN(parsed) ? undefined : parsed;
+    } else if (typeof pontszam !== 'number') {
+      pontszam = undefined;
+    }
+
+  const szoveg =
+  ertekeles.szovegesErtekeles ||
+  ertekeles.szoveges ||
+  ertekeles.megjegyzes ||
+  ['text1', 'text2', 'text3', 'text4', 'text5']
+    .map(kulcs => (ertekeles[kulcs] || '').trim())
+    .filter(Boolean)
+    .join('\n\n');  // KÉT sortöréssel fűzzük egybe
+
+    // Megnézzük, van-e már értékelés ettől a bírálótól
+    const existing = dolgozat.ertekelesek.find(
+      e => String(e.biraloId) === String(biraloId)
+    );
+
+    if (existing) {
+      if (typeof pontszam === 'number') {
+        existing.pontszam = pontszam;
+      }
+      if (szoveg) {
+        existing.szovegesErtekeles = szoveg;
+      }
+      existing.form = ertekeles;      // 🔹 teljes űrlap mentése
+      existing.createdAt = new Date();
+    } else {
+      dolgozat.ertekelesek.push({
+        biraloId,
+        pontszam: typeof pontszam === 'number' ? pontszam : undefined,
+        szovegesErtekeles: szoveg,
+        form: ertekeles,              // 🔹 teljes űrlap mentése
+        createdAt: new Date()
+      });
+    }
+
+
+    // 🔹 Bírálati állapot frissítése (1/2, 2/2, 3/3 logika + nagy eltérés)
+    const stat = frissitsBiralatiAllapot(dolgozat);
 
     await dolgozat.save();
 
-    res.json({ message: 'Értékelés elmentve', dolgozat });
+    res.json({
+      message: 'Értékelés elmentve',
+      dolgozat,
+      reviewStats: stat
+    });
   } catch (err) {
     console.error('Hiba az értékelés mentésekor:', err);
     res.status(500).json({ error: 'Szerver hiba' });
   }
 });
+
+
 
 
 
@@ -831,16 +1032,34 @@ app.get('/api/papers/:id/ertekeles', async (req, res) => {
       return res.status(404).json({ error: 'Dolgozat nem található' });
     }
 
+    // 🔹 bíráló azonosítása tokenből vagy query paraméterből
+    const tokenUserId = getUserIdFromToken(req);
+    const qBiraloId =
+      req.query.biraloId ||
+      req.query.biralo_id ||
+      req.query.reviewer ||
+      req.query.userId ||
+      null;
+
+    const biraloId = tokenUserId || qBiraloId;
+
+    if (biraloId && Array.isArray(dolgozat.ertekelesek)) {
+      const sajat = dolgozat.ertekelesek.find(
+        e => String(e.biraloId) === String(biraloId)
+      );
+      if (sajat && sajat.form && Object.keys(sajat.form).length > 0) {
+        // 🔹 bíráló a saját, teljes űrlapját kapja
+        return res.json(sajat.form);
+      }
+    }
+
+    // 🔙 visszaesés a régi egy darab értékelésre (admin / régi adatok)
     res.json(dolgozat.ertekeles || {});
   } catch (err) {
     console.error('Hiba az értékelés lekérdezésekor:', err);
     res.status(500).json({ error: 'Szerver hiba' });
   }
 });
-
-
-
-
 
   // Csak a kész (feltölthető) dolgozatok lekérdezése
 app.get('/api/dolgozatok/kesz', async (req, res) => {
@@ -891,6 +1110,115 @@ app.post('/api/dolgozatok/ertekeles-feltoltes/:id', upload.single('file'), async
         res.status(500).json({ error: 'Hiba történt az értékelés mentése során' });
     }
 });
+
+// 🔹 Hallgatói nézethez: bírálatok listája egy dolgozathoz (pontszám nélkül)
+// 🔹 Hallgatói nézethez: bírálatok listája egy dolgozathoz (pontszám nélkül)
+app.get('/api/papers/:id/ertekelesek-hallgato', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Érvénytelen dolgozat ID' });
+    }
+
+    const paper = await Dolgozat.findById(id).lean();
+    if (!paper) {
+      return res.status(404).json({ error: 'Dolgozat nem található.' });
+    }
+
+    // Ha még nincs bírálva, akkor ne adjunk vissza bírálatot
+    if (paper.allapot !== 'bírálva') {
+      return res.status(400).json({ error: 'A dolgozat még nincs bírálva, bírálatok nem érhetők el.' });
+    }
+
+    const felhasznalok = await Felhasznalo.find().lean();
+    const felhasznaloMapNeptun = {};
+    const felhasznaloMapId = {};
+
+    felhasznalok.forEach(f => {
+      if (f.neptun) felhasznaloMapNeptun[f.neptun] = f;
+      felhasznaloMapId[String(f._id)] = f;
+    });
+
+    // Hallgatók
+    const szerzok = (paper.hallgato_ids || []).map(neptun => {
+      const f = felhasznaloMapNeptun[neptun] || {};
+      return {
+        nev: f.nev || 'Ismeretlen hallgató',
+        neptun
+      };
+    });
+
+    // Elfogadott bírálók
+    const acceptedReviewers = (paper.biralok || [])
+      .filter(b => b.allapot === 'Elfogadva')
+      .map(b => {
+        const f = felhasznaloMapId[String(b.felhasznaloId)] || {};
+        return {
+          id: String(b.felhasznaloId),
+          nev: f.nev || 'Ismeretlen bíráló'
+        };
+      });
+
+    // Bírálónkénti értékelés – pontszám nélkül, de a TEXT mezőkre bontva
+    const reviews = [];
+    (paper.ertekelesek || []).forEach(e => {
+      const rid = String(e.biraloId || '');
+      const reviewer = acceptedReviewers.find(r => r.id === rid);
+      if (!reviewer) return;
+
+      // csak akkor küldjük, ha van valamilyen szöveges rész
+      const fullText = e.szovegesErtekeles || '';
+      const form = (e.form && typeof e.form === 'object') ? e.form : {};
+
+      // Csak a hallgatónak fontos SZÖVEGES mezőket engedjük át
+      const allowedKeys = [
+        'text1', 'text2', 'text3', 'text4', 'text5',
+        'kerdesek', 'bírálói_kérdések',
+        'otdk', 'otdk_reszvetel',
+        'datum'
+      ];
+
+      const sanitizedForm = {};
+      allowedKeys.forEach(k => {
+        if (typeof form[k] === 'string' && form[k].trim() !== '') {
+          sanitizedForm[k] = form[k];
+        }
+      });
+
+      // ha semmi szöveges nincs, akkor ne tegyük listába
+      if (!fullText && Object.keys(sanitizedForm).length === 0) return;
+
+      reviews.push({
+        biraloId: rid,
+        biraloNev: reviewer.nev,
+        szovegesErtekeles: fullText || '',
+        form: sanitizedForm,          // <- EBBŐL fogunk tölteni text1..text5-öt
+        leadva: e.createdAt || null
+      });
+    });
+
+    // Szekció neve (ha kell a hallgatói felülethez)
+    let szekcioNev = '';
+    if (paper.szekcioId) {
+      const szekcio = await Section.findById(paper.szekcioId).lean();
+      if (szekcio) szekcioNev = szekcio.name || '';
+    }
+
+    res.json({
+      paperId: paper._id,
+      cim: paper.cím || paper.cim || '',
+      szerzok,
+      szekcioNev,
+      reviews
+    });
+  } catch (err) {
+    console.error('Hiba a hallgatói bírálatok lekérdezésekor:', err);
+    res.status(500).json({ error: 'Szerver hiba' });
+  }
+});
+
+
 
 app.put('/api/dolgozatok/:id/temavezeto-nyilatkozat', async (req, res) => {
   try {
@@ -1131,7 +1459,7 @@ app.get('/api/papers', async (req, res) => {
         const elsoNeptun = d.hallgato_ids[0];
         const hallgato = felhasznaloMapNeptun[elsoNeptun];
         if (hallgato && hallgato.kar) {
-          kar = hallgato.kar;  // lehet rövidítés vagy teljes név, a faculties.js mindkettőt kezeli
+          kar = hallgato.kar; // lehet rövidítés vagy teljes név
         }
       }
 
@@ -1141,7 +1469,7 @@ app.get('/api/papers', async (req, res) => {
         allapot: d.allapot || 'ismeretlen',
         leiras: d.leiras || '',
         szekcioId: d.szekcioId ? String(d.szekcioId) : null,
-        kar,                                // ⬅️ itt már a kiszámolt értéket adjuk vissza
+        kar,
         ertekeles: d.ertekeles || {},
 
         szerzok: (d.hallgato_ids || []).map(neptun => {
@@ -1171,9 +1499,32 @@ app.get('/api/papers', async (req, res) => {
             email: f.email || '',
             allapot: b.allapot || 'Felkérve'
           };
-        })
+        }),
+
+        // 🔹 Bírálónkénti értékelések a frontendnek
+        ertekelesek: (d.ertekelesek || []).map(e => ({
+          biraloId: String(e.biraloId),
+          pontszam: e.pontszam,
+          szovegesErtekeles: e.szovegesErtekeles || ''
+        })),
+
+        // 🔹 Jelölés, ha a két fő bírálat között > 12 pont a különbség
+        nagyElteres12: !!d.nagyElteres12,
+
+        // 🔹 Összesített számláló: hány elfogadott bíráló, hány elkészült bírálat
+        reviewCounter: (() => {
+          const accepted = (d.biralok || []).filter(b => b.allapot === 'Elfogadva');
+          const acceptedIds = accepted.map(b => String(b.felhasznaloId));
+          const evals = (d.ertekelesek || []).filter(e => e.biraloId);
+          const done = evals.filter(e => acceptedIds.includes(String(e.biraloId)));
+
+          return {
+            osszesElfogadottBiralo: acceptedIds.length,
+            befejezettBiralat: done.length
+          };
+        })()
       };
-    });
+    }); // <-- map lezárása
 
     res.json(eredmeny);
   } catch (error) {
@@ -1181,8 +1532,6 @@ app.get('/api/papers', async (req, res) => {
     res.status(500).json({ error: 'Szerverhiba a dolgozatok lekérésekor' });
   }
 });
-
-
 
 
 
@@ -2094,6 +2443,125 @@ async function sendDailyReviewReminders() {
   }
 }
 
+// 🔹 Bírálatok kiküldése hallgatóknak a globális határidő után
+async function sendReviewsToStudentsAfterDeadline() {
+  try {
+    const deadline = await Deadline.findOne({ key: 'biralat_kikuldese_hallgatoknak' }).lean();
+    if (!deadline || !deadline.hatarido) {
+      return; // nincs beállítva ilyen határidő
+    }
+
+    const now = new Date();
+    const hatarido = new Date(deadline.hatarido);
+    if (isNaN(hatarido.getTime())) return;
+
+    // Csak akkor indulunk, ha már lejárt a hallgatói kiküldés határideje
+    if (now <= hatarido) return;
+
+    // 🔍 Olyan dolgozatokat keresünk, amelyek már "bírálva" állapotúak,
+    // de a bírálatokat még NEM küldtük ki a hallgatóknak
+    const dolgozatok = await Dolgozat.find({
+      allapot: 'bírálva',
+      $or: [
+        { reviewSentToStudentsAt: { $exists: false } },
+        { reviewSentToStudentsAt: null }
+      ]
+    })
+      .populate('biralok.felhasznaloId')
+      .lean();
+
+    if (!dolgozatok.length) return;
+
+    const felhasznalok = await Felhasznalo.find().lean();
+    const felhasznaloMapNeptun = {};
+    const felhasznaloMapId = {};
+
+    felhasznalok.forEach(f => {
+      if (f.neptun) felhasznaloMapNeptun[f.neptun] = f;
+      felhasznaloMapId[String(f._id)] = f;
+    });
+
+    for (const d of dolgozatok) {
+      // Elfogadott bírálók
+      const acceptedReviewers = (d.biralok || [])
+        .filter(b => b.allapot === 'Elfogadva')
+        .map(b => {
+          const f = felhasznaloMapId[String(b.felhasznaloId)] || {};
+          return {
+            id: String(b.felhasznaloId),
+            nev: f.nev || 'Ismeretlen bíráló'
+          };
+        });
+
+      if (acceptedReviewers.length < 2) {
+        // nincs meg legalább 2 elfogadott bíráló → ne küldjünk
+        continue;
+      }
+
+      // Bírálónkénti szöveges értékelés összegyűjtése
+      const reviewsForMail = [];
+      (d.ertekelesek || []).forEach(e => {
+        const rid = String(e.biraloId || '');
+        const reviewer = acceptedReviewers.find(r => r.id === rid);
+        if (!reviewer) return;
+        if (!e.szovegesErtekeles) return;
+
+        reviewsForMail.push({
+          biraloNev: reviewer.nev,
+          szovegesErtekeles: e.szovegesErtekeles
+        });
+      });
+
+      if (reviewsForMail.length < 2) {
+        // még nincs legalább 2 szöveges bírálat → várunk
+        continue;
+      }
+
+      // 🔹 Bírálatok szövegének összeállítása a sablonba
+      const biralatiSzovegek = reviewsForMail
+        .map((r, idx) => {
+          return `\n${idx + 1}. bíráló (${r.biraloNev}):\n${r.szovegesErtekeles}\n`;
+        })
+        .join('\n');
+
+      // Hallgatók e-mail címei
+      const hallgatoFelhasznalok = (d.hallgato_ids || [])
+        .map(neptun => felhasznaloMapNeptun[neptun])
+        .filter(f => f && f.email);
+
+      if (!hallgatoFelhasznalok.length) continue;
+
+      // Link a hallgatói nézetre (readonly + hallgatói mód)
+      const link = `http://localhost:3000/import_form.html?id=${d._id}&readonly=true&student=true`;
+
+      for (const hallgato of hallgatoFelhasznalok) {
+        const emailSzoveg = betoltEmailSablon('ertesites_biralatok_hallgatonak.txt', {
+          HALLGATONEV: hallgato.nev || 'Kedves Hallgató',
+          DOLGOZATCIM: d.cím || d.cim || 'ismeretlen című dolgozat',
+          BIRALATI_SZOVEGEK: biralatiSzovegek,
+          LINK: link
+        });
+
+        await transporter.sendMail({
+          from: 'TDK rendszer <m48625729@gmail.com>',
+          to: hallgato.email,
+          subject: 'TDK dolgozat bírálatai',
+          text: emailSzoveg
+        });
+      }
+
+      // Jelöljük, hogy kiküldtük a hallgatóknak
+      await Dolgozat.updateOne(
+        { _id: d._id },
+        { $set: { reviewSentToStudentsAt: now } }
+      );
+    }
+  } catch (err) {
+    console.error('Hiba a bírálatok hallgatóknak való kiküldésekor:', err);
+  }
+}
+
+
 // 3️⃣ Időzítő: óránként lefuttatjuk (lastReminderAt miatt így is csak napi 1 mail jut bírálónként)
 setInterval(() => {
   // 1️⃣ Bírálat indítható (feltöltési határidő lejárt + témavezető elfogadta)
@@ -2103,7 +2571,12 @@ setInterval(() => {
   // 2️⃣ Már futó bírálatokhoz napi emlékeztető a bírálati határidő után
   sendDailyReviewReminders()
     .catch(err => console.error('Hiba az emlékeztető futtatásakor:', err));
-}, 1000 * 10); // óránként fut
+
+  // 3️⃣ Bírálatok kiküldése hallgatóknak (pontszám nélkül)
+  sendReviewsToStudentsAfterDeadline()
+    .catch(err => console.error('Hiba a bírálatok hallgatóknak való kiküldésekor:', err));
+}, 1000 * 60 * 60); // kb. óránként
+
 
 
 async function sendReviewStartEmailsAfterUploadDeadline() {
@@ -2139,7 +2612,7 @@ async function sendReviewStartEmailsAfterUploadDeadline() {
         const emailSzoveg = betoltEmailSablon('ertesites_biralat_megkezdheto.txt', {
           NEV: felhasznalo.nev || 'Tisztelt Bíráló',
           DOLGOZATCIM: d.cím || d.cim || 'ismeretlen című dolgozat',
-          LINK: `http://localhost:3000/import_form.html?id=${d._id}`
+          LINK: `http://localhost:3000/import_form.html?id=${d._id}&biraloId=${b.felhasznaloId}`
         });
 
         await transporter.sendMail({

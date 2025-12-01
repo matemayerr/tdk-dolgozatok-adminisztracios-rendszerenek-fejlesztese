@@ -1,0 +1,12 @@
+Kedves {{HALLGATONEV}}!
+
+A(z) "{{DOLGOZATCIM}}" című dolgozatodhoz elkészültek a bírálatok.
+Az alábbi bírálók szöveges értékeléseit kaptad meg:
+
+{{BIRALATI_SZOVEGEK}}
+
+A részletes bírálatok a TDK adminisztrációs rendszerben is elérhetők:
+{{LINK}}
+
+Üdvözlettel:
+TDK adminisztrációs rendszer

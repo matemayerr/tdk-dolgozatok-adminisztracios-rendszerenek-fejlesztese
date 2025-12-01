@@ -382,7 +382,22 @@ async function renderEgyKarCard(container, kar, karDolgozatok) {
         .join('<br>') || '-';
 
       const tdAllapot = document.createElement('td');
-      tdAllapot.textContent = d.allapot || '-';
+
+      // Ha 2 bírálat között >= 12 pont eltérés van ÉS még nincs lezárva (nem "bírálva")
+      if (d.nagyElteres12 && d.allapot !== 'bírálva') {
+        tdAllapot.innerHTML = `
+          <div><strong>12 pontnál nagyobb eltérés a bírálatok között.</strong></div>
+          <div style="font-size:0.85rem; color:#c00;">
+            Szükséges egy harmadik bíráló felvétele.
+          </div>
+        `;
+      } else {
+        // Egyébként a sima állapot látszik
+        tdAllapot.textContent = d.allapot || '-';
+      }
+
+
+
 
       const tdBiralok = document.createElement('td');
       if (!d.biralok || d.biralok.length === 0) {
