@@ -10,7 +10,7 @@ Adatbázis kiválasztása:
 use tdk_adatbazis
 
 Kollekciók listázása:
-show collentions
+show collections
 
 Dokementumok lekérdezése:
 db.kollekcio_nev.find()

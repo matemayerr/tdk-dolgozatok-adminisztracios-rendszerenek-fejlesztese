@@ -7,26 +7,39 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="login-oldal">
-    <header>
-        <h1>TDK Adminisztrációs Rendszer</h1>
-    </header>
+  
+  <header>
+    <h1>TDK Adminisztrációs Rendszer</h1>
+  </header>
+  
+  <!-- Logó mobilra – csak mobilon látszik -->
+<div class="mobile-logo-wrapper">
+  <img src="images/bagoly.png" alt="TDK logó" class="mobile-login-logo" />
+</div>
 
-      <main class="login-background">
-        <section>
+
+  <main class="login-background">
+    <div class="login-flex-row">
+      <section class="login-layout-row">
+        <div class="form-side">
           <div class="form-container" id="login-container">
-            <h2>Bejelentkezés</h2>
+        <h2>Bejelentkezés</h2>
             <form id="login-form">
                 <input type="email" id="email" name="email" required placeholder="E-mail">
                 <input type="password" id="jelszo" placeholder="Jelszó" required>
                 <button type="submit">Bejelentkezés</button>
             </form>
-            <p>Még nincs fiókod? <a href="#" id="open-register-modal">Regisztráció</a></p>
+            <p>Még nincs fiókja? <a href="#" id="open-register-modal">Regisztráció</a></p>
             <p id="login-error" style="color: red; display: none;">Hibás Neptun-kód vagy jelszó!</p>
             <p style="text-align:left;">
               <a href="#" id="forgot-password-link">Elfelejtette a jelszavát?</a>
             </p>
           </div>
-        </section>
+        </div>
+        <div class="logo-side">
+          <img src="images/bagoly.png" alt="TDK logó" class="login-logo-right" />
+        </div>
+      </section>
 
 
             <!-- Regisztrációs modal -->
@@ -35,7 +48,7 @@
   <h3>Regisztráció</h3>
   <input type="email" id="reg-email" placeholder="E-mail">
   <div class="gombok-egymas-alatt">
-    <button id="reg-link-gomb">Regisztrációs link küldés</button>
+    <button id="reg-link-gomb">Regisztrációs link küldése</button>
     <button id="close-register-modal" type="button">Mégse</button>
   </div>
   <p id="register-feedback" style="color:red; display:none;"></p>
@@ -50,7 +63,7 @@
     <h3>Elfelejtett jelszó</h3>
     <input type="email" id="reset-email" placeholder="E-mail" required>
     <div class="gombok-egymas-alatt">
-      <button id="send-reset-link">Új jelszót kérek</button>
+      <button id="send-reset-link">Kérjen új jelszót</button>
       <button id="close-reset-modal">Mégse</button>
     </div>  
     <p id="reset-feedback" style="color:red; display:none;"></p>

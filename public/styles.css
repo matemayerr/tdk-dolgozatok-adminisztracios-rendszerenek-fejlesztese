@@ -541,21 +541,6 @@ nav ul li a.active {
   #register-form input {
     width: 170px;
   }
-  
-  .login-background {
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    height: 100vh;
-    padding-left: 100px;
-    padding-top: 200px;
-    background-image: url("images/bagoly.png");
-    background-size: 30%;
-    background-position: 80% 80px;
-    background-repeat: no-repeat;
-    background-color: #f4f4f4;
-    overflow: hidden;
-}
 
 .cim-szoveg {
     white-space: normal;
@@ -738,20 +723,18 @@ thead th:first-child {
     text-align: center;
     white-space: nowrap;
 }
+
 .form-container {
     max-width: 700px;
-    margin-left: 40px;
-    margin-top: 20px;
+    margin: 20px auto;
     padding: 10px;
-}
+  }
+  
 
 #register-modal .form-container {
     margin-top: 2px;
 }
 
-.login-background {
-    overflow: hidden;
-}
 
 body.login-oldal {
     overflow: hidden;
@@ -878,5 +861,234 @@ body.login-oldal {
     cursor: pointer;
     margin-top: 4px;
   }
+
+/* Asztali nézet: logó jobbra, form balra */
+.login-flex-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .form-side {
+    flex: 1;
+  }
+  
+  .logo-side {
+    flex: 0 0 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .login-logo-right {
+    width: 200px;
+  }
+  
   
 
+ /* Mobilos bejelentkezés oldal nézete */
+ 
+ @media (max-width: 768px) {
+    * {
+      box-sizing: border-box;
+    }
+  
+    .login-background {
+        display: block;
+        padding: 16px;
+      }
+      
+  
+    .form-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 24px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin: 0 auto; /* ✅ Középre */
+    }
+
+    .login-form-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 0;
+        padding-top: 10px;
+      }
+      
+      /* Adjunk kisebb felső margót a logó és a doboz között */
+      .logo-container {
+        margin-bottom: 10px;
+      }
+      
+      /* Login doboz igazítása */
+      .login-box {
+        max-width: 400px;
+        width: 90%;
+        margin: 0 auto;
+        padding: 30px;
+        border-radius: 10px;
+        background-color: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      
+         
+      .login-logo {
+        width: 200px;
+        max-width: 80%;
+        height: auto;
+      }
+       
+    #login-form input,
+    #login-form button {
+      width: 100%;
+      margin: 10px 0;
+      font-size: 1rem;
+    }
+  }
+  
+  /*Mobilos lebegő ablakok kinézete*/
+  @media (max-width: 768px) {
+    .modal-form {
+      width: 90%;
+      margin: 10vh auto;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-sizing: border-box;
+    }
+  
+    .modal-form h2, .modal-form h3 {
+      font-size: 1.2rem;
+      text-align: center;
+    }
+  
+    .modal-form input,
+    .modal-form button {
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  
+    .modal-form .cancel-btn {
+      margin-top: 0.5rem;
+    }
+  }
+
+  .login-layout-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    flex-wrap: wrap; /* ha kisebb a képernyő */
+  }
+  
+  .form-side {
+    flex: 1;
+    min-width: 300px;
+  }
+  
+  .logo-side {
+    flex: 0 0 220px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .login-logo-right {
+    width: 200px;
+    height: auto;
+  }
+  
+  /* Mobil nézetre visszaosztás */
+  @media (max-width: 768px) {
+    .login-layout-row {
+      flex-direction: column;
+      padding: 10px;
+    }
+  
+    .logo-side {
+      margin-top: 20px;
+    }
+  
+    .login-logo-right {
+      width: 160px;
+    }
+  }
+
+  
+  /* Mobilon a felső logó jelenik meg, a jobb oldali rejtve */
+.mobile-logo-wrapper {
+    display: none;
+    text-align: center;
+    margin-top: 10px;
+  }
+  
+  .mobile-login-logo {
+    width: 180px;
+  }
+  
+  /* PC-n a jobb oldali logó nagyobb */
+  @media (min-width: 769px) {
+    .login-logo-right {
+      width: 260px;
+    }
+  
+    .mobile-logo-wrapper {
+      display: none;
+    }
+  
+    .logo-side {
+      display: flex;
+    }
+  }
+  
+  /* Mobilon: logó felül, jobb oldali logó rejtve */
+  @media (max-width: 768px) {
+    .mobile-logo-wrapper {
+      display: block;
+    }
+  
+    .logo-side {
+      display: none;
+    }
+  }
+
+  @media (min-width: 769px) {
+    .login-background {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: calc(100vh - 100px); /* a header levonva */
+    }
+  
+    .login-layout-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 80px;
+      width: auto;
+      margin: 0 auto;
+    }
+  
+    .form-side {
+      flex: none;
+    }
+  
+    .logo-side {
+      flex: none;
+    }
+  
+    .login-logo-right {
+      width: 300px;
+      height: auto;
+    }
+  }
+  
+  
+  
