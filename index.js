@@ -190,22 +190,6 @@ app.get('/api/dolgozatok/kesz', async (req, res) => {
 });
 
 // Új dolgozat hozzáadása
-app.post('/api/dolgozatok', async (req, res) => {
-    const { cím, hallgato_ids, temavezeto_id } = req.body;
-
-    if (!cím || !hallgato_ids || hallgato_ids.length === 0 || !temavezeto_id) {
-        return res.status(400).json({ error: 'Minden mezőt ki kell tölteni!' });
-    }
-
-    const dolgozat = new Dolgozat({ cím, hallgato_ids, temavezeto_id, allapot: "benyújtva" });
-
-    try {
-        await dolgozat.save();
-        res.status(201).json(dolgozat);
-    } catch (error) {
-        res.status(500).json({ error: 'Hiba történt a dolgozat mentésekor' });
-    }
-});
 
 
 // Dolgozat módosítása
@@ -326,29 +310,28 @@ app.delete('/api/felhasznalok/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
-        // Ellenőrizzük, hogy a felhasználó témavezető vagy bíráló-e
-        const vanDolgozat = await Dolgozat.findOne({ 
-            $or: [
-                { temavezeto_id: id }, 
-                { biralo_id: id }
-            ]
-        });
-
-        if (vanDolgozat) {
-            return res.status(400).json({ error: "A felhasználó nem törölhető, mert témavezető vagy bíráló egy dolgozatnál." });
-        }
-
-        // Ha nincs kapcsolódó dolgozat, akkor törölhető
         const felhasznalo = await Felhasznalo.findByIdAndDelete(id);
         if (!felhasznalo) {
             return res.status(404).json({ error: 'Felhasználó nem található' });
         }
+
+        // Dolgozatok frissítése, ha hallgató vagy témavezető volt
+        await Dolgozat.updateMany(
+            { hallgato_id: felhasznalo.neptun },
+            { hallgato_id: "Nincs kijelölt személy. Kérjük válasszon másikat!" }
+        );
+
+        await Dolgozat.updateMany(
+            { temavezeto_id: felhasznalo.neptun },
+            { temavezeto_id: "Nincs kijelölt személy. Kérjük válasszon másikat!" }
+        );
 
         res.json({ message: 'Felhasználó sikeresen törölve' });
     } catch (error) {
         res.status(500).json({ error: 'Hiba történt a felhasználó törlése során' });
     }
 });
+
 
 
 // Fájl feltöltése és értesítés küldése a bírálónak

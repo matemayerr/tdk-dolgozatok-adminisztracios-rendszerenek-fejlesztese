@@ -24,13 +24,13 @@ document.addEventListener('DOMContentLoaded', function () {
         `).join('');
 
 
-            temavezetoSelect.innerHTML = '<option value="">Válasszon témavezetőt</option>';
-            temavezetok.forEach(temavezeto => {
-                const option = document.createElement('option');
-                option.value = temavezeto.neptun;
-                option.textContent = `${temavezeto.nev} (${temavezeto.neptun})`;
-                temavezetoSelect.appendChild(option);
-            });
+            const temavezetoLista = document.getElementById('temavezeto-lista'); // Hozz létre egy ilyen divet a HTML-ben
+temavezetoLista.innerHTML = temavezetok.map(temavezeto => `
+    <label class="csoport-label">
+        <input type="radio" name="temavezeto" value="${temavezeto.neptun}"> ${temavezeto.nev} (${temavezeto.neptun})
+    </label>
+`).join('');
+
         } catch (error) {
             console.error('Hiba történt a felhasználók betöltése során:', error);
         }
@@ -95,10 +95,16 @@ if (selectedHallgatok.length === 0) {
     return;
 }
 
+const selectedTemavezeto = document.querySelector('#temavezeto-lista input[name="temavezeto"]:checked');
+if (!selectedTemavezeto) {
+    alert('Válassz témavezetőt!');
+    return;
+}
+
 const formData = {
     cím: document.getElementById('dolgozat-cim').value,
-    hallgato_ids: selectedHallgatok, 
-    temavezeto_id: temavezetoSelect.value,
+    hallgato_ids: selectedHallgatok,
+    temavezeto_id: selectedTemavezeto.value,
     allapot: "benyújtva"
 };
 
@@ -128,67 +134,92 @@ if (!formData.cím || !formData.temavezeto_id || formData.hallgato_ids.length ==
     }
 
     // Dolgozat szerkesztése
-    window.editDolgozat = function (id) {
-        const dolgozat = dolgozatok.find(d => d._id === id);
-        const tr = document.querySelector(`tr[data-id="${id}"]`);
-        
-        if (tr) {
-            const cells = tr.querySelectorAll('td');
-            cells[0].innerHTML = `<input type="text" value="${dolgozat.cím}">`;
-            cells[1].innerHTML = `<input type="text" value="${dolgozat.hallgato_id}">`;
-            cells[2].innerHTML = `<input type="text" value="${dolgozat.temavezeto_id}">`;
-            cells[3].innerHTML = `
-                <select id="allapot-${id}">
-                    <option value="benyújtva" ${dolgozat.allapot === 'benyújtva' ? 'selected' : ''}>Benyújtva</option>
-                    <option value="bírálás alatt" ${dolgozat.allapot === 'bírálás alatt' ? 'selected' : ''}>Bírálás alatt</option>
-                    <option value="elfogadva" ${dolgozat.allapot === 'elfogadva' ? 'selected' : ''}>Elfogadva</option>
-                    <option value="elutasítva" ${dolgozat.allapot === 'elutasítva' ? 'selected' : ''}>Elutasítva</option>
-                </select>
-            `;
+window.editDolgozat = async function (id) {
+    const dolgozat = dolgozatok.find(d => d._id === id);
+    const tr = document.querySelector(`tr[data-id="${id}"]`);
 
-            const saveBtn = document.createElement('button');
-            saveBtn.textContent = 'Mentés';
-            saveBtn.addEventListener('click', async () => saveDolgozat(id, cells));
-            const cancelBtn = document.createElement('button');
-            cancelBtn.textContent = 'Mégse';
-            cancelBtn.addEventListener('click', megjelenitDolgozatok);
+    if (tr) {
+        const cells = tr.querySelectorAll('td');
 
-            cells[4].innerHTML = '';
-            cells[4].appendChild(saveBtn);
-            cells[4].appendChild(cancelBtn);
-        }
+        // 🔥 Felhasználók betöltése módosításkor
+        const response = await fetch('/api/felhasznalok');
+        const felhasznalok = await response.json();
+
+        const hallgatok = felhasznalok.filter(f => f.csoportok.includes('hallgato'));
+        const temavezetok = felhasznalok.filter(f => f.csoportok.includes('temavezeto'));
+
+        // Hallgatók dropdown
+        const hallgatoSelect = `
+            <select id="edit-hallgato-${id}">
+                ${hallgatok.map(h => `<option value="${h.neptun}" ${dolgozat.hallgato_id === h.neptun ? 'selected' : ''}>${h.nev} (${h.neptun})</option>`).join('')}
+            </select>
+        `;
+
+        // Témavezetők dropdown
+        const temaSelect = `
+            <select id="edit-temavezeto-${id}">
+                ${temavezetok.map(t => `<option value="${t.neptun}" ${dolgozat.temavezeto_id === t.neptun ? 'selected' : ''}>${t.nev} (${t.neptun})</option>`).join('')}
+            </select>
+        `;
+
+        // Táblázatba berakjuk a szerkeszthető elemeket
+        cells[0].innerHTML = `<input type="text" value="${dolgozat.cím}">`;
+        cells[1].innerHTML = hallgatoSelect;
+        cells[2].innerHTML = temaSelect;
+        cells[3].innerHTML = `
+            <select id="allapot-${id}">
+                <option value="benyújtva" ${dolgozat.allapot === 'benyújtva' ? 'selected' : ''}>Benyújtva</option>
+                <option value="bírálás alatt" ${dolgozat.allapot === 'bírálás alatt' ? 'selected' : ''}>Bírálás alatt</option>
+                <option value="elfogadva" ${dolgozat.allapot === 'elfogadva' ? 'selected' : ''}>Elfogadva</option>
+                <option value="elutasítva" ${dolgozat.allapot === 'elutasítva' ? 'selected' : ''}>Elutasítva</option>
+            </select>
+        `;
+
+        // Mentés és Mégse gomb
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Mentés';
+        saveBtn.addEventListener('click', async () => saveDolgozat(id, cells));
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Mégse';
+        cancelBtn.addEventListener('click', megjelenitDolgozatok);
+
+        cells[4].innerHTML = '';
+        cells[4].appendChild(saveBtn);
+        cells[4].appendChild(cancelBtn);
     }
-
-    // Dolgozat mentése szerkesztés után
-    async function saveDolgozat(id, cells) {
-        const updatedDolgozat = {
-    cím: cells[0].querySelector('input').value,
-    hallgato_ids: Array.from(cells[1].querySelectorAll('input[type="checkbox"]:checked'))
-        .map(checkbox => checkbox.value),
-    temavezeto_id: cells[2].querySelector('input').value,
-    allapot: document.getElementById(`allapot-${id}`).value,
 };
 
 
-        try {
-            const response = await fetch(`/api/dolgozatok/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedDolgozat)
-            });
+    // Dolgozat mentése szerkesztés után
+async function saveDolgozat(id, cells) {
+    const updatedDolgozat = {
+        cím: cells[0].querySelector('input').value,
+        hallgato_id: cells[1].querySelector('select').value,
+        temavezeto_id: cells[2].querySelector('select').value,
+        allapot: document.getElementById(`allapot-${id}`).value,
+    };
 
-            if (response.ok) {
-                const updatedDolgozatResponse = await response.json();
-                const dolgozatIndex = dolgozatok.findIndex(d => d._id === id);
-                dolgozatok[dolgozatIndex] = updatedDolgozatResponse;
-                megjelenitDolgozatok();
-            } else {
-                console.error('Hiba történt a dolgozat módosítása során');
-            }
-        } catch (error) {
-            console.error('Hiba történt a dolgozat mentése során:', error);
+    try {
+        const response = await fetch(`/api/dolgozatok/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedDolgozat)
+        });
+
+        if (response.ok) {
+            const updatedDolgozatResponse = await response.json();
+            const dolgozatIndex = dolgozatok.findIndex(d => d._id === id);
+            dolgozatok[dolgozatIndex] = updatedDolgozatResponse;
+            megjelenitDolgozatok();
+        } else {
+            console.error('Hiba történt a dolgozat módosítása során');
         }
+    } catch (error) {
+        console.error('Hiba történt a dolgozat mentése során:', error);
     }
+}
+
 
     // Dolgozat törlése
     window.deleteDolgozat = async function (id) {

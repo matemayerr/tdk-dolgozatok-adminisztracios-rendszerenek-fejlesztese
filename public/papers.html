@@ -35,17 +35,18 @@
             <form id="dolgozat-form">
                 <input type="text" id="dolgozat-cim" placeholder="Dolgozat címe" required>
                 <div class="dropdown">
-    <button class="dropbtn" onclick="toggleDropdown()">Hallgatók kiválasztása ▼</button>
+    <button class="dropbtn" onclick="toggleDropdown()">Hallgató(k) kiválasztása ▼</button>
     <div id="hallgato-lista" class="dropdown-content">
         <!-- Ide töltjük be a hallgatók checkboxait -->
     </div>
 </div>
 
-                <select id="dolgozat-temavezeto-id" required>
-                    <option value="">Válasszon témavezetőt</option>
-                    <!-- Témavezetők betöltése JavaScriptből -->
-                </select>
-                <button type="submit">Dolgozat hozzáadása</button>
+<div class="dropdown">
+    <button class="dropbtn" onclick="toggleDropdown()">Témavezető kiválasztása ▼</button>
+    <div id="temavezeto-lista" class="dropdown-content"></div>
+</div>
+
+                <button type="submit">Hozzáadás</button>
             </form>
 
             <!-- "Felvett dolgozatok" és kereső ikon egy sorban -->
