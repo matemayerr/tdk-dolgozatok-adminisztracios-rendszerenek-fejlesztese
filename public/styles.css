@@ -1613,19 +1613,7 @@ body.login-oldal {
 }
 
 
-/* ===== Modal alapstílus ===== */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  justify-content: center;
-  align-items: center;
-}
+
 
 .modal-content {
   background: #fff;
@@ -1862,3 +1850,312 @@ body.login-oldal {
   white-space: normal;
   word-break: break-word;
 }
+
+
+#register-container.modal-form {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 40px 30px;
+  border-radius: 12px;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 420px;              /* Szélesebb modal */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#register-container h3 {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1f2745;
+  margin-bottom: 10px;
+}
+
+#register-container input[type="email"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+#register-container .gombok-egymas-alatt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+#register-container .gombok-egymas-alatt button {
+  width: 80%;
+  max-width: 250px;
+  font-size: 16px;
+  border-radius: 6px;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+#register-container #reg-link-gomb {
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  font-weight: bold;
+}
+
+#register-container #reg-link-gomb:hover {
+  background-color: #388e3c;
+}
+
+#register-container #close-register-modal {
+  background-color: #eee;
+  border: none;
+  color: #333;
+}
+
+#register-container #close-register-modal:hover {
+  background-color: #ddd;
+}
+
+#register-blur {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+
+
+@media (max-width: 600px) {
+  #register-container.modal-form {
+    width: 90%;
+    padding: 30px 20px;
+  }
+
+  #register-container h3 {
+    font-size: 20px;
+  }
+
+  #register-container input[type="email"] {
+    font-size: 15px;
+  }
+
+  #register-container .gombok-egymas-alatt button {
+    font-size: 15px;
+    padding: 9px 0;
+  }
+}
+
+
+/* ─────────────────────────────── */
+/* EGYSÉGES FORGOTT PASSWORD MODAL */
+/* ─────────────────────────────── */
+
+#forgot-password-modal.modal-form {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 40px 30px;
+  border-radius: 12px;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 420px;  /* ugyanaz mint a regisztrációs */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#forgot-password-modal h3 {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1f2745;
+  margin-bottom: 10px;
+}
+
+#forgot-password-modal input[type="email"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+#forgot-password-modal .gombok-egymas-alatt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+#forgot-password-modal .gombok-egymas-alatt button {
+  width: 80%;
+  max-width: 250px;
+  font-size: 16px;
+  border-radius: 6px;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Zöld főgomb */
+#forgot-password-modal #send-reset-link {
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  font-weight: bold;
+}
+
+#forgot-password-modal #send-reset-link:hover {
+  background-color: #388e3c;
+}
+
+/* Szürke „Mégse” gomb */
+#forgot-password-modal #close-reset-modal {
+  background-color: #eee;
+  border: none;
+  color: #333;
+}
+
+#forgot-password-modal #close-reset-modal:hover {
+  background-color: #ddd;
+}
+
+/* Háttér elhomályosítása */
+#reset-blur {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+
+/* Mobilra optimalizálva */
+@media (max-width: 600px) {
+  #forgot-password-modal.modal-form {
+    width: 90%;
+    padding: 30px 20px;
+  }
+
+  #forgot-password-modal h3 {
+    font-size: 20px;
+  }
+
+  #forgot-password-modal input[type="email"] {
+    font-size: 15px;
+  }
+
+  #forgot-password-modal .gombok-egymas-alatt button {
+    font-size: 15px;
+    padding: 9px 0;
+  }
+}
+
+/* ─────────────────────────────── */
+/* TÖKÉLETESEN KÖZÉPRE IGAZÍTOTT FÉLÉV MODAL */
+/* ─────────────────────────────── */
+#semester-modal {
+  display: none;                   /* Alapból rejtve */
+  position: fixed;
+  inset: 0;                        /* top:0; left:0; right:0; bottom:0 */
+  background: rgba(0, 0, 0, 0.45); /* Sötétített háttér */
+  backdrop-filter: blur(5px);      /* Finom homályosítás */
+  z-index: 2000;
+  display: flex;
+  align-items: center;             /* Függőlegesen középre */
+  justify-content: center;         /* Vízszintesen középre */
+}
+
+/* A modális ablak (fehér doboz) */
+#semester-modal .modal-content {
+  background: #fff;
+  padding: 35px 40px;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+  width: 480px;
+  max-width: 90%;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+/* A cím és input stílusai */
+#semester-modal h2 {
+  color: #1f3c88;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+#semester-modal input[type="text"] {
+  width: 80%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+  font-size: 16px;
+  text-align: center;
+}
+
+/* A két gomb egymás mellett */
+#semester-modal .btn-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px; /* távolság a két gomb között */
+}
+
+#semester-modal .btn {
+  padding: 10px 18px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+/* Gombszínek */
+#semester-modal .btn-primary {
+  background-color: #1f3c88;
+  color: #fff;
+}
+
+#semester-modal .btn-primary:hover {
+  background-color: #274baf;
+}
+
+#semester-modal .btn-secondary {
+  background-color: #ccc;
+  color: #333;
+}
+
+#semester-modal .btn-secondary:hover {
+  background-color: #b5b5b5;
+}
+
+/* Belépő animáció */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
