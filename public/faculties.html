@@ -1,0 +1,55 @@
+    <!DOCTYPE html>
+    <html lang="hu">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dolgozatok kezelése</title>
+        <link rel="stylesheet" href="styles.css">
+        <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+    </head>
+    <body>
+        <header>
+            <h1>TDK Adminisztrációs Rendszer</h1>
+   <nav>
+    <ul>
+      <li><a href="index.html">Főoldal</a></li>
+
+      <li class="dropdown">
+        <a href="#" class="dropbtn">Dolgozatok kezelése</a>
+        <div class="dropdown-content">
+          <a href="papers.html">Jelentkezés új dolgozattal</a>
+          <a href="completed-papers.html">Dolgozat feltöltése</a>
+          <a href="review-papers.html">Dolgozat bírálata</a>
+        </div>
+      </li>
+
+      <li class="dropdown">
+        <a href="#" class="dropbtn">Adminisztrációk</a>
+        <div class="dropdown-content">
+          <a href="sections.html">Szekciók</a>
+          <a href="faculties.html">Karok &amp; bírálók</a>
+          <a href="users.html">Felhasználók kezelése</a>
+          <a href="upload-word.html">Főoldal módosítás</a>
+          <a href="statistics.html">Statisztikák</a>
+        </div>
+      </li>
+
+      <li><a href="#" id="logout-link">Kijelentkezés</a></li>
+    </ul>
+    </nav>
+
+        </header>
+
+  <main class="container">
+    <h1 style="margin-top: 20px;">Karok szerinti dolgozatok és bírálók kezelése</h1>
+    <p>Az alábbi listában karonként látod a dolgozatokat, beállíthatod a feltöltési határidőt, és bírálókat rendelhetsz a dolgozatokhoz.</p>
+
+    <div id="karok-container" style="margin-top: 20px;"></div>
+    <div id="hiba-uzenet" style="color: red; margin-top: 10px;"></div>
+  </main>
+
+</body>
+
+<script src="faculties.js" defer></script>
+</html>

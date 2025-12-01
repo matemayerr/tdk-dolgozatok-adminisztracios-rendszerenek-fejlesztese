@@ -1,0 +1,18 @@
+Tisztelt {{NEV}}!
+
+Ezúton szeretnénk felkérni Önt a következő TDK dolgozat bírálatára:
+
+Cím: {{DOLGOZATCIM}}
+
+Kérjük, jelezze vissza döntését az alábbi linkek egyikén:
+
+A felkérés elfogadása:
+{{LINK_ELFOGADAS}}
+
+A felkérés elutasítása:
+{{LINK_ELUTASITAS}}
+
+Amennyiben a hivatkozások nem működnek, másolja be őket a böngésző címsorába.
+
+Üdvözlettel:
+TDK Adminisztrációs Rendszer

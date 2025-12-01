@@ -5,6 +5,23 @@ document.addEventListener('DOMContentLoaded', function () {
     let dolgozatok = [];
     let currentPage = 1;
     let itemsPerPage = 25;
+    let currentUploadPaperId = null;
+    let selectedFiles = []; // csak a most kiválasztott (még fel nem töltött) fájlok
+    const uploadModal = document.getElementById('upload-modal');
+    const uploadBlur = document.getElementById('upload-blur');
+    const uploadInput = document.getElementById('upload-files-input');
+    const uploadedFilesList = document.getElementById('uploaded-files-list');
+    const uploadSaveBtn = document.getElementById('upload-save-btn');
+    const uploadCancelBtn = document.getElementById('upload-cancel-btn');
+
+    const feltoltesEngedelyezettAllapotok = [
+  'jelentkezett',
+  'feltöltve - témavezető válaszára vár',
+  'elfogadva - témavezető által',
+  'elutasítva - témavezető által'
+];
+
+
 
     // Dolgozatok lekérdezése
     async function listazDolgozatok() {
@@ -55,78 +72,82 @@ async function megjelenitDolgozatok() {
 
     dolgozatTbody.innerHTML = '';
 
-    paginatedDolgozatok.forEach(dolgozat => {
-        const cim = dolgozat.cim || dolgozat.cím || 'N/A';
-        const allapot = dolgozat.allapot || 'N/A';
+paginatedDolgozatok.forEach(dolgozat => {
+    const cim = dolgozat.cim || dolgozat.cím || 'N/A';
+    const allapot = dolgozat.allapot || 'N/A';
 
-        // 🔹 Nevek + Neptun -> hallgatók / témavezetők szövege
-        const hallgatokText =
-            (dolgozat.hallgato_ids || [])
-                .map(neptun => {
-                    const nev = felhasznalokNevek[neptun];
-                    return nev ? `${nev} (${neptun})` : neptun;
-                })
-                .join(', ') || '—';
+      // 🔹 Leírás
+    const leiras = dolgozat.leiras || '';
 
-        const temavezetoText =
-            (dolgozat.temavezeto_ids || [])
-                .map(neptun => {
-                    const nev = felhasznalokNevek[neptun];
-                    return nev ? `${nev} (${neptun})` : neptun;
-                })
-                .join(', ') || '—';
+    // 🔹 Hallgatók (név + Neptun, ha van)
+    const hallgatokText =
+        (dolgozat.hallgato_ids || [])
+            .map(neptun => {
+                const nev = felhasznalokNevek[neptun] || '';
+                return nev ? `${nev} (${neptun})` : neptun;
+            })
+            .join(', ') || '–';
 
-        const leiras = dolgozat.leiras || '—';
+    // 🔹 Témavezetők (név + Neptun, ha van)
+    const temavezetoText =
+        (dolgozat.temavezeto_ids || [])
+            .map(neptun => {
+                const nev = felhasznalokNevek[neptun] || '';
+                return nev ? `${nev} (${neptun})` : neptun;
+            })
+            .join(', ') || '–';
 
-        // 🔹 Fő sor (Cím + Állapot + Műveletek)
-        const tr = document.createElement('tr');
-        tr.dataset.id = dolgozat._id;
-        tr.innerHTML = `
-            <td class="clickable-title" onclick="toggleDetails('${dolgozat._id}')">
-                <div class="cim-es-ikon">
-                    <span class="cim-szoveg" title="${cim}">${cim}</span>
-                    <span class="toggle-icon" id="toggle-icon-${dolgozat._id}">▼</span>
-                </div>
-            </td>
-            <td>${allapot}</td>
-            <td class="actions-cell">
-                ${
-                    dolgozat.allapot === 'jelentkezett'
-                        ? `<button class="jelentkezes-btn" onclick="feltoltes('${dolgozat._id}')">Feltöltés</button>`
-                        : ''
-                }
-                ${
-                    dolgozat.filePath &&
-                    (dolgozat.allapot === 'feltöltve' || dolgozat.allapot === 'értékelve')
-                        ? `<button class="view-button" onclick="megtekintes('${dolgozat.filePath}')">Megtekintés</button>`
-                        : ''
-                }
-            </td>
-        `;
+    // ... hallgatokText, temavezetoText, leiras ugyanúgy marad ...
 
-        // 🔹 Részletek sor (lenyíló)
-        const detailTr = document.createElement('tr');
-        detailTr.classList.add('dolgozat-details-row');
-        detailTr.id = `details-${dolgozat._id}`;
-        detailTr.style.display = 'none';
+    const eredetiAllapot = dolgozat.allapot || '';
+    const mutassFeltoltesGombot =
+        feltoltesEngedelyezettAllapotok.includes(eredetiAllapot);
+    const mutassMegtekintesGombot = !!dolgozat.filePath;
 
-        detailTr.innerHTML = `
-            <td colspan="3">
-                <div class="dolgozat-details-panel">
-                    <p class="dolgozat-leiras">
-                        <span class="leiras-cimke">Tartalmi összefoglaló:</span><br>
-                        <span class="leiras-szoveg">${leiras}</span>
-                    </p>
+    // 🔹 Fő sor (Cím + Állapot + Műveletek)
+    const tr = document.createElement('tr');
+    tr.dataset.id = dolgozat._id;
+    tr.innerHTML = `
+        <td class="clickable-title" onclick="toggleDetails('${dolgozat._id}')">
+            <div class="cim-es-ikon">
+                <span class="cim-szoveg" title="${cim}">${cim}</span>
+                <span class="toggle-icon" id="toggle-icon-${dolgozat._id}">▼</span>
+            </div>
+        </td>
+        <td>${allapot}</td>
+        <td class="actions-cell">
+            ${
+                mutassFeltoltesGombot
+                    ? `<button class="jelentkezes-btn" onclick="feltoltes('${dolgozat._id}')">Feltöltés</button>`
+                    : ''
+            }
+        </td>
+    `;
 
-                    <p><strong>Hallgatók:</strong> ${hallgatokText}</p>
-                    <p><strong>Témavezetők:</strong> ${temavezetoText}</p>
-                </div>
-            </td>
-        `;
+    // 🔹 Részletek sor (lenyíló) – ez maradhat pont úgy, ahogy most van
+    const detailTr = document.createElement('tr');
+    detailTr.classList.add('dolgozat-details-row');
+    detailTr.id = `details-${dolgozat._id}`;
+    detailTr.style.display = 'none';
 
-        dolgozatTbody.appendChild(tr);
-        dolgozatTbody.appendChild(detailTr);
-    });
+    detailTr.innerHTML = `
+        <td colspan="3">
+            <div class="dolgozat-details-panel">
+                <p class="dolgozat-leiras">
+                    <span class="leiras-cimke">Tartalmi összefoglaló:</span><br>
+                    <span class="leiras-szoveg">${leiras}</span>
+                </p>
+
+                <p><strong>Hallgatók:</strong> ${hallgatokText}</p>
+                <p><strong>Témavezetők:</strong> ${temavezetoText}</p>
+            </div>
+        </td>
+    `;
+
+    dolgozatTbody.appendChild(tr);
+    dolgozatTbody.appendChild(detailTr);
+});
+
 
     frissitPaginacio(filteredDolgozatok.length);
 }
@@ -149,33 +170,255 @@ async function megjelenitDolgozatok() {
         }
     }
 
-    // Feltöltés művelet
-    window.feltoltes = async function (id) {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = ".pdf";
-        fileInput.onchange = async () => {
-            const file = fileInput.files[0];
-            if (!file) return;
-            const formData = new FormData();
-            formData.append('file', file);
-            try {
-                const response = await fetch(`/api/dolgozatok/feltoltes/${id}`, {
-                    method: 'POST',
-                    body: formData
-                });
-                if (response.ok) {
-                    alert('Fájl sikeresen feltöltve');
-                    listazDolgozatok(); // Frissítjük a listát
-                } else {
-                    console.error('Hiba történt a feltöltés során');
-                }
-            } catch (error) {
-                console.error('Hiba történt a feltöltés során:', error);
-            }
+    // Feltöltés gomb → modal megnyitása
+        window.feltoltes = async function (id) {
+        currentUploadPaperId = id;
+        selectedFiles = [];
+        uploadInput.value = ''; // kiürítjük
+
+        // már meglévő fájlok betöltése az API-ból
+        try {
+            const res = await fetch(`/api/dolgozatok/${id}/files`);
+            const files = res.ok ? await res.json() : [];
+            renderUploadedFiles(files);
+        } catch (err) {
+            console.error('Nem sikerült lekérni a fájlokat:', err);
+            renderUploadedFiles([]);
+        }
+
+        showUploadModal();
         };
-        fileInput.click();
+
+        function showUploadModal() {
+        uploadModal.style.display = 'block';
+        uploadBlur.style.display = 'block';
+        }
+
+        function hideUploadModal() {
+        uploadModal.style.display = 'none';
+        uploadBlur.style.display = 'none';
+        currentUploadPaperId = null;
+        selectedFiles = [];
+        uploadInput.value = '';
+        uploadedFilesList.innerHTML = '';
+        }
+
+        uploadCancelBtn.addEventListener('click', hideUploadModal);
+        uploadBlur.addEventListener('click', hideUploadModal);
+
+        uploadInput.addEventListener('change', () => {
+        // hozzáadjuk az újonnan kiválasztott fájlokat a selectedFiles tömbhöz
+        const files = Array.from(uploadInput.files);
+        selectedFiles = selectedFiles.concat(files);
+
+        // Kijelzéshez kombináljuk a már adatbázisban lévő fájlokat + újakat.
+        // A régieket az API-ból tölti be a feltoltes() hívás, itt most csak az újak listáját rajzoljuk külön.
+        renderSelectedFiles();
+        });
+
+        // A már szerveren lévő fájlok kilistázása
+function renderUploadedFiles(filesFromServer) {
+  uploadedFilesList.innerHTML = '';
+
+  filesFromServer.forEach(file => {
+    const li = document.createElement('li');
+    li.style.marginBottom = '6px';
+
+    li.innerHTML = `
+      <span class="file-name" style="cursor:pointer; text-decoration:underline;">
+        ${file.originalName || file.fileName}
+      </span>
+      <button class="delete-btn" style="padding:3px 8px; margin-left:8px;">
+        Törlés
+      </button>
+    `;
+
+    // Megtekintés (névre kattintva – új fülön nyitja meg)
+    li.querySelector('.file-name').addEventListener('click', () => {
+      if (file.path) window.open(file.path, '_blank');
+    });
+
+    // Törlés a szerverről
+    li.querySelector('.delete-btn').addEventListener('click', async () => {
+      if (!confirm('Biztosan törlöd ezt a fájlt?')) return;
+      try {
+        const res = await fetch(`/api/dolgozatok/${currentUploadPaperId}/files/${file._id}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          renderUploadedFiles(updated.files || []);
+        } else {
+          console.error('Hiba történt a fájl törlésekor');
+        }
+      } catch (err) {
+        console.error('Hiba történt a fájl törlésekor:', err);
+      }
+    });
+
+    uploadedFilesList.appendChild(li);
+  });
+
+  // Újonnan kiválasztott (még fel nem töltött) fájlok is jelenjenek meg
+  if (selectedFiles.length > 0) {
+    const separator = document.createElement('li');
+    separator.style.borderTop = '1px solid #ccc';
+    separator.style.margin = '8px 0';
+    uploadedFilesList.appendChild(separator);
+
+    selectedFiles.forEach((file, index) => {
+      const li = document.createElement('li');
+      li.style.marginBottom = '4px';
+      li.textContent = `${file.name} (még nincs feltöltve)`;
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-btn';
+      delBtn.textContent = 'Eltávolítás a listából';
+      delBtn.style.padding = '3px 8px';
+      delBtn.style.marginLeft = '8px';
+      delBtn.addEventListener('click', () => {
+        selectedFiles.splice(index, 1);
+        renderUploadedFiles(filesFromServer); // újrarajzol
+      });
+
+      li.appendChild(delBtn);
+      uploadedFilesList.appendChild(li);
+    });
+  }
+}
+
+// csak az új, még fel nem töltött fájlokat frissítjük a listában
+function renderSelectedFiles() {
+  // először újra lekérjük a szerveren lévőket, hogy ne vesszen el az info
+  fetch(`/api/dolgozatok/${currentUploadPaperId}/files`)
+    .then(r => r.ok ? r.json() : [])
+    .then(files => renderUploadedFiles(files))
+    .catch(err => {
+      console.error('Nem sikerült újrarajzolni a listát:', err);
+      renderUploadedFiles([]);
+    });
+}
+    // A már szerveren lévő fájlok kilistázása
+function renderUploadedFiles(filesFromServer) {
+  uploadedFilesList.innerHTML = '';
+
+  filesFromServer.forEach(file => {
+    const li = document.createElement('li');
+    li.style.marginBottom = '6px';
+
+    li.innerHTML = `
+      <span class="file-name" style="cursor:pointer; text-decoration:underline;">
+        ${file.originalName || file.fileName}
+      </span>
+      <button class="delete-btn" style="padding:3px 8px; margin-left:8px;">
+        Törlés
+      </button>
+    `;
+
+    // Megtekintés (névre kattintva – új fülön nyitja meg)
+    li.querySelector('.file-name').addEventListener('click', () => {
+      if (file.path) window.open(file.path, '_blank');
+    });
+
+    // Törlés a szerverről
+    li.querySelector('.delete-btn').addEventListener('click', async () => {
+      if (!confirm('Biztosan törlöd ezt a fájlt?')) return;
+      try {
+        const res = await fetch(`/api/dolgozatok/${currentUploadPaperId}/files/${file._id}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          renderUploadedFiles(updated.files || []);
+        } else {
+          console.error('Hiba történt a fájl törlésekor');
+        }
+      } catch (err) {
+        console.error('Hiba történt a fájl törlésekor:', err);
+      }
+    });
+
+    uploadedFilesList.appendChild(li);
+  });
+
+  // Újonnan kiválasztott (még fel nem töltött) fájlok is jelenjenek meg
+  if (selectedFiles.length > 0) {
+    const separator = document.createElement('li');
+    separator.style.borderTop = '1px solid #ccc';
+    separator.style.margin = '8px 0';
+    uploadedFilesList.appendChild(separator);
+
+    selectedFiles.forEach((file, index) => {
+      const li = document.createElement('li');
+      li.style.marginBottom = '4px';
+      li.textContent = `${file.name} (még nincs feltöltve)`;
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-btn';
+      delBtn.textContent = 'Eltávolítás a listából';
+      delBtn.style.padding = '3px 8px';
+      delBtn.style.marginLeft = '8px';
+      delBtn.addEventListener('click', () => {
+        selectedFiles.splice(index, 1);
+        renderUploadedFiles(filesFromServer); // újrarajzol
+      });
+
+      li.appendChild(delBtn);
+      uploadedFilesList.appendChild(li);
+    });
+  }
+}
+
+// csak az új, még fel nem töltött fájlokat frissítjük a listában
+function renderSelectedFiles() {
+  // először újra lekérjük a szerveren lévőket, hogy ne vesszen el az info
+  fetch(`/api/dolgozatok/${currentUploadPaperId}/files`)
+    .then(r => r.ok ? r.json() : [])
+    .then(files => renderUploadedFiles(files))
+    .catch(err => {
+      console.error('Nem sikerült újrarajzolni a listát:', err);
+      renderUploadedFiles([]);
+    });
+}
+
+    uploadSaveBtn.addEventListener('click', async () => {
+  if (!currentUploadPaperId) return;
+
+  if (selectedFiles.length === 0) {
+    alert('Nem választottál új fájlt.');
+    return;
+  }
+
+  const formData = new FormData();
+  selectedFiles.forEach(f => formData.append('files', f));
+
+  try {
+    const res = await fetch(`/api/dolgozatok/${currentUploadPaperId}/files`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!res.ok) {
+      console.error('Hiba történt a fájlok feltöltésekor');
+      alert('Hiba történt a feltöltés során.');
+      return;
     }
+
+    const data = await res.json();
+    alert('Fájl(ok) sikeresen feltöltve.');
+
+    selectedFiles = [];
+    renderUploadedFiles(data.files || []);
+
+    // Frissítjük a táblázatot is, hogy az állapot/műveletek is frissüljenek
+    listazDolgozatok();
+    hideUploadModal();
+  } catch (err) {
+    console.error('Hiba történt a fájlok feltöltésekor:', err);
+    alert('Hiba történt a feltöltés során.');
+  }
+});
+
 
     // Megtekintés művelet
     window.megtekintes = function (filePath) {

@@ -77,6 +77,30 @@
 
             <div id="dolgozat-pagination"></div>
         </section>
+
+        <!-- Fájl feltöltés modal -->
+<div id="upload-modal" class="modal-form" style="display:none;">
+  <h3>Fájlok feltöltése</h3>
+
+  <div class="form-group">
+    <label for="upload-files-input">Fájlok kiválasztása (több is lehet):</label>
+    <input type="file" id="upload-files-input" multiple>
+  </div>
+
+  <div class="form-group">
+    <h4>Feltöltött fájlok</h4>
+    <ul id="uploaded-files-list" style="list-style:none; padding-left:0; max-height:250px; overflow-y:auto;"></ul>
+  </div>
+
+  <div class="gombok-kozeppontban">
+    <button id="upload-save-btn" class="mentes-btn">Feltöltés</button>
+    <button id="upload-cancel-btn" class="megse-btn">Mégse</button>
+  </div>
+</div>
+
+<div id="upload-blur" class="blur-layer" style="display:none;"></div>
+
+
     </main>
 
     <script src="completed-papers.js"></script>

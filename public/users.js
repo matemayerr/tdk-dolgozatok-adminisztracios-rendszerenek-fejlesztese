@@ -287,6 +287,9 @@ window.modositFelhasznalo = function(id) {
     document.getElementById('modosit-email').value = felhasznalo.email;
     document.getElementById("modosit-szak").value = felhasznalo.szak;
     document.getElementById("modosit-evfolyam").value = felhasznalo.evfolyam;
+    document.getElementById('modosit-kar').value = felhasznalo.kar || '';
+
+
 
 
     document.querySelectorAll('#modosit-csoport-lista input[type="checkbox"]')
@@ -311,6 +314,7 @@ document.getElementById('modosit-mentes').addEventListener('click', async () => 
     email: document.getElementById('modosit-email').value,
     szak: document.getElementById('modosit-szak').value,
     evfolyam: document.getElementById('modosit-evfolyam').value,
+    kar: document.getElementById('modosit-kar').value, 
     csoportok: Array.from(document.querySelectorAll('#modosit-csoport-lista input[type="checkbox"]:checked')).map(cb => cb.value),
 };
 
@@ -391,36 +395,45 @@ async function betoltSzakok() {
 
     const karSelect = document.getElementById('felhasznalo-kar');
     const szakSelect = document.getElementById('felhasznalo-szak');
+    const modositKarSelect = document.getElementById('modosit-kar'); // ⬅️ új
 
-    // Alaphelyzet
     karSelect.innerHTML = '<option value="">-- Válassz kart --</option>';
     szakSelect.innerHTML = '<option value="">-- Válassz szakot --</option>';
+    if (modositKarSelect) {
+      modositKarSelect.innerHTML = '<option value="">-- Válassz kart --</option>';
+    }
 
-    // 🔸 Feltöltjük a karokat a listába
     strukturak.forEach(kar => {
-      const option = document.createElement('option');
-      option.value = kar.nev;
-      option.textContent = kar.nev;
-      karSelect.appendChild(option);
+      const opt1 = document.createElement('option');
+      opt1.value = kar.nev;
+      opt1.textContent = kar.nev;
+      karSelect.appendChild(opt1);
+
+      if (modositKarSelect) {
+        const opt2 = document.createElement('option');
+        opt2.value = kar.nev;
+        opt2.textContent = kar.nev;
+        modositKarSelect.appendChild(opt2);
+      }
     });
 
-    // 🔸 Ha kiválasztanak egy kart, frissítjük a szakok listát
     karSelect.addEventListener('change', e => {
       szakSelect.innerHTML = '<option value="">-- Válassz szakot --</option>';
-      const selectedKar = strukturak.find(k => k.nev === e.target.value);
-      if (selectedKar && selectedKar.szakok && selectedKar.szakok.length > 0) {
-        selectedKar.szakok.forEach(szak => {
-          const option = document.createElement('option');
-          option.value = szak.nev;
-          option.textContent = `${szak.nev} (${szak.tipus})`;
-          szakSelect.appendChild(option);
+      const selected = strukturak.find(k => k.nev === e.target.value);
+      if (selected?.szakok) {
+        selected.szakok.forEach(szak => {
+          const opt = document.createElement('option');
+          opt.value = szak.nev;
+          opt.textContent = `${szak.nev} (${szak.tipus})`;
+          szakSelect.appendChild(opt);
         });
       }
     });
-  } catch (error) {
-    console.error('Hiba a szakok betöltésekor:', error);
+  } catch (err) {
+    console.error('Hiba a szakok betöltésekor:', err);
   }
 }
+
 
 // Automatikusan futtatjuk az oldal betöltésekor
 betoltSzakok();

@@ -216,7 +216,8 @@ if (dolgozatForm) {
       cím: cim,
       leiras,
       hallgato_ids: [loggedInUser.neptun],
-      temavezeto_ids: selectedTemavezetok
+      temavezeto_ids: selectedTemavezetok,
+      kar: loggedInUser.kar || '' 
     };
 
     try {
