@@ -518,10 +518,21 @@ app.post('/api/papers/:id/ertekeles', async (req, res) => {
 
 
 // Értékelés lekérdezése (megtekintéshez)
+
 app.get('/api/papers/:id/ertekeles', async (req, res) => {
   try {
-    const dolgozat = await Dolgozat.findById(req.params.id);
-    if (!dolgozat) return res.status(404).json({ error: 'Dolgozat nem található' });
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.warn('Érvénytelen dolgozat ID:', id);
+      return res.status(400).json({ error: 'Érvénytelen dolgozat ID' });
+    }
+
+    const dolgozat = await Dolgozat.findById(id);
+
+    if (!dolgozat) {
+      return res.status(404).json({ error: 'Dolgozat nem található' });
+    }
 
     res.json(dolgozat.ertekeles || {});
   } catch (err) {
@@ -529,6 +540,7 @@ app.get('/api/papers/:id/ertekeles', async (req, res) => {
     res.status(500).json({ error: 'Szerver hiba' });
   }
 });
+
 
 
 
@@ -764,6 +776,7 @@ const eredmeny = dolgozatok.map(d => ({
   _id: d._id,
   cim: d["cím"],
   allapot: d.allapot,
+  ertekeles: d.ertekeles || {},
   szerzok: (d.hallgato_ids || []).map(neptun => ({
     nev: felhasznaloMap[neptun]?.nev || '',
     szak: felhasznaloMap[neptun]?.szak || '',
@@ -775,6 +788,7 @@ const eredmeny = dolgozatok.map(d => ({
     kar: felhasznaloMap[neptun]?.kar || ''
   }))
 }));
+
 
 
     res.json(eredmeny);

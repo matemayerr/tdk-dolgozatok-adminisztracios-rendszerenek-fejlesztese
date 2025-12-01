@@ -25,11 +25,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             sor.innerHTML = `
                 <td>${dolgozat.cim}</td>
-                <td>${dolgozat.szerzok?.map(s => s.nev).join(", ") || ''}</td>
-                <td>${dolgozat.temavezeto?.nev || ''}</td>
-                <td>${dolgozat.allapot || ''}</td>
+                <td>${dolgozat.szerzok?.map(s => s.nev).join(", ") || '-'}</td>
+                <td>${dolgozat.temavezeto?.map(t => t.nev).join(", ") || '-'}</td>
+                <td>${dolgozat.allapot || '-'}</td>
                 <td>${gomb}</td>
-            `;
+`;
+
 
             tabla.appendChild(sor);
         });
