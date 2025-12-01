@@ -9,31 +9,34 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentPage = 1;
     const rowsPerPage = 10;
 
+    // 🔹 Új felhasználó hozzáadása több csoporttal
     form.addEventListener('submit', async (event) => {
-        event.preventDefault();
+    event.preventDefault();
 
-        const nev = document.getElementById('felhasznalo-nev').value;
-        const neptun = document.getElementById('felhasznalo-neptun').value;
-        const email = document.getElementById('felhasznalo-email').value;
-        const csoport = document.getElementById('felhasznalo-csoport').value;
+    const nev = document.getElementById('felhasznalo-nev').value;
+    const neptun = document.getElementById('felhasznalo-neptun').value;
+    const email = document.getElementById('felhasznalo-email').value;
+    const checkboxes = document.querySelectorAll('#felhasznalo-csoport input[type="checkbox"]:checked');
+    const csoportok = Array.from(checkboxes).map(checkbox => checkbox.value);
 
-        const response = await fetch('/api/felhasznalok', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nev, neptun, email, csoport })
-        });
-
-        if (response.ok) {
-            const newFelhasznalo = await response.json();
-            felhasznalok.push(newFelhasznalo);
-            filteredFelhasznalok = [...felhasznalok];
-            renderTable();
-            form.reset();
-        } else {
-            console.error('Hiba történt a felhasználó hozzáadása során');
-        }
+    const response = await fetch('/api/felhasznalok', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nev, neptun, email, csoportok })
     });
 
+    if (response.ok) {
+        const newFelhasznalo = await response.json();
+        felhasznalok.push(newFelhasznalo);
+        filteredFelhasznalok = [...felhasznalok];
+        renderTable();
+        form.reset();
+    } else {
+        console.error('Hiba történt a felhasználó hozzáadása során');
+    }
+});
+
+    // 🔹 Felhasználók betöltése
     async function loadFelhasznalok() {
         const response = await fetch('/api/felhasznalok');
         felhasznalok = await response.json();
@@ -41,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
         renderTable();
     }
 
+    // 🔹 Táblázat frissítése
     function renderTable() {
         tbody.innerHTML = '';
         const startIndex = (currentPage - 1) * rowsPerPage;
@@ -55,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${felhasznalo.nev}</td>
                 <td>${felhasznalo.neptun}</td>
                 <td>${felhasznalo.email}</td>
-                <td>${felhasznalo.csoport}</td>
+                <td>${felhasznalo.csoportok.join(', ')}</td>
                 <td>
                     <button onclick="editFelhasznalo('${felhasznalo._id}')">Módosítás</button>
                     <button onclick="deleteFelhasznalo('${felhasznalo._id}')">Törlés</button>
@@ -84,6 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // 🔹 Felhasználó törlése
     window.deleteFelhasznalo = async function(id) {
         const response = await fetch(`/api/felhasznalok/${id}`, { method: 'DELETE' });
         if (response.ok) {
@@ -95,36 +100,50 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
+    // 🔹 Felhasználó szerkesztése több csoporttal
     window.editFelhasznalo = function(id) {
-        const tr = document.querySelector(`tr[data-id='${id}']`);
-        const felhasznalo = felhasznalok.find(f => f._id === id);
+    const tr = document.querySelector(`tr[data-id='${id}']`);
+    const felhasznalo = felhasznalok.find(f => f._id === id);
 
-        tr.innerHTML = `
-            <td><input type="text" value="${felhasznalo.nev}" id="edit-nev-${id}"></td>
-            <td><input type="text" value="${felhasznalo.neptun}" id="edit-neptun-${id}"></td>
-            <td><input type="email" value="${felhasznalo.email}" id="edit-email-${id}"></td>
-            <td>
-                <select id="edit-csoport-${id}">
-                    <option value="hallgato" ${felhasznalo.csoport === 'hallgato' ? 'selected' : ''}>Hallgató</option>
-                    <option value="temavezeto" ${felhasznalo.csoport === 'temavezeto' ? 'selected' : ''}>Témavezető</option>
-                    <option value="biralo" ${felhasznalo.csoport === 'biralo' ? 'selected' : ''}>Bíráló</option>
-                    <option value="zsuri" ${felhasznalo.csoport === 'zsuri' ? 'selected' : ''}>Zsűri</option>
-                    <option value="rendszergazda" ${felhasznalo.csoport === 'rendszergazda' ? 'selected' : ''}>Rendszergazda</option>
-                </select>
-            </td>
-            <td>
-                <button onclick="saveFelhasznalo('${id}')">Mentés</button>
-                <button onclick="renderTable()">Mégse</button>
-            </td>
-        `;
-    };
+    // Biztosítjuk, hogy mindig tömbként kezeljük a csoportokat
+    const csoportLista = ['hallgato', 'temavezeto', 'biralo', 'zsuri', 'rendszergazda'];
+    const userCsoportok = Array.isArray(felhasznalo.csoportok) ? felhasznalo.csoportok : [];
 
+    tr.innerHTML = `
+        <td><input type="text" value="${felhasznalo.nev}" id="edit-nev-${id}"></td>
+        <td><input type="text" value="${felhasznalo.neptun}" id="edit-neptun-${id}"></td>
+        <td><input type="email" value="${felhasznalo.email}" id="edit-email-${id}"></td>
+                <td>
+        <div class="dropdown">
+            <button class="dropbtn" onclick="toggleDropdown('edit-csoport-${id}')">Csoport kiválasztása ▼</button>
+            <div id="edit-csoport-${id}" class="dropdown-content">
+                ${csoportLista.map(role => `
+                    <label class="csoport-label">
+                        <input type="checkbox" value="${role}" ${userCsoportok.includes(role) ? 'checked' : ''}> ${role}
+                    </label>
+                `).join('')}
+            </div>
+        </div>
+    </td>
+
+        <td>
+            <button onclick="saveFelhasznalo('${id}')">Mentés</button>
+            <button onclick="renderTable()">Mégse</button>
+        </td>
+    `;
+};
+
+    // 🔹 Módosított felhasználó mentése
     window.saveFelhasznalo = async function(id) {
+        const checkboxes = document.querySelectorAll(`#edit-csoport-${id} input[type="checkbox"]:checked`);
+const csoportok = Array.from(checkboxes).map(checkbox => checkbox.value);
+
+
         const updatedFelhasznalo = {
             nev: document.getElementById(`edit-nev-${id}`).value,
             neptun: document.getElementById(`edit-neptun-${id}`).value,
             email: document.getElementById(`edit-email-${id}`).value,
-            csoport: document.getElementById(`edit-csoport-${id}`).value
+            csoportok
         };
 
         const response = await fetch(`/api/felhasznalok/${id}`, {
@@ -142,27 +161,23 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Hiba történt a felhasználó módosítása során');
         }
     };
+    
+window.toggleDropdown = function(id) {
+    const dropdown = document.getElementById(id);
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+};
 
-    window.toggleSearch = function () {
-        searchInput.style.display = searchInput.style.display === 'none' ? 'inline' : 'none';
-        searchInput.value = '';
-        filteredFelhasznalok = [...felhasznalok];
-        renderTable();
-    };
 
-    window.searchFelhasznalok = function () {
-        const query = searchInput.value.toLowerCase();
-        filteredFelhasznalok = felhasznalok.filter(felhasznalo => {
-            return (
-                felhasznalo.nev.toLowerCase().includes(query) ||
-                felhasznalo.neptun.toLowerCase().includes(query) ||
-                felhasznalo.email.toLowerCase().includes(query) ||
-                felhasznalo.csoport.toLowerCase().includes(query)
-            );
-        });
-        currentPage = 1;
-        renderTable();
-    };
+// Bezárja a lenyíló menüt, ha máshova kattintasz
+document.addEventListener('click', function(event) {
+    const dropdowns = document.querySelectorAll('.dropdown-content');
+    dropdowns.forEach(dropdown => {
+        if (!dropdown.parentElement.contains(event.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+});
+
 
     loadFelhasznalok();
 });

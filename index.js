@@ -33,13 +33,14 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
 const bcrypt = require('bcrypt');
 
 // Felhasznalo modell
-const Felhasznalo = mongoose.model('felhasznalo', new mongoose.Schema({
+const Felhasznalo = mongoose.model('felhasznalos', new mongoose.Schema({
     nev: { type: String, required: true },
     neptun: { type: String, required: true, unique: true },
     email: { type: String, required: true },
-    csoport: { type: String, required: true },
+    csoportok: { type: [String], required: true }, // Tömb több csoporthoz
     password: { type: String, required: true }
 }));
+
 
 // Ellenörzöm a Neptun-kod és jelszo helyesseget, majd egy JWT tokent adok vissza
 const jwt = require('jsonwebtoken');
@@ -237,11 +238,11 @@ app.delete('/api/dolgozatok/:id', async (req, res) => {
 // Felhasználó CRUD műveletek
 
 // Új felhasználó hozzáadása
-app.post('/api/felhasznalok', async (req, res) => {
-    const { nev, neptun, email, csoport } = req.body;
+ app.post('/api/felhasznalok', async (req, res) => {
+    const { nev, neptun, email, csoportok } = req.body;
 
-    if (!nev || !neptun || !email || !csoport) {
-        return res.status(400).json({ error: "Minden mező kitöltése kötelező!" });
+    if (!nev || !neptun || !email || !csoportok || !Array.isArray(csoportok)) {
+        return res.status(400).json({ error: "Minden mező kitöltése kötelező! A csoportokat tömbként kell megadni." });
     }
 
     try {
@@ -250,45 +251,33 @@ app.post('/api/felhasznalok', async (req, res) => {
             return res.status(400).json({ error: "Ez a Neptun-kód már létezik!" });
         }
 
-        // **ÚJ:** Alapértelmezett jelszó titkosítással
-        const alapJelszo = "Temp1234"; // Ezt meg lehet változtatni később
-        const hashJelszo = await bcrypt.hash(alapJelszo, 10);
+        const hashJelszo = await bcrypt.hash("Temp1234", 10); // Alapértelmezett jelszó
 
         const felhasznalo = new Felhasznalo({ 
             nev, 
             neptun, 
             email, 
-            csoport, 
-            password: hashJelszo // **Jelszó kötelező az adatbázisban**
+            csoportok, 
+            password: hashJelszo
         });
 
         await felhasznalo.save();
         res.status(201).json(felhasznalo);
     } catch (error) {
-        console.error("💥 Hiba történt a felhasználó mentésekor:", error);
+        console.error("Hiba történt a felhasználó mentésekor:", error);
         res.status(500).json({ error: 'Hiba történt a felhasználó mentésekor' });
     }
 });
 
 
+
 // Felhasználók listázása
 app.get('/api/felhasznalok', async (req, res) => {
     try {
-        const felhasznalok = await Felhasznalo.find();
+        const felhasznalok = await Felhasznalo.find(); // Már a "felhasznalos" gyűjteményt használja
         res.json(felhasznalok);
     } catch (error) {
         res.status(500).json({ error: 'Hiba történt a felhasználók lekérésekor' });
-    }
-});
-
-// Csoportok szerinti felhasználók listázása
-app.get('/api/felhasznalok/csoportok', async (req, res) => {
-    try {
-        const hallgatok = await Felhasznalo.find({ csoport: 'hallgato' });
-        const temavezetok = await Felhasznalo.find({ csoport: 'temavezeto' });
-        res.json({ hallgatok, temavezetok });
-    } catch (error) {
-        res.status(500).json({ error: 'Hiba történt a felhasználók lekérésekor csoportok szerint' });
     }
 });
 

@@ -35,15 +35,18 @@
                 <input type="text" id="felhasznalo-nev" placeholder="Név" required>
                 <input type="text" id="felhasznalo-neptun" placeholder="Neptun kód" required>
                 <input type="email" id="felhasznalo-email" placeholder="Email cím" required>
-                <select id="felhasznalo-csoport" required>
-                    <option value="">Válassz csoportot</option>
-                    <option value="hallgato">Hallgató</option>
-                    <option value="temavezeto">Témavezető</option>
-                    <option value="biralo">Bíráló</option>
-                    <option value="zsuri">Zsűri</option>
-                    <option value="rendszergazda">Rendszergazda</option>
-                </select>
-                <button type="submit">Felhasználó hozzáadása</button>
+               <div class="dropdown">
+    <button class="dropbtn">Csoport kiválasztása ▼</button>
+    <div class="dropdown-content" id="felhasznalo-csoport">
+        <label><input type="checkbox" value="hallgato"> Hallgató</label>
+        <label><input type="checkbox" value="temavezeto"> Témavezető</label>
+        <label><input type="checkbox" value="biralo"> Bíráló</label>
+        <label><input type="checkbox" value="zsuri"> Zsűri</label>
+        <label><input type="checkbox" value="rendszergazda"> Rendszergazda</label>
+    </div>
+</div>
+
+                <p><button type="submit">Felhasználó hozzáadása</button>
             </form>
 
             <!-- Cím és kereső ikon egy sorban -->

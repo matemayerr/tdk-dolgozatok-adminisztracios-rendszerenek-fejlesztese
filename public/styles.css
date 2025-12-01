@@ -5,6 +5,12 @@ body {
     background-color: #f4f4f4;
 }
 
+input[type="checkbox"] {
+    display: inline-block;
+    margin-right: 5px;
+}
+
+
 header {
     background: #333;
     color: #fff;
@@ -205,4 +211,77 @@ nav ul li:last-child {
     margin-left: 5px;
     padding: 5px;
 }
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropbtn {
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    color: white;
+
+.dropdown-content label {
+    display: block;
+    padding: 5px;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropbtn {
+    background-color: #3498db;
+    color: white;
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 200px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    z-index: 1;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    display: flex;
+    flex-wrap: wrap; /* ✔ A lista több sorba törhet */
+    gap: 10px; /* ✔ Távolság a checkboxok között */
+    width: 300px; /* ✔ A lista szélessége */
+}
+
+.csoport-label {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    white-space: nowrap; /* ✔ Ne törjenek meg a csoportnevek */
+}
+
+.csoport-label input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+
+
+
+
 
