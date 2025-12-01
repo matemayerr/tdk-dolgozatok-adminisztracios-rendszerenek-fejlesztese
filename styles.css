@@ -151,3 +151,52 @@ nav ul li a:hover {
 .allapot-text[title] {
     cursor: help;
 }
+
+/* Táblázat feletti kereső beállításai */
+.table-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.search-container {
+    position: relative;
+}
+
+.search-icon {
+    cursor: pointer;
+    font-size: 18px;
+    padding: 5px;
+}
+
+#search-input {
+    margin-left: 5px;
+    padding: 5px;
+}
+
+/* Cím és kereső mező egy sorban */
+.header-with-search {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    cursor: pointer;
+    font-size: 18px;
+    padding: 5px;
+}
+
+#search-input {
+    margin-left: 5px;
+    padding: 5px;
+}
+

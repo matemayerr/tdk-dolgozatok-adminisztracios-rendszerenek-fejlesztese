@@ -27,7 +27,15 @@
 
     <main>
         <section>
-            <p><h2>Dolgozatok értékelése:</h2>
+         <p>
+            <div class="header-with-search">
+                <h2>Dolgozatok értékelése:</h2>
+                <div class="search-container">
+                    <span class="search-icon" onclick="toggleSearchInput()">🔍</span>
+                    <input type="text" id="search-input" placeholder="Keresés..." oninput="searchDolgozatok()" style="display: none;">
+                </div>
+            </div>
+            
             <table id="ertekeles-table">
                 <thead>
                     <tr>
@@ -43,6 +51,7 @@
                     <!-- Dolgozatok listája ide kerül -->
                 </tbody>
             </table>
+            <div id="pagination-container"></div>
         </section>
     </main>
 

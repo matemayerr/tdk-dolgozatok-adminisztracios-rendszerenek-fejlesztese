@@ -1,105 +1,128 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const keszDolgozatokTbody = document.getElementById('kesz-dolgozatok-tbody');
+    const dolgozatTbody = document.getElementById('dolgozat-tbody');
+    const searchInput = document.getElementById('dolgozat-search-input');
+    const paginationContainer = document.getElementById('dolgozat-pagination');
+    let dolgozatok = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
-    // Kész dolgozatok listázása
-    async function listazKeszDolgozatok() {
+    // Dolgozatok lekérdezése
+    async function listazDolgozatok() {
         try {
             const response = await fetch('/api/dolgozatok/kesz');
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            const keszDolgozatok = await response.json();
-
-            keszDolgozatokTbody.innerHTML = '';
-            keszDolgozatok.forEach(dolgozat => {
-                addDolgozatToTable(dolgozat);
-            });
+            dolgozatok = await response.json();
+            megjelenitDolgozatok();
         } catch (err) {
-            console.error('Hiba történt a kész dolgozatok listázása során:', err);
+            console.error('Hiba történt a dolgozatok lekérése során:', err);
         }
     }
 
-    // Kész dolgozat hozzáadása a táblázathoz
-    function addDolgozatToTable(dolgozat) {
-        const tr = document.createElement('tr');
-        tr.dataset.id = dolgozat._id;
+    // Dolgozatok megjelenítése
+    function megjelenitDolgozatok() {
+        const filteredDolgozatok = dolgozatok.filter(dolgozat => 
+            dolgozat.cím.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+            dolgozat.hallgato_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+            dolgozat.temavezeto_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+            dolgozat.allapot.toLowerCase().includes(searchInput.value.toLowerCase())
+        );
 
-        // Feltöltve vagy értékelve állapot esetén csak a megtekintés gomb jelenik meg, és a fájl tallózás eltűnik
-        const isFeltoltveVagyErtekelve = dolgozat.allapot === 'feltöltve' || dolgozat.allapot === 'értékelve';
-
-        tr.innerHTML = `
-            <td>${dolgozat.cím || 'N/A'}</td>
-            <td>${dolgozat.hallgato_id || 'N/A'}</td>
-            <td>${dolgozat.temavezeto_id || 'N/A'}</td>
-            <td>${dolgozat.allapot || 'N/A'}</td>
-            <td>
-                ${isFeltoltveVagyErtekelve ? 
-                    `<button class="megtekintes-btn" data-path="${dolgozat.filePath}">Megtekintés</button>` :
-                    `<input type="file" id="file-${dolgozat._id}" required>
-                    <button class="upload-btn">Feltöltés</button>`
-                }
-            </td>
-        `;
-        keszDolgozatokTbody.appendChild(tr);
-
-        // Feltöltés gomb funkció hozzárendelése, ha még nem "feltöltve" vagy "értékelve" az állapot
-        if (!isFeltoltveVagyErtekelve) {
-            const uploadBtn = tr.querySelector('.upload-btn');
-            uploadBtn.addEventListener('click', async () => {
-                await feltoltDolgozat(dolgozat._id);
-            });
-        }
-
-        // Megtekintés gomb funkció hozzárendelése
-        if (isFeltoltveVagyErtekelve) {
-            const megtekintesBtn = tr.querySelector('.megtekintes-btn');
-            megtekintesBtn.addEventListener('click', () => {
-                const filePath = megtekintesBtn.dataset.path;
-                if (filePath) {
-                    window.open(filePath, '_blank');
-                } else {
-                    alert('Nincs feltöltött fájl a megtekintéshez.');
-                }
-            });
-        }
-    }
-
-    // Fájl feltöltése az adott dolgozathoz
-    async function feltoltDolgozat(dolgozatId) {
-        const fileInput = document.getElementById(`file-${dolgozatId}`);
+        const start = (currentPage - 1) * itemsPerPage;
+        const paginatedDolgozatok = filteredDolgozatok.slice(start, start + itemsPerPage);
         
-        if (!fileInput) {
-            console.error(`Fájl input nem található: file-${dolgozatId}`);
-            return;
-        }
+        dolgozatTbody.innerHTML = '';
+        paginatedDolgozatok.forEach(dolgozat => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${dolgozat.cím || 'N/A'}</td>
+                <td>${dolgozat.hallgato_id || 'N/A'}</td>
+                <td>${dolgozat.temavezeto_id || 'N/A'}</td>
+                <td>${dolgozat.allapot || 'N/A'}</td>
+                <td>
+                    ${dolgozat.allapot === 'elfogadva' ? 
+                        `<button onclick="feltoltes('${dolgozat._id}')">Feltöltés</button>` : 
+                        ''
+                    }
+                    ${dolgozat.filePath && (dolgozat.allapot === 'feltöltve' || dolgozat.allapot === 'értékelve') ? 
+                        `<button onclick="megtekintes('${dolgozat.filePath}')">Megtekintés</button>` : 
+                        ''
+                    }
+                </td>
+            `;
+            dolgozatTbody.appendChild(tr);
+        });
 
-        const file = fileInput.files[0];
-        if (!file) {
-            alert('Kérlek, válassz ki egy fájlt a feltöltéshez!');
-            return;
-        }
+        frissitPaginacio(filteredDolgozatok.length);
+    }
 
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const response = await fetch(`/api/dolgozatok/feltoltes/${dolgozatId}`, {
-                method: 'POST',
-                body: formData
+    // Lapozó gombok frissítése
+    function frissitPaginacio(totalItems) {
+        paginationContainer.innerHTML = '';
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            if (i === currentPage) btn.classList.add('active');
+            btn.addEventListener('click', () => {
+                currentPage = i;
+                megjelenitDolgozatok();
             });
-
-            if (!response.ok) {
-                throw new Error('Hiba történt a fájl feltöltése során');
-            }
-
-            alert('Fájl sikeresen feltöltve!');
-            listazKeszDolgozatok(); // Frissítjük a táblázatot a státusz miatt
-        } catch (error) {
-            console.error('Hiba történt a fájl feltöltése során:', error);
+            paginationContainer.appendChild(btn);
         }
     }
 
-    // Kész dolgozatok listázása indításkor
-    listazKeszDolgozatok();
+    // Feltöltés művelet
+    window.feltoltes = async function (id) {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = ".pdf";
+        fileInput.onchange = async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch(`/api/dolgozatok/feltoltes/${id}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    alert('Fájl sikeresen feltöltve');
+                    listazDolgozatok(); // Frissítjük a listát
+                } else {
+                    console.error('Hiba történt a feltöltés során');
+                }
+            } catch (error) {
+                console.error('Hiba történt a feltöltés során:', error);
+            }
+        };
+        fileInput.click();
+    }
+
+    // Megtekintés művelet
+    window.megtekintes = function (filePath) {
+        window.open(filePath, '_blank');
+    }
+
+    // Keresőmező megjelenítése
+    window.toggleDolgozatSearch = function() {
+        if (searchInput.style.display === 'none') {
+            searchInput.style.display = 'block';
+            searchInput.focus();
+        } else {
+            searchInput.style.display = 'none';
+            searchInput.value = '';
+            megjelenitDolgozatok();
+        }
+    }
+
+    // Keresés
+    window.searchDolgozatok = function() {
+        currentPage = 1;
+        megjelenitDolgozatok();
+    }
+
+    // Indításkor dolgozatok betöltése
+    listazDolgozatok();
 });
 

@@ -20,19 +20,48 @@
 
     <main>
         <section>
-            <p><h2>Új hallgató hozzáadása</h2>
-            <form id="hallgato-form">
-    <input type="text" id="hallgato-nev" placeholder="Név" required>
-    <input type="email" id="hallgato-email" placeholder="Email" required>
-    <input type="text" id="hallgato-dolgozat-id" placeholder="Dolgozat ID" required>
-    <button type="submit">Hallgató hozzáadása</button>
-</form>
+            <p><h2>Új felhasználó hozzáadása:</h2>
+            <form id="felhasznalo-form">
+                <input type="text" id="felhasznalo-nev" placeholder="Név" required>
+                <input type="text" id="felhasznalo-neptun" placeholder="Neptun kód" required>
+                <input type="email" id="felhasznalo-email" placeholder="Email cím" required>
+                <select id="felhasznalo-csoport" required>
+                    <option value="">Válassz csoportot</option>
+                    <option value="hallgato">Hallgató</option>
+                    <option value="temavezeto">Témavezető</option>
+                    <option value="biralo">Bíráló</option>
+                    <option value="zsuri">Zsűri</option>
+                    <option value="rendszergazda">Rendszergazda</option>
+                </select>
+                <button type="submit">Felhasználó hozzáadása</button>
+            </form>
 
-            <h2>Felvett hallgatók</h2>
-            <ul id="hallgato-lista"></ul>
+            <!-- Cím és kereső ikon egy sorban -->
+            <div class="header-with-search">
+                <h2>Felvett felhasználók:</h2>
+                <div class="search-container">
+                    <span class="search-icon" onclick="toggleSearch()">🔍</span>
+                    <input type="text" id="search-input" placeholder="Keresés..." oninput="searchFelhasznalok()" style="display: none;">
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Név</th>
+                        <th>Neptun</th>
+                        <th>Email</th>
+                        <th>Csoport</th>
+                        <th>Műveletek</th>
+                    </tr>
+                </thead>
+                <tbody id="felhasznalo-tbody"></tbody>
+            </table>
+            <div id="pagination"></div>
         </section>
     </main>
-   <script src="app.js"></script> 
+
+    <script src="users.js"></script> 
 </body>
 </html>
 

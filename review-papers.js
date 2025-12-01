@@ -1,27 +1,46 @@
 document.addEventListener('DOMContentLoaded', function () {
     const ertekelesTbody = document.getElementById('ertekeles-tbody');
+    const searchInput = document.getElementById('search-input');
+    const paginationContainer = document.getElementById('pagination-container');
+    let dolgozatok = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
     // Dolgozatok listázása értékeléshez
     async function listazErtekelesDolgozatok() {
         try {
             const response = await fetch('/api/dolgozatok/kesz');
-            const dolgozatok = await response.json();
-
-            ertekelesTbody.innerHTML = ''; // Ürítjük a táblázatot
-            dolgozatok.forEach(dolgozat => {
-                addDolgozatToErtekelesTable(dolgozat);
-            });
+            dolgozatok = await response.json();
+            megjelenitDolgozatok();
         } catch (err) {
             console.error('Hiba történt a dolgozatok értékelése során:', err);
         }
+    }
+
+    // Dolgozatok megjelenítése
+    function megjelenitDolgozatok() {
+        const filteredDolgozatok = dolgozatok.filter(dolgozat => 
+            dolgozat.cím.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+            dolgozat.hallgato_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+            dolgozat.temavezeto_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+            dolgozat.allapot.toLowerCase().includes(searchInput.value.toLowerCase())
+        );
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const paginatedDolgozatok = filteredDolgozatok.slice(start, start + itemsPerPage);
+        
+        ertekelesTbody.innerHTML = '';
+        paginatedDolgozatok.forEach(dolgozat => {
+            addDolgozatToErtekelesTable(dolgozat);
+        });
+
+        frissitPaginacio(filteredDolgozatok.length);
     }
 
     // Dolgozat hozzáadása az értékelési táblázathoz
     function addDolgozatToErtekelesTable(dolgozat) {
         const tr = document.createElement('tr');
         tr.dataset.id = dolgozat._id;
-
-        // Ellenőrizzük, hogy az állapot "értékelve"-e
         const isErtekelve = dolgozat.allapot === 'értékelve';
 
         tr.innerHTML = `
@@ -43,58 +62,87 @@ document.addEventListener('DOMContentLoaded', function () {
                     <input type="file" id="ertekeles-file-${dolgozat._id}" accept=".pdf" />`
                 }
             </td>
-            <td class="action-buttons" data-id="${dolgozat._id}">
+            <td>
                 ${isErtekelve ? 
-                    `<button class="megtekintes-btn" data-path="${dolgozat.ertekelesFilePath}">Megtekintés</button>` :
-                    `<button class="ertekeles-btn">Értékelés</button>`
+                    `<button onclick="megtekintes('${dolgozat.ertekelesFilePath}')">Megtekintés</button>` :
+                    `<button onclick="ertekeles('${dolgozat._id}')">Értékelés</button>`
                 }
             </td>
         `;
         ertekelesTbody.appendChild(tr);
+    }
 
-        // Értékelés gomb funkciója csak akkor érhető el, ha az állapot nem "értékelve"
-        if (!isErtekelve) {
-            const ertekelesBtn = tr.querySelector('.ertekeles-btn');
-            ertekelesBtn.addEventListener('click', async () => {
-                const dolgozatId = dolgozat._id;
-                const pontszam = tr.querySelector(`#pontszam-${dolgozatId}`).value;
-                const fileInput = tr.querySelector(`#ertekeles-file-${dolgozatId}`);
-                const file = fileInput.files[0];
+    // Értékelés funkció
+    window.ertekeles = async function (id) {
+        const pontszamSelect = document.getElementById(`pontszam-${id}`);
+        const fileInput = document.getElementById(`ertekeles-file-${id}`);
+        const pontszam = pontszamSelect.value;
+        const file = fileInput.files[0];
 
-                if (!pontszam || !file) {
-                    alert('Kérlek, válaszd ki az érdemjegyet és a fájlt!');
-                    return;
-                }
-
-                const formData = new FormData();
-                formData.append('pontszam', pontszam);
-                formData.append('file', file);
-
-                try {
-                    const response = await fetch(`/api/dolgozatok/ertekeles-feltoltes/${dolgozatId}`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    if (!response.ok) throw new Error('Hiba történt a feltöltés során');
-                    
-                    alert('Értékelés és feltöltés sikeresen mentve!');
-                    listazErtekelesDolgozatok(); // Frissítjük a listát a megtekintés gomb megjelenítéséhez
-                } catch (error) {
-                    console.error('Hiba történt az értékelés mentése során:', error);
-                }
-            });
+        if (!pontszam || !file) {
+            alert('Kérlek, válaszd ki az érdemjegyet és a fájlt!');
+            return;
         }
 
-        // Megtekintés gomb funkciója, ha már van feltöltött fájl
-        if (isErtekelve && dolgozat.ertekelesFilePath) {
-            const megtekintesBtn = tr.querySelector('.megtekintes-btn');
-            megtekintesBtn.addEventListener('click', () => {
-                window.open(dolgozat.ertekelesFilePath, '_blank');
+        const formData = new FormData();
+        formData.append('pontszam', pontszam);
+        formData.append('file', file);
+
+        try {
+            const response = await fetch(`/api/dolgozatok/ertekeles-feltoltes/${id}`, {
+                method: 'POST',
+                body: formData
             });
+            if (!response.ok) throw new Error('Hiba történt a feltöltés során');
+            
+            alert('Értékelés és feltöltés sikeresen mentve!');
+            listazErtekelesDolgozatok();
+        } catch (error) {
+            console.error('Hiba történt az értékelés mentése során:', error);
+        }
+    };
+
+    // Megtekintés funkció
+    window.megtekintes = function (filePath) {
+        window.open(filePath, '_blank');
+    }
+
+    // Keresőmező megjelenítése
+    window.toggleSearchInput = function() {
+        if (searchInput.style.display === 'none') {
+            searchInput.style.display = 'block';
+            searchInput.focus();
+        } else {
+            searchInput.style.display = 'none';
+            searchInput.value = '';
+            megjelenitDolgozatok();
         }
     }
 
-    // Dolgozatok listázása indításkor
+    // Keresés
+    window.searchDolgozatok = function() {
+        currentPage = 1;
+        megjelenitDolgozatok();
+    }
+
+    // Lapozás frissítése
+    function frissitPaginacio(totalItems) {
+        paginationContainer.innerHTML = '';
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const button = document.createElement('button');
+            button.textContent = i;
+            if (i === currentPage) button.classList.add('active');
+            button.addEventListener('click', () => {
+                currentPage = i;
+                megjelenitDolgozatok();
+            });
+            paginationContainer.appendChild(button);
+        }
+    }
+
+    // Indításkor dolgozatok betöltése
     listazErtekelesDolgozatok();
 });
 

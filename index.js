@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname)));
 app.use(express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 
-// Mongoose modell
+// Mongoose modellek
 const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     cím: { type: String, required: true },
     hallgato_id: { type: String, required: true },
@@ -31,6 +31,41 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     ertekelesFilePath: { type: String },
     elutasitas_oka: { type: String }
 }));
+
+const Felhasznalo = mongoose.model('felhasznalo', new mongoose.Schema({
+    nev: { type: String, required: true },
+    neptun: { type: String, required: true },
+    email: { type: String, required: true },
+    csoport: { type: String, required: true }
+}));
+
+// Felhasználók hozzáadása
+app.post('/api/felhasznalok', async (req, res) => {
+    const { nev, neptun, email, csoport } = req.body;
+
+    if (!nev || !neptun || !email || !csoport) {
+        return res.status(400).json({ error: 'Minden mezőt ki kell tölteni!' });
+    }
+
+    const felhasznalo = new Felhasznalo({ nev, neptun, email, csoport });
+
+    try {
+        await felhasznalo.save();
+        res.status(201).json(felhasznalo);
+    } catch (error) {
+        res.status(500).json({ error: 'Hiba történt a felhasználó mentésekor' });
+    }
+});
+
+// Felhasználók lekérdezése
+app.get('/api/felhasznalok', async (req, res) => {
+    try {
+        const felhasznalok = await Felhasznalo.find();
+        res.json(felhasznalok);
+    } catch (error) {
+        res.status(500).json({ error: 'Hiba történt a felhasználók lekérésekor' });
+    }
+});
 
 // Multer beállítások a fájlfeltöltéshez
 const storage = multer.diskStorage({
@@ -173,6 +208,40 @@ app.put('/api/dolgozatok/:id', async (req, res) => {
         res.status(500).json({ error: 'Hiba történt a dolgozat módosítása során' });
     }
 });
+
+// Felhasználó törlése
+app.delete('/api/felhasznalok/:id', async (req, res) => {
+    try {
+        const felhasznalo = await Felhasznalo.findByIdAndDelete(req.params.id);
+        if (!felhasznalo) {
+            return res.status(404).json({ error: 'Felhasználó nem található' });
+        }
+        res.json({ message: 'Felhasználó törölve' });
+    } catch (error) {
+        res.status(500).json({ error: 'Hiba történt a felhasználó törlése során' });
+    }
+});
+
+// Felhasználó módosítása
+app.put('/api/felhasznalok/:id', async (req, res) => {
+    try {
+        const { nev, neptun, email, csoport } = req.body;
+        const updatedFelhasznalo = await Felhasznalo.findByIdAndUpdate(
+            req.params.id,
+            { nev, neptun, email, csoport },
+            { new: true }
+        );
+
+        if (!updatedFelhasznalo) {
+            return res.status(404).json({ error: 'Felhasználó nem található' });
+        }
+
+        res.json(updatedFelhasznalo);
+    } catch (error) {
+        res.status(500).json({ error: 'Hiba történt a felhasználó módosítása során' });
+    }
+});
+
 
 app.listen(port, () => {
     console.log(`Server started on port ${port}`);

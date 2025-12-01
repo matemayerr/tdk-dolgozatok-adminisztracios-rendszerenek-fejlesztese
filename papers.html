@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Új dolgozat hozzáadása</title>
+    <title>Dolgozatok kezelése</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -28,15 +28,23 @@
     <main>
         <section>
             <p><h2>Új dolgozat hozzáadása:</h2>
-            <form id="dolgozat-form" enctype="multipart/form-data">
-                <input type="text" id="dolgozat-cim" name="cím" placeholder="Cím" required>
-                <input type="text" id="dolgozat-hallgato-id" name="hallgato_id" placeholder="Hallgató Neptun-kód" required>
-                <input type="text" id="dolgozat-temavezeto-id" name="temavezeto_id" placeholder="Témavezető Neptun-kód" required>
+            <form id="dolgozat-form">
+                <input type="text" id="dolgozat-cim" placeholder="Cím" required>
+                <input type="text" id="dolgozat-hallgato-id" placeholder="Hallgató Neptun-kód" required>
+                <input type="text" id="dolgozat-temavezeto-id" placeholder="Témavezető Neptun-kód" required>
                 <button type="submit">Dolgozat hozzáadása</button>
             </form>
 
-            <h2>Felvett dolgozatok:</h2>
-            <table id="dolgozatok-table">
+            <!-- Cím és kereső ikon egy sorban -->
+            <div class="header-with-search">
+                <h2>Felvett dolgozatok:</h2>
+                <div class="search-container">
+                    <span class="search-icon" onclick="toggleDolgozatSearch()">🔍</span>
+                    <input type="text" id="dolgozat-search-input" placeholder="Keresés..." oninput="searchDolgozatok()" style="display: none;">
+                </div>
+            </div>
+
+            <table>
                 <thead>
                     <tr>
                         <th>Cím</th>
@@ -46,14 +54,13 @@
                         <th>Műveletek</th>
                     </tr>
                 </thead>
-                <tbody id="dolgozat-tbody">
-                    <!-- Dolgozatok listája ide kerül -->
-                </tbody>
+                <tbody id="dolgozat-tbody"></tbody>
             </table>
+            <div id="dolgozat-pagination"></div>
         </section>
     </main>
 
-    <script src="app.js"></script>
+    <script src="app.js"></script> 
 </body>
 </html>
 

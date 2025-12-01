@@ -27,8 +27,17 @@
 
     <main>
         <section>
-            <p><h2>Dolgozatok feltöltése:</h2>
-            <table id="kesz-dolgozatok-table">
+        <p>
+            <!-- Cím és kereső ikon egy sorban -->
+            <div class="header-with-search">
+                <h2>Dolgozatok feltöltése:</h2>
+                <div class="search-container">
+                    <span class="search-icon" onclick="toggleDolgozatSearch()">🔍</span>
+                    <input type="text" id="dolgozat-search-input" placeholder="Keresés..." oninput="searchDolgozatok()" style="display: none;">
+                </div>
+            </div>
+
+            <table>
                 <thead>
                     <tr>
                         <th>Cím</th>
@@ -38,14 +47,13 @@
                         <th>Műveletek</th>
                     </tr>
                 </thead>
-                <tbody id="kesz-dolgozatok-tbody">
-                    <!-- Kész dolgozatok listája ide kerül -->
-                </tbody>
+                <tbody id="dolgozat-tbody"></tbody>
             </table>
+            <div id="dolgozat-pagination"></div>
         </section>
     </main>
 
-    <script src="completed-papers.js"></script>
+    <script src="completed-papers.js"></script> 
 </body>
 </html>
 
