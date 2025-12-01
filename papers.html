@@ -16,9 +16,9 @@
                 <li class="dropdown">
                     <a href="#" class="dropbtn">Dolgozatok kezelése</a>
                     <div class="dropdown-content">
-                        <a href="papers.html">Új dolgozatok h ozzáadása</a>
+                        <a href="papers.html">Új dolgozatok hozzáadása</a>
                         <a href="completed-papers.html">Kész dolgozatok feltöltése</a>
-                        <a href="review-papers.html">Dolgozatok értékelése</a> <!-- Új menüpont -->
+                        <a href="review-papers.html">Dolgozatok értékelése</a>
                     </div>
                 </li>
             </ul>
@@ -29,14 +29,9 @@
         <section>
             <p><h2>Új dolgozat hozzáadása</h2>
             <form id="dolgozat-form" enctype="multipart/form-data">
-                <input type="text" id="dolgozat-cim" name="cím" placeholder="Cím" required> <!-- Fontos a name="cím" -->
-                <input type="text" id="dolgozat-hallgato-id" name="hallgato_id" placeholder="Hallgató ID" required>
-                <input type="text" id="dolgozat-temavezeto-id" name="temavezeto_id" placeholder="Témavezető ID" required>
-                <select id="dolgozat-allapot" name="allapot" required>
-                    <option value="benyújtva">Benyújtva</option>
-                    <option value="bírálás alatt">Bírálás alatt</option>
-                    <option value="elfogadva">Elfogadva</option>
-                </select>
+                <input type="text" id="dolgozat-cim" name="cím" placeholder="Cím" required>
+                <input type="text" id="dolgozat-hallgato-id" name="hallgato_id" placeholder="Hallgató Neptun-kód" required>
+                <input type="text" id="dolgozat-temavezeto-id" name="temavezeto_id" placeholder="Témavezető Neptun-kód" required>
                 <button type="submit">Dolgozat hozzáadása</button>
             </form>
 
@@ -45,8 +40,8 @@
                 <thead>
                     <tr>
                         <th>Cím</th>
-                        <th>Hallgató ID</th>
-                        <th>Témavezető ID</th>
+                        <th>Hallgató Neptun-kód</th>
+                        <th>Témavezető Neptun-kód</th>
                         <th>Állapot</th>
                         <th>Műveletek</th>
                     </tr>
@@ -61,3 +56,4 @@
     <script src="app.js"></script>
 </body>
 </html>
+

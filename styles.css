@@ -138,3 +138,16 @@ nav ul li a:hover {
     color: #007bff;
 }
 
+/* CSS a lenyitható sorokhoz */
+.dolgozat-row {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.allapot-text {
+    cursor: default;
+}
+
+.allapot-text[title] {
+    cursor: help;
+}
