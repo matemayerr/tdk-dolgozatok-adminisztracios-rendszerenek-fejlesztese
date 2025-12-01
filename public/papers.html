@@ -37,27 +37,24 @@
 <button id="uj-dolgozat-gomb">Új dolgozat hozzáadása</button>
 
 <!-- A form rejtve, kattintásra jelenik meg -->
-<div id="uj-dolgozat-form" class="modal-form uj-dolgozat-form" style="display: none;">
+<form id="uj-dolgozat-form" class="modal-form uj-dolgozat-form" style="display: none;">
     <input type="text" id="dolgozat-cim" placeholder="Dolgozat címe">
     <textarea id="dolgozat-leiras" placeholder="Rövid leírás"></textarea>
 
-<div class="user-dropdown">
-  <button class="dropdown-btn">Hallgató(k) kiválasztása ▾</button>
-  <div class="dropdown-content" id="hallgato-lista">
-    <!-- JS generálja ide -->
-  </div>
-</div>
+    <div class="user-dropdown">
+      <button type="button" class="dropdown-btn">Hallgató(k) kiválasztása ▾</button>
+      <div class="dropdown-content" id="hallgato-lista"></div>
+    </div>
 
-<div class="user-dropdown">
-  <button class="dropdown-btn">Témavezető kiválasztása ▾</button>
-  <div class="dropdown-content" id="temavezeto-lista">
-    <!-- JS generálja ide -->
-  </div>
-</div>
+    <div class="user-dropdown">
+      <button type="button" class="dropdown-btn">Témavezető kiválasztása ▾</button>
+      <div class="dropdown-content" id="temavezeto-lista"></div>
+    </div>
 
-    <button id="hozzaadas-gomb">Hozzáadás</button>
-    <button id="megse-gomb">Mégse</button>
-</div>
+    <button type="submit" id="hozzaadas-gomb">Hozzáadás</button>
+    <button type="button" id="megse-gomb">Mégse</button>
+</form>
+
 
 <!-- Homályosító réteg -->
 <div id="homalyositas" class="blur-layer" style="display: none;"></div>

@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const dolgozatForm = document.getElementById('dolgozat-form');
+    const dolgozatForm = document.getElementById('uj-dolgozat-form');
     const dolgozatTbody = document.getElementById('dolgozat-tbody');
     const searchInput = document.getElementById('dolgozat-search-input');
     const paginationContainer = document.getElementById('dolgozat-pagination');
@@ -84,55 +84,61 @@ function megjelenitDolgozatok() {
 
 
     // Új dolgozat hozzáadása
-    if (dolgozatForm) {
-        dolgozatForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
+if (dolgozatForm) {
+    dolgozatForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
 
-          const selectedHallgatok = Array.from(document.querySelectorAll('#hallgato-lista input[type="checkbox"]:checked'))
-    .map(checkbox => checkbox.value);
+        const selectedHallgatok = Array.from(document.querySelectorAll('#hallgato-lista input[type="checkbox"]:checked'))
+            .map(checkbox => checkbox.value);
 
-if (selectedHallgatok.length === 0) {
-    alert('Válassz legalább egy hallgatót!');
-    return;
-}
+        if (selectedHallgatok.length === 0) {
+            alert('Válassz legalább egy hallgatót!');
+            return;
+        }
 
-const selectedTemavezeto = document.querySelector('#temavezeto-lista input[name="temavezeto"]:checked');
-if (!selectedTemavezeto) {
-    alert('Válassz témavezetőt!');
-    return;
-}
+        const selectedTemavezeto = document.querySelector('#temavezeto-lista input[name="temavezeto"]:checked');
+        if (!selectedTemavezeto) {
+            alert('Válassz témavezetőt!');
+            return;
+        }
 
-const formData = {
-    cím: document.getElementById('dolgozat-cim').value,
-    hallgato_ids: selectedHallgatok,
-    temavezeto_id: selectedTemavezeto.value,
-    allapot: "benyújtva"
-};
+        const formData = {
+            cím: document.getElementById('dolgozat-cim').value,
+            hallgato_ids: selectedHallgatok,
+            temavezeto_id: selectedTemavezeto.value,
+            allapot: "benyújtva"
+        };
 
-if (!formData.cím || !formData.temavezeto_id || formData.hallgato_ids.length === 0) {
-    alert('Kérlek, töltsd ki az összes mezőt!');
-    return;
-}
-            try {
-                const response = await fetch('/api/dolgozatok', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
+        if (!formData.cím || !formData.temavezeto_id || formData.hallgato_ids.length === 0) {
+            alert('Kérlek, töltsd ki az összes mezőt!');
+            return;
+        }
 
-                if (response.ok) {
-                    const ujDolgozat = await response.json();
-                    dolgozatok.push(ujDolgozat);
-                    megjelenitDolgozatok();
-                    dolgozatForm.reset();
-                } else {
-                    console.error('Hiba történt a dolgozat hozzáadása során');
-                }
-            } catch (error) {
-                console.error('Hiba történt a dolgozat mentése során:', error);
+        try {
+            const response = await fetch('/api/dolgozatok', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                const ujDolgozat = await response.json();
+                console.log('Sikeres POST:', ujDolgozat);
+                dolgozatok.push(ujDolgozat);
+                megjelenitDolgozatok();
+                dolgozatForm.reset();
+                document.getElementById('uj-dolgozat-form').style.display = 'none';
+                document.getElementById('homalyositas').style.display = 'none';
+            } else {
+                console.error('Hiba történt a dolgozat hozzáadása során');
             }
-        });
-    }
+        } catch (error) {
+            console.error('Hiba történt a dolgozat mentése során:', error);
+        }
+    });
+}
+
+
 
     // Dolgozat szerkesztése
 window.editDolgozat = async function (id) {
@@ -177,17 +183,20 @@ window.editDolgozat = async function (id) {
         `;
 
         // Mentés és Mégse gomb
-        const saveBtn = document.createElement('button');
-        saveBtn.textContent = 'Mentés';
-        saveBtn.addEventListener('click', async () => saveDolgozat(id, cells));
+        // Mentés és Mégse gombok
+const saveBtn = document.createElement('button');
+saveBtn.textContent = 'Mentés';
+saveBtn.addEventListener('click', async () => saveDolgozat(id, cells));
 
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Mégse';
-        cancelBtn.addEventListener('click', megjelenitDolgozatok);
+const cancelBtn = document.createElement('button');
+cancelBtn.textContent = 'Mégse';
+cancelBtn.addEventListener('click', megjelenitDolgozatok);
 
-        cells[4].innerHTML = '';
-        cells[4].appendChild(saveBtn);
-        cells[4].appendChild(cancelBtn);
+
+cells[5].innerHTML = '';
+cells[5].appendChild(saveBtn);
+cells[5].appendChild(cancelBtn);
+
     }
 };
 
@@ -269,10 +278,11 @@ async function saveDolgozat(id, cells) {
     }
 
     // Keresés
-    searchInput.addEventListener('input', () => {tr.inn
-        currentPage = 1;
-        megjelenitDolgozatok();
-    });
+   searchInput.addEventListener('input', () => {
+    currentPage = 1;
+    megjelenitDolgozatok();
+});
+
     
     const ujDolgozatGomb = document.getElementById('uj-dolgozat-gomb');
 const ujDolgozatForm = document.getElementById('uj-dolgozat-form');
