@@ -916,11 +916,46 @@ async function isGlobalDeadlineExpired(key) {
 // 🔹 Többszörös bírálat mentése
 app.post('/api/papers/:id/ertekeles', async (req, res) => {
   const { id } = req.params;
-  const ertekeles = req.body;
+  const ertekeles = req.body || {};
 
   try {
     const dolgozat = await Dolgozat.findById(id);
     if (!dolgozat) return res.status(404).send('Dolgozat nem található');
+
+    // 🔹 ÜRES értékelés szűrése: ha nincs pontszám ÉS nincs szöveges rész, akkor ne mentsünk semmit
+    const scoreKeys = ['pontszam', 'score1', 'score2', 'score3', 'score4', 'score5'];
+    const textKeys = [
+      'szovegesErtekeles',
+      'szoveges',
+      'megjegyzes',
+      'text1',
+      'text2',
+      'text3',
+      'text4',
+      'text5'
+    ];
+
+    const hasScore = scoreKeys.some(key => {
+      const v = ertekeles[key];
+      if (v === null || v === undefined) return false;
+      const str = String(v).trim();
+      if (str === '') return false;
+      const num = parseFloat(str.replace(',', '.'));
+      return !Number.isNaN(num);
+    });
+
+    const hasText = textKeys.some(key => {
+      const v = ertekeles[key];
+      return typeof v === 'string' && v.trim() !== '';
+    });
+
+    if (!hasScore && !hasText) {
+      return res.status(400).json({
+        error:
+          'Nem érkezett értékelés (nincs pontszám vagy szöveges mező kitöltve). ' +
+          'Kérjük, tölts fel Excel fájlt, vagy adj meg pontszámot / szöveges értékelést, mielőtt mentesz.'
+      });
+    }
 
     // Mindig elmentjük a "legutóbbi" értékelés objektumot kompatibilitás miatt
     dolgozat.ertekeles = ertekeles || {};
@@ -961,14 +996,14 @@ app.post('/api/papers/:id/ertekeles', async (req, res) => {
       pontszam = undefined;
     }
 
-  const szoveg =
-  ertekeles.szovegesErtekeles ||
-  ertekeles.szoveges ||
-  ertekeles.megjegyzes ||
-  ['text1', 'text2', 'text3', 'text4', 'text5']
-    .map(kulcs => (ertekeles[kulcs] || '').trim())
-    .filter(Boolean)
-    .join('\n\n');  // KÉT sortöréssel fűzzük egybe
+    const szoveg =
+      ertekeles.szovegesErtekeles ||
+      ertekeles.szoveges ||
+      ertekeles.megjegyzes ||
+      ['text1', 'text2', 'text3', 'text4', 'text5']
+        .map(kulcs => (ertekeles[kulcs] || '').trim())
+        .filter(Boolean)
+        .join('\n\n'); // KÉT sortöréssel fűzzük egybe
 
     // Megnézzük, van-e már értékelés ettől a bírálótól
     const existing = dolgozat.ertekelesek.find(
@@ -982,18 +1017,17 @@ app.post('/api/papers/:id/ertekeles', async (req, res) => {
       if (szoveg) {
         existing.szovegesErtekeles = szoveg;
       }
-      existing.form = ertekeles;      // 🔹 teljes űrlap mentése
+      existing.form = ertekeles; // 🔹 teljes űrlap mentése
       existing.createdAt = new Date();
     } else {
       dolgozat.ertekelesek.push({
         biraloId,
         pontszam: typeof pontszam === 'number' ? pontszam : undefined,
         szovegesErtekeles: szoveg,
-        form: ertekeles,              // 🔹 teljes űrlap mentése
+        form: ertekeles, // 🔹 teljes űrlap mentése
         createdAt: new Date()
       });
     }
-
 
     // 🔹 Bírálati állapot frissítése (1/2, 2/2, 3/3 logika + nagy eltérés)
     const stat = frissitsBiralatiAllapot(dolgozat);
@@ -2467,7 +2501,6 @@ async function sendReviewsToStudentsAfterDeadline() {
         { reviewSentToStudentsAt: null }
       ]
     })
-      .populate('biralok.felhasznaloId')
       .lean();
 
     if (!dolgozatok.length) return;
@@ -2575,7 +2608,7 @@ setInterval(() => {
   // 3️⃣ Bírálatok kiküldése hallgatóknak (pontszám nélkül)
   sendReviewsToStudentsAfterDeadline()
     .catch(err => console.error('Hiba a bírálatok hallgatóknak való kiküldésekor:', err));
-}, 1000 * 60 * 60); // kb. óránként
+}, 1000 * 10); // kb. óránként
 
 
 

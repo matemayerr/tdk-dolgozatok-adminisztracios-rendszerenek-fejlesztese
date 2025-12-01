@@ -128,7 +128,7 @@
 <div id="biralat-deadline-box"
      style="margin: 10px 0; padding: 8px 12px; border-radius: 4px;
             background:#fff3cd; color:#856404; font-weight: bold;">
-  Bírálat leadásának (ajánlott) határideje:
+  Bírálat leadásának határideje:
   <span id="biralat-deadline-text">nincs beállítva</span>
 </div>
 
@@ -471,7 +471,7 @@
 
       const cimInput = document.getElementById('cim');
       const szekcioInput = document.getElementById('szekcio');
-            const biraloInput = document.getElementById('biralo');
+      const biraloInput = document.getElementById('biralo');
 
       if (cimInput) cimInput.value = paper.cim || '';
       if (szekcioInput) szekcioInput.value = paper.szekcioNev || '';
@@ -496,7 +496,6 @@
 
         biraloInput.value = megjelenoNev || '';
       }
-
 
       // Szerzők
       const szerzokContainer = document.getElementById('szerzok-container');
@@ -569,6 +568,22 @@
       biraloId: biraloIdFromUrl
     };
 
+    // 🔹 Frontend ellenőrzés: legyen legalább egy pontszám vagy szöveges értékelés
+    const vanPont = [1, 2, 3, 4, 5].some(i => {
+      const v = (ertekeles[`score${i}`] ?? '').toString().trim();
+      return v !== '';
+    });
+    const vanSzoveg = [1, 2, 3, 4, 5].some(i => {
+      const v = (ertekeles[`text${i}`] ?? '').toString().trim();
+      return v !== '';
+    });
+    const vanKerdes = (ertekeles.kerdesek || '').trim() !== '';
+
+    if (!vanPont && !vanSzoveg && !vanKerdes) {
+      alert('Legalább egy pontszámot vagy szöveges értékelést adj meg a mentéshez.');
+      return;
+    }
+
     try {
       const res = await fetch(`/api/papers/${id}/ertekeles`, {
         method: 'POST',
@@ -576,12 +591,29 @@
         body: JSON.stringify(ertekeles)
       });
 
-      if (!res.ok) throw new Error('Hibás válasz a szervertől.');
-      await res.json();
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (e) {
+        // ha nincs JSON törzs, marad null
+      }
+
+      if (!res.ok) {
+        // 🔹 Backend hibák kulturált megjelenítése
+        const msg =
+          (data && (data.error || data.message)) ||
+          (res.status === 400
+            ? 'Az értékelés adatai hiányosak vagy hibásak. Kérjük, ellenőrizd a pontszámokat és a szöveges mezőket.'
+            : 'Hiba történt az értékelés mentésekor. Kérlek, próbáld újra később.');
+
+        alert(msg);
+        return;
+      }
+
       alert('Értékelés elmentve!');
     } catch (err) {
       console.error('Hiba az értékelés mentésénél:', err);
-      alert('Hiba történt az értékelés mentésekor.');
+      alert('Hálózati hiba történt az értékelés mentésekor.');
     }
   }
 
@@ -626,102 +658,101 @@
     }
   }
 
-let studentReviews = [];
+  let studentReviews = [];
 
-// Hallgatói endpointról bírálatok betöltése
-async function loadStudentReviews(id) {
-  if (!isStudentView) return;
+  // Hallgatói endpointról bírálatok betöltése
+  async function loadStudentReviews(id) {
+    if (!isStudentView) return;
 
-  try {
-    const res = await fetch(`/api/papers/${id}/ertekelesek-hallgato`);
-    if (!res.ok) {
-      console.warn('Nincs hallgatói bírálat ehhez a dolgozathoz vagy hiba történt.');
-      return;
-    }
-
-    const data = await res.json();
-    const reviews = data.reviews || [];
-    if (!reviews.length) {
-      console.warn('Nincs még bírálat a hallgatói nézethez.');
-      return;
-    }
-
-    studentReviews = reviews;
-
-    // Bíráló input lecserélése selectre
-    const biraloInput = document.getElementById('biralo');
-    if (biraloInput && biraloInput.parentElement) {
-      let biraloSelect = document.getElementById('biraloSelect');
-
-      if (!biraloSelect) {
-        biraloSelect = document.createElement('select');
-        biraloSelect.id = 'biraloSelect';
-        biraloSelect.style.width = '25%';
-
-        // az input helyére tesszük a selectet
-        biraloInput.parentElement.replaceChild(biraloSelect, biraloInput);
+    try {
+      const res = await fetch(`/api/papers/${id}/ertekelesek-hallgato`);
+      if (!res.ok) {
+        console.warn('Nincs hallgatói bírálat ehhez a dolgozathoz vagy hiba történt.');
+        return;
       }
 
-      biraloSelect.innerHTML = '';
-      reviews.forEach((r, index) => {
-        const opt = document.createElement('option');
-        opt.value = r.biraloId;
-        opt.textContent = r.biraloNev || `Bíráló ${index + 1}`;
-        biraloSelect.appendChild(opt);
-      });
+      const data = await res.json();
+      const reviews = data.reviews || [];
+      if (!reviews.length) {
+        console.warn('Nincs még bírálat a hallgatói nézethez.');
+        return;
+      }
 
-      biraloSelect.addEventListener('change', () => {
-        showStudentReview(biraloSelect.value);
-      });
+      studentReviews = reviews;
 
-      // első bírálat megjelenítése
-      if (reviews[0]) {
-        showStudentReview(reviews[0].biraloId);
+      // Bíráló input lecserélése selectre
+      const biraloInput = document.getElementById('biralo');
+      if (biraloInput && biraloInput.parentElement) {
+        let biraloSelect = document.getElementById('biraloSelect');
+
+        if (!biraloSelect) {
+          biraloSelect = document.createElement('select');
+          biraloSelect.id = 'biraloSelect';
+          biraloSelect.style.width = '25%';
+
+          // az input helyére tesszük a selectet
+          biraloInput.parentElement.replaceChild(biraloSelect, biraloInput);
+        }
+
+        biraloSelect.innerHTML = '';
+        reviews.forEach((r, index) => {
+          const opt = document.createElement('option');
+          opt.value = r.biraloId;
+          opt.textContent = r.biraloNev || `Bíráló ${index + 1}`;
+          biraloSelect.appendChild(opt);
+        });
+
+        biraloSelect.addEventListener('change', () => {
+          showStudentReview(biraloSelect.value);
+        });
+
+        // első bírálat megjelenítése
+        if (reviews[0]) {
+          showStudentReview(reviews[0].biraloId);
+        }
+      }
+
+      // Régi "Szöveges bírálat" blokk biztosan maradjon elrejtve, ha még létezik
+      const block = document.getElementById('student-review-block');
+      if (block) block.style.display = 'none';
+
+    } catch (err) {
+      console.error('Hiba a hallgatói bírálatok betöltésekor:', err);
+    }
+  }
+
+  function showStudentReview(biraloId) {
+    if (!studentReviews.length) return;
+
+    const review = studentReviews.find(r => String(r.biraloId) === String(biraloId));
+    const form = review && review.form ? review.form : {};
+
+    // 1–5. szempont szövegei
+    for (let i = 1; i <= 5; i++) {
+      const textarea = document.getElementById(`text${i}`);
+      if (textarea) {
+        textarea.value = form[`text${i}`] || '';
       }
     }
 
-    // Régi "Szöveges bírálat" blokk biztosan maradjon elrejtve, ha még létezik
-    const block = document.getElementById('student-review-block');
-    if (block) block.style.display = 'none';
+    // Bírálói kérdések
+    const kerdesElem = document.getElementById('bírálói_kérdések');
+    if (kerdesElem) {
+      kerdesElem.value = form.kerdesek || form['bírálói_kérdések'] || '';
+    }
 
-  } catch (err) {
-    console.error('Hiba a hallgatói bírálatok betöltésekor:', err);
-  }
-}
+    // OTDK részvétel
+    const otdkElem = document.getElementById('otdk_reszvetel');
+    if (otdkElem) {
+      otdkElem.value = form.otdk || form.otdk_reszvetel || otdkElem.value;
+    }
 
-
-function showStudentReview(biraloId) {
-  if (!studentReviews.length) return;
-
-  const review = studentReviews.find(r => String(r.biraloId) === String(biraloId));
-  const form = review && review.form ? review.form : {};
-
-  // 1–5. szempont szövegei
-  for (let i = 1; i <= 5; i++) {
-    const textarea = document.getElementById(`text${i}`);
-    if (textarea) {
-      textarea.value = form[`text${i}`] || '';
+    // Dátum
+    const datumElem = document.getElementById('datum');
+    if (datumElem) {
+      datumElem.value = form.datum || '';
     }
   }
-
-  // Bírálói kérdések
-  const kerdesElem = document.getElementById('bírálói_kérdések');
-  if (kerdesElem) {
-    kerdesElem.value = form.kerdesek || form['bírálói_kérdések'] || '';
-  }
-
-  // OTDK részvétel
-  const otdkElem = document.getElementById('otdk_reszvetel');
-  if (otdkElem) {
-    otdkElem.value = form.otdk || form.otdk_reszvetel || otdkElem.value;
-  }
-
-  // Dátum
-  const datumElem = document.getElementById('datum');
-  if (datumElem) {
-    datumElem.value = form.datum || '';
-  }
-}
 
   // 🔹 Hallgatói nézet: csak a pontszámmezőket és az összpontszám blokkot rejtsük el
   function hideScoresForStudents() {
