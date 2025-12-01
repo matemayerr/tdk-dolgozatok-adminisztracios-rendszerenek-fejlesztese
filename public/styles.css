@@ -3,6 +3,11 @@ body {
     margin: 0;
 }
 
+html, body {
+    height: 100%;
+    overflow-y: auto;
+  }  
+
 input[type="checkbox"] {
     display: inline-block;
     margin-right: 5px;
@@ -49,7 +54,6 @@ ul {
 }
 
 li {
-    background: #red;
     margin: 5px 0;
     padding: 5px;
     border: 0px solid #ddd;
@@ -61,9 +65,13 @@ table {
 }
 
 th, td {
-    padding: 4px;
+    padding: 6px 8px;    /* kisebb térköz: függőlegesen 6px, vízszintesen 8px */
     text-align: left;
+    vertical-align: middle;
+    line-height: 1.4;
+    font-size: 14px;
 }
+
 
 th {
     background-color: #242a43;
@@ -326,7 +334,7 @@ nav ul li:last-child {
     width: 100%;
     }
     
-}
+
 
 .uj-dolgozat-form input,
 .uj-dolgozat-form textarea {
@@ -531,12 +539,18 @@ nav ul li a.active {
   }
   
   .login-background {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    height: 100vh;
+    padding-left: 100px;
+    padding-top: 200px;
     background-image: url("images/bagoly.png");
     background-size: 30%;
-    background-position: 70% 100px;
+    background-position: 80% 80px;
     background-repeat: no-repeat;
     background-color: #f4f4f4;
-    min-height: 100vh;
+    overflow: hidden;
 }
 
 .cim-szoveg {
@@ -579,6 +593,187 @@ nav ul li a.active {
     font-weight: bold;
 }
 
+#modosit-dolgozat-form {
+    max-width: 650px;
+    width: 90%;
+    height: auto;
+    padding: 30px;
+    box-sizing: border-box;
+    display: none;
+    max-height: 90vh;         /* max 90% a böngészőmagasságból */
+}
 
+#modosit-dolgozat-leiras {
+    width: 100%;
+    height: 210px;
+    resize: vertical;
+}
 
+/* Felvett felhazsnálók táblázat szélességei */
 
+#felhasznalo-tbody td:nth-child(1), 
+thead th:nth-child(1) {
+    width: 10%;
+}
+
+#felhasznalo-tbody td:nth-child(2), 
+thead th:nth-child(2) {
+    width: 10%;
+}
+
+#felhasznalo-tbody td:nth-child(3), 
+thead th:nth-child(3) {
+    width: 10%;
+}
+
+#felhasznalo-tbody td:nth-child(4), 
+thead th:nth-child(4) {
+    width: 10%;
+}
+
+#felhasznalo-tbody td:nth-child(5), 
+thead th:nth-child(5) {
+    width: 10%;
+}
+
+#felhasznalo-tbody td:first-child,
+thead th:first-child {
+    padding-left: 20px;
+}
+
+/* Felvett dolgozatok táblázat szélességei */
+
+#felvett-dolgozatok-table td:nth-child(1),
+#felvett-dolgozatok-table th:nth-child(1) {
+    width: 55%;
+    padding-left: 20px;
+}
+
+#felvett-dolgozatok-table td:nth-child(2),
+#felvett-dolgozatok-table th:nth-child(2) {
+    width: 10%;
+    text-align: center;
+}
+
+#felvett-dolgozatok-table td:nth-child(3),
+#felvett-dolgozatok-table th:nth-child(3) {
+    width: 15%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+#feltoltes-table td:nth-child(1),
+#feltoltes-table th:nth-child(1) {
+    width: 40%;
+    padding-left: 20px;
+}
+
+#feltoltes-table td:nth-child(2),
+#feltoltes-table th:nth-child(2) {
+    width: 15%;
+    text-align: center;
+}
+
+#feltoltes-table td:nth-child(3),
+#feltoltes-table th:nth-child(3) {
+    width: 15%;
+    text-align: center;
+}
+
+#feltoltes-table td:nth-child(4),
+#feltoltes-table th:nth-child(4) {
+    width: 15%;
+    text-align: center;
+}
+
+#feltoltes-table td:nth-child(5),
+#feltoltes-table th:nth-child(5) {
+    width: 15%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+#ertekeles-table td:nth-child(1),
+#ertekeles-table th:nth-child(1) {
+    width: 30%;
+    padding-left: 20px;
+}
+
+#ertekeles-table td:nth-child(2),
+#ertekeles-table th:nth-child(2),
+#ertekeles-table td:nth-child(3),
+#ertekeles-table th:nth-child(3) {
+    width: 15%;
+    text-align: center;
+}
+
+#ertekeles-table td:nth-child(4),
+#ertekeles-table th:nth-child(4) {
+    width: 10%;
+    text-align: center;
+}
+
+#ertekeles-table td:nth-child(5),
+#ertekeles-table th:nth-child(5) {
+    width: 10%;
+    text-align: center;
+}
+
+#ertekeles-table td:nth-child(6),
+#ertekeles-table th:nth-child(6) {
+    width: 20%;
+    text-align: center;
+    white-space: nowrap;
+}
+.form-container {
+    max-width: 700px;
+    margin-left: 40px;
+    margin-top: 20px;
+    padding: 10px;
+}
+
+#register-modal .form-container {
+    margin-top: 2px;
+}
+
+.login-background {
+    overflow: hidden;
+}
+
+body.login-oldal {
+    overflow: hidden;
+}
+
+#register-container {
+    max-width: 700px;
+    padding: 10px;
+    margin-top: -120px;
+    margin-left: 220px;
+  }
+
+  .user-dropdown .dropdown-content.scrollable-list {
+    max-height: 200px; /* beállíthatod igény szerint */
+    overflow-y: auto;
+    border: 1px solid #ccc;
+}
+
+.user-dropdown .dropdown-content {
+    max-height: 200px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.lista-kereso {
+    width: 100%;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .user-dropdown .dropdown-content input.lista-kereso {
+    margin-bottom: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  

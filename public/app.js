@@ -10,32 +10,51 @@ document.addEventListener('DOMContentLoaded', function () {
     let aktualisModositandoId = null;
     const itemsPerPage = 10;
 
-    // Felhasználók betöltése csoportok szerint
-    async function betoltFelhasznalok() {
-        try {
-            const response = await fetch('/api/felhasznalok/csoportok');
-            const { hallgatok, temavezetok } = await response.json();
-            
-            // Hallgatók betöltése a legördülő menübe
+// Felhasználók betöltése csoportok szerint
+async function betoltFelhasznalok() {
+    try {
+        const response = await fetch('/api/felhasznalok/csoportok');
+        const { hallgatok, temavezetok } = await response.json();
+
+        // Hallgatók betöltése
         const hallgatoLista = document.getElementById('hallgato-lista');
-        hallgatoLista.innerHTML = hallgatok.map(hallgato => `
+        hallgatoLista.innerHTML = hallgatok.map(h => `
             <label>
-                <input type="checkbox" value="${hallgato.neptun}"> ${hallgato.nev} (${hallgato.neptun})
+                <input type="checkbox" value="${h.neptun}">
+                ${h.nev} (${h.neptun})
             </label>
         `).join('');
 
+        // Témavezetők betöltése
+        const temavezetoLista = document.getElementById('temavezeto-lista');
+        temavezetoLista.innerHTML = temavezetok.map(t => `
+            <label>
+                <input type="radio" name="temavezeto" value="${t.neptun}">
+                ${t.nev} (${t.neptun})
+            </label>
+        `).join('');
 
-            const temavezetoLista = document.getElementById('temavezeto-lista'); // Hozz létre egy ilyen divet a HTML-ben
-temavezetoLista.innerHTML = temavezetok.map(temavezeto => `
-    <label class="csoport-label">
-        <input type="radio" name="temavezeto" value="${temavezeto.neptun}"> ${temavezeto.nev} (${temavezeto.neptun})
-    </label>
-`).join('');
-
-        } catch (error) {
-            console.error('Hiba történt a felhasználók betöltése során:', error);
-        }
+    } catch (error) {
+        console.error('Hiba történt a felhasználók betöltése során:', error);
     }
+}
+
+// Hallgatói kereső szűrés
+document.getElementById('hallgato-kereso').addEventListener('input', function () {
+    const keres = this.value.toLowerCase();
+    document.querySelectorAll('#hallgato-lista label').forEach(label => {
+        label.style.display = label.textContent.toLowerCase().includes(keres) ? '' : 'none';
+    });
+});
+
+// Témavezető kereső szűrés
+document.getElementById('temavezeto-kereso').addEventListener('input', function () {
+    const keres = this.value.toLowerCase();
+    document.querySelectorAll('#temavezeto-lista label').forEach(label => {
+        label.style.display = label.textContent.toLowerCase().includes(keres) ? '' : 'none';
+    });
+});
+
 
     // Dolgozatok lekérdezése
     async function listazDolgozatok() {
@@ -50,12 +69,14 @@ temavezetoLista.innerHTML = temavezetok.map(temavezeto => `
 
 // Dolgozatok megjelenítése
 async function megjelenitDolgozatok() {
+    const searchText = searchInput.value.toLowerCase();
     const filteredDolgozatok = dolgozatok.filter(dolgozat => 
-        dolgozat.cím.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-        (Array.isArray(dolgozat.hallgato_ids) && dolgozat.hallgato_ids.some(id => id.toLowerCase().includes(searchInput.value.toLowerCase()))) ||
-        dolgozat.temavezeto_id.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-        dolgozat.allapot.toLowerCase().includes(searchInput.value.toLowerCase())
+        (dolgozat.cím && dolgozat.cím.toLowerCase().includes(searchText)) ||
+        (Array.isArray(dolgozat.hallgato_ids) && dolgozat.hallgato_ids.some(id => id.toLowerCase().includes(searchText))) ||
+        (dolgozat.temavezeto_id && dolgozat.temavezeto_id.toLowerCase().includes(searchText)) ||
+        (dolgozat.allapot && dolgozat.allapot.toLowerCase().includes(searchText))
     );
+    
 
     // Felhasználók lekérése a nevekhez
 let felhasznalokNevek = {};
@@ -385,7 +406,4 @@ window.toggleDetails = function (dolgozatId) {
         icon.textContent = isOpen ? '▲' : '▼';
     }
 };
-
-
-
 

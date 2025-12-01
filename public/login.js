@@ -1,18 +1,21 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const loginForm = document.getElementById('login-form');
-
-    // 🔹 Modal nyitása/zárása
-const openModalBtn = document.getElementById('open-register-modal');
-const closeModalBtn = document.getElementById('close-register-modal');
-const registerModal = document.getElementById('register-modal');
-
-openModalBtn.addEventListener('click', () => {
-    registerModal.style.display = 'block';
-});
-
-closeModalBtn.addEventListener('click', () => {
-    registerModal.style.display = 'none';
-});
+document.addEventListener("DOMContentLoaded", () => {
+    const openRegister = document.getElementById("open-register-modal");
+    const closeRegister = document.getElementById("close-register-modal");
+    const loginContainer = document.getElementById("login-container");
+    const registerContainer = document.getElementById("register-container");
+  
+    openRegister.addEventListener("click", (e) => {
+      e.preventDefault();
+      loginContainer.style.display = "none";
+      registerContainer.style.display = "block";
+    });
+  
+    closeRegister.addEventListener("click", () => {
+      registerContainer.style.display = "none";
+      loginContainer.style.display = "block";
+    });
+  });
+  
 
 // 🔹 Regisztráció kezelése
 const registerForm = document.getElementById('register-form');
@@ -47,6 +50,7 @@ registerForm.addEventListener('submit', async function (event) {
 });
 
     // Bejelentkezés
+    const loginForm = document.getElementById('login-form');
     loginForm.addEventListener('submit', async function (event) {
         event.preventDefault();
 
@@ -76,5 +80,4 @@ registerForm.addEventListener('submit', async function (event) {
             console.error('Hiba történt a bejelentkezés során:', error);
         }
     });
-});
 

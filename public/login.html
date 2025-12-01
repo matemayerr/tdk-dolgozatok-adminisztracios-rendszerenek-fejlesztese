@@ -6,14 +6,15 @@
     <title>Bejelentkezés</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="login-oldal">
     <header>
         <h1>TDK Adminisztrációs Rendszer</h1>
     </header>
 
       <main class="login-background">
-      <section>  
-            <p><h2>Bejelentkezés</h2>
+        <section>
+          <div class="form-container" id="login-container">
+            <h2>Bejelentkezés</h2>
             <form id="login-form">
                 <input type="text" id="neptun" placeholder="Neptun-kód" required>
                 <input type="password" id="jelszo" placeholder="Jelszó" required>
@@ -21,13 +22,14 @@
             </form>
             <p>Még nincs fiókod? <a href="#" id="open-register-modal">Regisztráció</a></p>
             <p id="login-error" style="color: red; display: none;">Hibás Neptun-kód vagy jelszó!</p>
+          </div>
         </section>
+        
 
             <!-- Regisztrációs modal -->
-<div id="register-modal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <h3>Regisztráció</h3>
-      <form id="register-form">
+        <div id="register-container" class="form-container" style="display: none;">
+          <h3>Regisztráció</h3>
+        <form id="register-form">
         <label for="reg-nev">Név:</label>
         <input type="text" id="reg-nev" placeholder="Teljes név" required>
   

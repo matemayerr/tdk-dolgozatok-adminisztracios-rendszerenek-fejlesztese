@@ -1,0 +1,494 @@
+[
+  {
+    "cim": "A mesterséges intelligencia hatása az oktatásra",
+    "leiras": "Ez a dolgozat részletesen elemzi a a mesterséges intelligencia hatása az oktatásra kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Lakatos Márta",
+        "neptun": "KL2345"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "Fenntartható városi közlekedési rendszerek",
+    "leiras": "Ez a dolgozat részletesen elemzi a fenntartható városi közlekedési rendszerek kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Varga Réka",
+        "neptun": "EF9012"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "A digitális identitás biztonsági kihívásai",
+    "leiras": "Ez a dolgozat részletesen elemzi a a digitális identitás biztonsági kihívásai kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Bognár Zsófia",
+        "neptun": "QR5678"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Takács Ádám",
+      "neptun": "TV002"
+    }
+  },
+  {
+    "cim": "Okos otthonok technológiai fejlődése",
+    "leiras": "Ez a dolgozat részletesen elemzi a okos otthonok technológiai fejlődése kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Varga Réka",
+        "neptun": "EF9012"
+      },
+      {
+        "nev": "Kovács Dóra",
+        "neptun": "AB1234"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Takács Ádám",
+      "neptun": "TV002"
+    }
+  },
+  {
+    "cim": "Kiberbiztonság az e-kereskedelemben",
+    "leiras": "Ez a dolgozat részletesen elemzi a kiberbiztonság az e-kereskedelemben kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Tóth Bence",
+        "neptun": "IJ7890"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "A megújuló energiaforrások szerepe Magyarországon",
+    "leiras": "Ez a dolgozat részletesen elemzi a a megújuló energiaforrások szerepe magyarországon kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Szabó Péter",
+        "neptun": "CD5678"
+      },
+      {
+        "nev": "Tóth Bence",
+        "neptun": "IJ7890"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "Virtuális valóság alkalmazása az orvostudományban",
+    "leiras": "Ez a dolgozat részletesen elemzi a virtuális valóság alkalmazása az orvostudományban kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Lakatos Márta",
+        "neptun": "KL2345"
+      },
+      {
+        "nev": "Kovács Dóra",
+        "neptun": "AB1234"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Kerekes Júlia",
+      "neptun": "TV003"
+    }
+  },
+  {
+    "cim": "Adatvédelem és GDPR a vállalati szektorban",
+    "leiras": "Ez a dolgozat részletesen elemzi a adatvédelem és gdpr a vállalati szektorban kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Tóth Bence",
+        "neptun": "IJ7890"
+      },
+      {
+        "nev": "Kovács Dóra",
+        "neptun": "AB1234"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Kerekes Júlia",
+      "neptun": "TV003"
+    }
+  },
+  {
+    "cim": "Mobilalkalmazások fejlesztése és UX kihívásai",
+    "leiras": "Ez a dolgozat részletesen elemzi a mobilalkalmazások fejlesztése és ux kihívásai kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Varga Réka",
+        "neptun": "EF9012"
+      },
+      {
+        "nev": "Kovács Dóra",
+        "neptun": "AB1234"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Takács Ádám",
+      "neptun": "TV002"
+    }
+  },
+  {
+    "cim": "Az IoT rendszerek biztonsági kockázatai",
+    "leiras": "Ez a dolgozat részletesen elemzi a az iot rendszerek biztonsági kockázatai kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Kiss Tamás",
+        "neptun": "GH3456"
+      },
+      {
+        "nev": "Szabó Péter",
+        "neptun": "CD5678"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Takács Ádám",
+      "neptun": "TV002"
+    }
+  },
+  {
+    "cim": "A mesterséges intelligencia hatása az oktatásra",
+    "leiras": "Ez a dolgozat részletesen elemzi a a mesterséges intelligencia hatása az oktatásra kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Lakatos Márta",
+        "neptun": "KL2345"
+      },
+      {
+        "nev": "Varga Réka",
+        "neptun": "EF9012"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "Fenntartható városi közlekedési rendszerek",
+    "leiras": "Ez a dolgozat részletesen elemzi a fenntartható városi közlekedési rendszerek kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Szűcs Zoltán",
+        "neptun": "ST9012"
+      },
+      {
+        "nev": "Tóth Bence",
+        "neptun": "IJ7890"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "A digitális identitás biztonsági kihívásai",
+    "leiras": "Ez a dolgozat részletesen elemzi a a digitális identitás biztonsági kihívásai kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Nagy András",
+        "neptun": "OP1234"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Takács Ádám",
+      "neptun": "TV002"
+    }
+  },
+  {
+    "cim": "Okos otthonok technológiai fejlődése",
+    "leiras": "Ez a dolgozat részletesen elemzi a okos otthonok technológiai fejlődése kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Szabó Péter",
+        "neptun": "CD5678"
+      },
+      {
+        "nev": "Farkas Lili",
+        "neptun": "MN6789"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "Kiberbiztonság az e-kereskedelemben",
+    "leiras": "Ez a dolgozat részletesen elemzi a kiberbiztonság az e-kereskedelemben kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Szabó Péter",
+        "neptun": "CD5678"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Kerekes Júlia",
+      "neptun": "TV003"
+    }
+  },
+  {
+    "cim": "A megújuló energiaforrások szerepe Magyarországon",
+    "leiras": "Ez a dolgozat részletesen elemzi a a megújuló energiaforrások szerepe magyarországon kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Farkas Lili",
+        "neptun": "MN6789"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "Virtuális valóság alkalmazása az orvostudományban",
+    "leiras": "Ez a dolgozat részletesen elemzi a virtuális valóság alkalmazása az orvostudományban kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Kiss Tamás",
+        "neptun": "GH3456"
+      },
+      {
+        "nev": "Varga Réka",
+        "neptun": "EF9012"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Takács Ádám",
+      "neptun": "TV002"
+    }
+  },
+  {
+    "cim": "Adatvédelem és GDPR a vállalati szektorban",
+    "leiras": "Ez a dolgozat részletesen elemzi a adatvédelem és gdpr a vállalati szektorban kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Farkas Lili",
+        "neptun": "MN6789"
+      },
+      {
+        "nev": "Tóth Bence",
+        "neptun": "IJ7890"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Takács Ádám",
+      "neptun": "TV002"
+    }
+  },
+  {
+    "cim": "Mobilalkalmazások fejlesztése és UX kihívásai",
+    "leiras": "Ez a dolgozat részletesen elemzi a mobilalkalmazások fejlesztése és ux kihívásai kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Bognár Zsófia",
+        "neptun": "QR5678"
+      },
+      {
+        "nev": "Lakatos Márta",
+        "neptun": "KL2345"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "Az IoT rendszerek biztonsági kockázatai",
+    "leiras": "Ez a dolgozat részletesen elemzi a az iot rendszerek biztonsági kockázatai kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Szabó Péter",
+        "neptun": "CD5678"
+      },
+      {
+        "nev": "Varga Réka",
+        "neptun": "EF9012"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Kerekes Júlia",
+      "neptun": "TV003"
+    }
+  },
+  {
+    "cim": "A mesterséges intelligencia hatása az oktatásra",
+    "leiras": "Ez a dolgozat részletesen elemzi a a mesterséges intelligencia hatása az oktatásra kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Varga Réka",
+        "neptun": "EF9012"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Takács Ádám",
+      "neptun": "TV002"
+    }
+  },
+  {
+    "cim": "Fenntartható városi közlekedési rendszerek",
+    "leiras": "Ez a dolgozat részletesen elemzi a fenntartható városi közlekedési rendszerek kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Kiss Tamás",
+        "neptun": "GH3456"
+      },
+      {
+        "nev": "Nagy András",
+        "neptun": "OP1234"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Kerekes Júlia",
+      "neptun": "TV003"
+    }
+  },
+  {
+    "cim": "A digitális identitás biztonsági kihívásai",
+    "leiras": "Ez a dolgozat részletesen elemzi a a digitális identitás biztonsági kihívásai kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Kovács Dóra",
+        "neptun": "AB1234"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "Okos otthonok technológiai fejlődése",
+    "leiras": "Ez a dolgozat részletesen elemzi a okos otthonok technológiai fejlődése kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Szabó Péter",
+        "neptun": "CD5678"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Kerekes Júlia",
+      "neptun": "TV003"
+    }
+  },
+  {
+    "cim": "Kiberbiztonság az e-kereskedelemben",
+    "leiras": "Ez a dolgozat részletesen elemzi a kiberbiztonság az e-kereskedelemben kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Szűcs Zoltán",
+        "neptun": "ST9012"
+      },
+      {
+        "nev": "Kiss Tamás",
+        "neptun": "GH3456"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Takács Ádám",
+      "neptun": "TV002"
+    }
+  },
+  {
+    "cim": "A megújuló energiaforrások szerepe Magyarországon",
+    "leiras": "Ez a dolgozat részletesen elemzi a a megújuló energiaforrások szerepe magyarországon kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Farkas Lili",
+        "neptun": "MN6789"
+      },
+      {
+        "nev": "Kiss Tamás",
+        "neptun": "GH3456"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "Virtuális valóság alkalmazása az orvostudományban",
+    "leiras": "Ez a dolgozat részletesen elemzi a virtuális valóság alkalmazása az orvostudományban kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Kovács Dóra",
+        "neptun": "AB1234"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "Adatvédelem és GDPR a vállalati szektorban",
+    "leiras": "Ez a dolgozat részletesen elemzi a adatvédelem és gdpr a vállalati szektorban kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Kiss Tamás",
+        "neptun": "GH3456"
+      },
+      {
+        "nev": "Nagy András",
+        "neptun": "OP1234"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  },
+  {
+    "cim": "Mobilalkalmazások fejlesztése és UX kihívásai",
+    "leiras": "Ez a dolgozat részletesen elemzi a mobilalkalmazások fejlesztése és ux kihívásai kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Szabó Péter",
+        "neptun": "CD5678"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Kerekes Júlia",
+      "neptun": "TV003"
+    }
+  },
+  {
+    "cim": "Az IoT rendszerek biztonsági kockázatai",
+    "leiras": "Ez a dolgozat részletesen elemzi a az iot rendszerek biztonsági kockázatai kérdéskörét. A kutatás során különös figyelmet fordítunk a jelenlegi technológiákra és azok társadalmi hatásaira. A dolgozat célja, hogy bemutassa a megvalósítási lehetőségeket, valamint a bevezetés lehetséges akadályait. Az elemzés hazai és nemzetközi példákra is támaszkodik. Külön fejezet foglalkozik a gyakorlati alkalmazhatósággal. Az eredmények alapján javaslatokat fogalmazunk meg a jövőbeni fejlesztésekhez.",
+    "hallgatok": [
+      {
+        "nev": "Varga Réka",
+        "neptun": "EF9012"
+      },
+      {
+        "nev": "Farkas Lili",
+        "neptun": "MN6789"
+      }
+    ],
+    "temavezeto": {
+      "nev": "Dr. Nagy Éva",
+      "neptun": "TV001"
+    }
+  }
+]
