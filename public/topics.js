@@ -69,7 +69,7 @@ topics.forEach(t => {
   detailsRow.innerHTML = `
     <td colspan="5">
       <div class="topic-details-panel">
-        <p><strong>Összefoglaló:</strong></p>
+        <p><strong>Tartalmi összefoglaló:</strong></</p>
         <p>${ossz || '(nincs megadva)'}</p>
       </div>
     </td>
@@ -346,3 +346,61 @@ async function mentModositast(id) {
 // ───────────────────────────────── INDULÓ BETÖLTÉS
 await loadTopics();
 });
+
+/*
+function sortTableByColumn(columnIndex) {
+  const table = document.getElementById("topic-table");
+  const tbody = table.querySelector("tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+
+  // Csak a fő sorokat (páros indexűeket) gyűjtjük be (a részletek a következő sorban vannak)
+  const dataRows = [];
+  for (let i = 0; i < rows.length; i += 2) {
+    const mainRow = rows[i];
+    const detailRow = rows[i + 1];
+    dataRows.push({ mainRow, detailRow });
+  }
+
+  // Rendezés
+  const sorted = dataRows.sort((a, b) => {
+    const cellA = a.mainRow.children[columnIndex]?.textContent.trim().toLowerCase() || '';
+    const cellB = b.mainRow.children[columnIndex]?.textContent.trim().toLowerCase() || '';
+    return cellA.localeCompare(cellB);
+  });
+
+  // Eredeti sorok törlése
+  while (tbody.firstChild) {
+    tbody.removeChild(tbody.firstChild);
+  }
+
+  // Újrarendezett sorok beszúrása
+  sorted.forEach(({ mainRow, detailRow }) => {
+    tbody.appendChild(mainRow);
+    tbody.appendChild(detailRow);
+  });
+}
+*/
+
+let sortDirection = {}; // tárolja az oszlopok irányát (növekvő/csökkenő)
+
+function sortTableByColumn(columnIndex) {
+  const table = document.getElementById("topic-table");
+  const tbody = table.querySelector("tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+
+  // rendezési irány beállítása: alapértelmezetten növekvő
+  sortDirection[columnIndex] = !sortDirection[columnIndex];
+
+  const direction = sortDirection[columnIndex] ? 1 : -1;
+
+  const sortedRows = rows.sort((rowA, rowB) => {
+    const cellA = rowA.children[columnIndex]?.textContent.trim().toLowerCase() || "";
+    const cellB = rowB.children[columnIndex]?.textContent.trim().toLowerCase() || "";
+
+    return cellA.localeCompare(cellB) * direction;
+  });
+
+  // újrarendereljük a rendezett sorokat
+  tbody.innerHTML = "";
+  sortedRows.forEach(row => tbody.appendChild(row));
+}

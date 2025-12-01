@@ -167,3 +167,14 @@ document.getElementById('assign-form').addEventListener('submit', async (e) => {
   }
 });
 
+function filterPapersByTitle() {
+  const searchTerm = document.getElementById('search-papers-input').value.toLowerCase();
+  const labels = document.querySelectorAll('#assign-papers-list label');
+
+  labels.forEach(label => {
+    const text = label.textContent.toLowerCase();
+    label.style.display = text.includes(searchTerm) ? 'block' : 'none';
+  });
+}
+
+
