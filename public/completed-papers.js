@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const paginationContainer = document.getElementById('dolgozat-pagination');
     let dolgozatok = [];
     let currentPage = 1;
-    const itemsPerPage = 10;
+    let itemsPerPage = 25;
 
     // Dolgozatok lekérdezése
     async function listazDolgozatok() {
@@ -124,5 +124,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Indításkor dolgozatok betöltése
     listazDolgozatok();
+
+    const sorokSzamaSelect = document.getElementById('sorokSzama');
+if (sorokSzamaSelect) {
+    sorokSzamaSelect.addEventListener('change', function () {
+        itemsPerPage = parseInt(this.value);
+        currentPage = 1;
+        megjelenitDolgozatok();
+    });
+}
+
 });
 

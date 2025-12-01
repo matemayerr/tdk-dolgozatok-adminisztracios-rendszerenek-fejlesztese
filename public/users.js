@@ -362,7 +362,30 @@ modositDropdownContent?.addEventListener('click', (e) => {
     e.stopPropagation();
 });
 
+window.searchFelhasznalok = function () {
+    const keresett = searchInput.value.trim().toLowerCase();
 
+    if (!keresett) {
+        filteredFelhasznalok = [...felhasznalok];
+    } else {
+        filteredFelhasznalok = felhasznalok.filter(f => {
+            const nev = f.nev?.toLowerCase() || '';
+            const neptun = f.neptun?.toLowerCase() || '';
+            const email = f.email?.toLowerCase() || '';
+            const kar = f.kar?.toLowerCase() || '';
+            const csoportok = (f.csoportok || []).join(' ').toLowerCase();
+
+            return nev.includes(keresett) ||
+                   neptun.includes(keresett) ||
+                   email.includes(keresett) ||
+                   kar.includes(keresett) ||
+                   csoportok.includes(keresett);
+        });
+    }
+
+    currentPage = 1;
+    renderTable();
+};
 
     loadFelhasznalok();
 });

@@ -8,7 +8,23 @@ document.addEventListener('DOMContentLoaded', function () {
     let dolgozatok = [];
     let currentPage = 1;
     let aktualisModositandoId = null;
-    const itemsPerPage = 10;
+    let itemsPerPage = 25;
+
+//sor kiválasztás
+    const sorSzamSelect = document.getElementById('sor-szam-valaszto');
+    if (sorSzamSelect) {
+        sorSzamSelect.addEventListener('change', () => {
+            const ertek = sorSzamSelect.value;
+            if (ertek === 'all') {
+                itemsPerPage = dolgozatok.length || 1000;
+            } else {
+                itemsPerPage = parseInt(ertek, 25);
+            }
+            currentPage = 1;
+            megjelenitDolgozatok();
+        });
+    }
+    
 
 // Felhasználók betöltése csoportok szerint
 async function betoltFelhasznalok() {
@@ -70,26 +86,35 @@ document.getElementById('temavezeto-kereso').addEventListener('input', function 
 // Dolgozatok megjelenítése
 async function megjelenitDolgozatok() {
     const searchText = searchInput.value.toLowerCase();
-    const filteredDolgozatok = dolgozatok.filter(dolgozat => 
-        (dolgozat.cím && dolgozat.cím.toLowerCase().includes(searchText)) ||
-        (Array.isArray(dolgozat.hallgato_ids) && dolgozat.hallgato_ids.some(id => id.toLowerCase().includes(searchText))) ||
-        (dolgozat.temavezeto_id && dolgozat.temavezeto_id.toLowerCase().includes(searchText)) ||
-        (dolgozat.allapot && dolgozat.allapot.toLowerCase().includes(searchText))
-    );
-    
 
-    // Felhasználók lekérése a nevekhez
-let felhasznalokNevek = {};
-try {
-    const response = await fetch('/api/felhasznalok');
-    const felhasznalok = await response.json();
-    felhasznalok.forEach(f => {
-        felhasznalokNevek[f.neptun] = f.nev;
+    // Felhasználók nevének betöltése (lokálisan cache-elt)
+    let felhasznalokNevek = {};
+    try {
+        const response = await fetch('/api/felhasznalok');
+        const felhasznalok = await response.json();
+        felhasznalok.forEach(f => {
+            felhasznalokNevek[f.neptun] = f.nev;
+        });
+    } catch (error) {
+        console.error("Nem sikerült lekérni a felhasználókat", error);
+    }
+
+    // Szűrés a keresőszöveg alapján
+    const filteredDolgozatok = dolgozatok.filter(dolgozat => {
+        const cim = dolgozat.cím?.toLowerCase() || '';
+        const allapot = dolgozat.allapot?.toLowerCase() || '';
+        const temavezetoNev = felhasznalokNevek[dolgozat.temavezeto_id]?.toLowerCase() || '';
+        const hallgatokNevek = (dolgozat.hallgato_ids || [])
+            .map(id => (felhasznalokNevek[id]?.toLowerCase() || '')).join(' ');
+
+        return cim.includes(searchText)
+            || allapot.includes(searchText)
+            || temavezetoNev.includes(searchText)
+            || hallgatokNevek.includes(searchText);
     });
-} catch (error) {
-    console.error("Nem sikerült lekérni a felhasználókat", error);
-}
 
+    
+    
 
     const start = (currentPage - 1) * itemsPerPage;
     const paginatedDolgozatok = filteredDolgozatok.slice(start, start + itemsPerPage);

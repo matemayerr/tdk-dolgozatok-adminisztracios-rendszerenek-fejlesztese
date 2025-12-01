@@ -72,12 +72,29 @@
 
             <!-- "Felvett dolgozatok" és kereső ikon egy sorban -->
             <div class="header-with-search">
+
                 <h2>Felvett dolgozatok:</h2>
                 <div class="search-container">
                     <span class="search-icon" onclick="toggleDolgozatSearch()">🔍</span>
                     <input type="text" id="dolgozat-search-input" placeholder="Keresés..." oninput="searchDolgozatok()" style="display: none;">
                 </div>
             </div>
+
+            <!-- Sorok száma kiválasztása -->
+            <div class="row-selector">
+                <label for="sorok-szama-dolgozat">Sorok száma:</label>
+                <select id="sorok-szama-dolgozat" onchange="frissitDolgozatokSorlimit()">
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="500">500</option>
+                    <option value="1000">1000</option>
+                    <option value="2000">2000</option>
+                    <option value="osszes">Összes</option>
+                </select>
+            </div>
+
 
             <table id="felvett-dolgozatok-table">
                 <thead>

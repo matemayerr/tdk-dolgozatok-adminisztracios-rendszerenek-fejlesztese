@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let dolgozatok = [];
     let aktualisDolgozatId = null;
     let currentPage = 1;
-    const itemsPerPage = 10;
+    let itemsPerPage = 25;
 
     // Dolgozatok lekérdezése
     async function listazErtekelesDolgozatok() {
@@ -195,5 +195,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Betöltés
     listazErtekelesDolgozatok();
+
+
+    //a sorok száma listázáshoz szükséges
+    const sorokSzamaSelect = document.getElementById('sorokSzama');
+if (sorokSzamaSelect) {
+    sorokSzamaSelect.addEventListener('change', function () {
+        itemsPerPage = parseInt(this.value);
+        currentPage = 1;
+        megjelenitDolgozatok();
+    });
+}
+
 });
 
