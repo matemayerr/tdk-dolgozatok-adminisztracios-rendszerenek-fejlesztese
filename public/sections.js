@@ -108,6 +108,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         assignButton.addEventListener('click', () => openAssignModal(section._id));
         actionsCell.appendChild(assignButton);
 
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Módosítás';
+        editButton.classList.add('btn', 'btn-warning', 'me-2');
+        editButton.addEventListener('click', () => editSection(section));
+        actionsCell.appendChild(editButton);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Törlés';
+        deleteButton.classList.add('btn', 'btn-danger');
+        deleteButton.addEventListener('click', () => deleteSection(section._id));
+        actionsCell.appendChild(deleteButton);
+
+
         row.appendChild(actionsCell);
         tableBody.appendChild(row);
 
@@ -132,40 +145,43 @@ document.addEventListener('DOMContentLoaded', async () => {
           for (const p of papersInSection) {
             const innerRow = document.createElement('tr');
             innerRow.innerHTML = `
-              <td class="clickable-paper">
-                <span>${p.cim || p.cím || 'Névtelen dolgozat'}</span>
-                <span class="toggle-icon">▼</span>
-              </td>
-              <td>${p.allapot || '-'}</td>`;
+            <td class="clickable-paper">
+            <span>${p.cim || p.cím || 'Névtelen dolgozat'}</span>
+            <span class="toggle-icon">▼</span>
+            </td>
+            <td>${p.allapot || '-'}</td>`;
             innerTbody.appendChild(innerRow);
+
 
             const innerDetailRow = document.createElement('tr');
             const innerDetailCell = document.createElement('td');
             innerDetailCell.colSpan = 2;
+
+
+            const hallgatokSzoveg = (p.szerzok || []).map(s => `${s.nev} (${s.neptun})`).join(', ') || '—';
+            const temavezetoSzoveg = (p.temavezeto || []).map(t => `${t.nev} (${t.neptun})`).join(', ') || '—';
+
+
             innerDetailCell.innerHTML = `
-              <div class="dolgozat-details-panel">
-                <p><strong>Tartalmi összefoglaló:</strong><br>${p.leiras || '—'}</p>
-                <p><strong>Hallgató(k):</strong> ${
-                  (p.szerzok || []).map(s => s.nev || 'Ismeretlen').join(', ') || '—'
-                }</p>
-                <p><strong>Témavezető(k):</strong> ${
-                  (p.temavezeto || []).map(t => t.nev || 'Ismeretlen').join(', ') || '—'
-                }</p>
-              </div>`;
+            <div class="dolgozat-details-panel">
+            <p><strong>Tartalmi összefoglaló:</strong><br>${p.leiras || '—'}</p>
+            <p><strong>Hallgató(k):</strong> ${hallgatokSzoveg}</p>
+            <p><strong>Témavezető(k):</strong> ${temavezetoSzoveg}</p>
+            </div>`;
+
+
             innerDetailRow.appendChild(innerDetailCell);
             innerDetailRow.style.display = 'none';
             innerTbody.appendChild(innerDetailRow);
 
-            // Lenyitás a dolgozatoknál
+
             innerRow.addEventListener('click', () => {
-              const isVisible = innerDetailRow.style.display === 'table-row';
-              innerDetailRow.style.display = isVisible ? 'none' : 'table-row';
-              const iconSpan = innerRow.querySelector('.toggle-icon');
-              if (iconSpan) {
-                iconSpan.textContent = isVisible ? '▼' : '▲';
-              }
+            const isVisible = innerDetailRow.style.display === 'table-row';
+            innerDetailRow.style.display = isVisible ? 'none' : 'table-row';
+            const iconSpan = innerRow.querySelector('.toggle-icon');
+            if (iconSpan) iconSpan.textContent = isVisible ? '▼' : '▲';
             });
-          }
+            }
 
           detailCell.appendChild(innerTable);
         }
