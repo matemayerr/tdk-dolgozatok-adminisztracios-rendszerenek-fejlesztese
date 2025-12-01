@@ -142,10 +142,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           for (const p of papersInSection) {
             const innerRow = document.createElement('tr');
+            innerRow.dataset.id = p._id;
 
             const titleCell = document.createElement('td');
             const statusCell = document.createElement('td');
             const deleteCell = document.createElement('td');
+
 
             const torlesButton = document.createElement('button');
             torlesButton.textContent = 'Eltávolítás';
@@ -173,13 +175,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleSpan.textContent = '▼';
             toggleSpan.classList.add('toggle-icon');
 
+            const dragHandle = document.createElement('span');
+              dragHandle.textContent = '☰';
+              dragHandle.classList.add('drag-handle');
+              dragHandle.style.cursor = 'move';
+              dragHandle.style.marginRight = '8px';
+              dragHandle.style.fontSize = '16px';
+              dragHandle.style.color = '#555';
+
             const titleSpan = document.createElement('span');
             titleSpan.textContent = p.cim || p.cím || 'Névtelen dolgozat';
 
             const clickableDiv = document.createElement('div');
-            clickableDiv.classList.add('clickable-paper');
-            clickableDiv.appendChild(titleSpan);
-            clickableDiv.appendChild(toggleSpan);
+              clickableDiv.classList.add('clickable-paper');
+              clickableDiv.appendChild(dragHandle); // ☰ ikon
+              clickableDiv.appendChild(titleSpan);  // dolgozat címe
+              clickableDiv.appendChild(toggleSpan); // lenyíló nyíl
+
 
             clickableDiv.addEventListener('click', () => {
               const isVisible = innerDetailRow.style.display === 'table-row';
@@ -215,6 +227,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             innerTbody.appendChild(innerDetailRow);
           }
 
+          // Drag and drop aktiválása az adott szekció dolgozatainál
+Sortable.create(innerTbody, {
+  handle: '.drag-handle',
+  animation: 150,
+  onEnd: async () => {
+    const rows = Array.from(innerTbody.querySelectorAll('tr[data-id]'));
+    const ujRend = rows.map((row, index) => ({
+      id: row.dataset.id,
+      sorszam: index + 1
+    }));
+
+    try {
+      const res = await fetch('/api/dolgozatok/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dolgozatok: ujRend })
+      });
+      if (res.ok) {
+        console.log('✅ Sorrend frissítve.');
+      } else {
+        console.error('❌ Hiba a sorrend mentésekor.');
+      }
+    } catch (err) {
+      console.error('⚠️ Hálózati hiba a sorrend mentésekor:', err);
+    }
+  }
+});
+
+
           detailCell.appendChild(innerTable);
         }
 
@@ -233,6 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Hiba a szekciók betöltésekor:', err);
     }
   }
+
 
   async function deleteSection(id) {
     if (!confirm('Biztosan törölni szeretnéd ezt a szekciót?')) return;
@@ -429,5 +471,36 @@ async function removeJudge(userId) {
   }
 }
 
+//aktuális félév
+function openSemesterModal() {
+  document.getElementById('semester-modal').style.display = 'block';
+
+  fetch('/api/settings/current-semester')
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('semester-input').value = data.ertek || '';
+    });
+}
+
+function closeSemesterModal() {
+  document.getElementById('semester-modal').style.display = 'none';
+}
+
+document.getElementById('semester-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const ertek = document.getElementById('semester-input').value.trim();
+  if (!ertek) return alert('Kérlek, adj meg egy félévet.');
+
+  fetch('/api/settings/current-semester', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ertek })
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert('Félév sikeresen frissítve.');
+      closeSemesterModal();
+    });
+});
 
 

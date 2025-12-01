@@ -26,6 +26,7 @@ app.use(express.json()); // JSON adatküldés engedélyezése (pl. POST és PUT 
 // Mongoose modellek létrehozása a "Dolgozat" és "Felhasznalo" gyűjteményekhez
 const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
   cím: { type: String, required: true },
+  sorszam: { type: Number, default: 0 },
   leiras: { type: String },
   hallgato_ids: { type: [String], required: true },
   temavezeto_ids: { type: [String], required: true },
@@ -36,6 +37,7 @@ const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
   elutasitas_oka: { type: String },
   szovegesErtekeles: { type: String },
   ertekeles: { type: Object, default: {} },
+  
 
   // 🔹 Ez hiányzott eddig:
   szekcioId: { type: mongoose.Schema.Types.ObjectId, ref: 'Section', default: null }
@@ -1611,6 +1613,45 @@ app.get('/api/homepage-content', (req, res) => {
 
   const htmlContent = fs.readFileSync(filePath, 'utf8');
   res.send(htmlContent);
+});
+
+// 🔹 Dolgozatok sorrendjének mentése drag and drop után
+app.put('/api/dolgozatok/reorder', async (req, res) => {
+  const { dolgozatok } = req.body;
+
+  if (!Array.isArray(dolgozatok)) {
+    return res.status(400).json({ error: 'Hibás formátumú dolgozatlista.' });
+  }
+
+  try {
+    const bulkOperations = [];
+
+    for (const { id, sorszam } of dolgozatok) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        console.warn('⚠️ Érvénytelen ObjectId:', id);
+        continue;
+      }
+
+      bulkOperations.push({
+        updateOne: {
+          filter: { _id: new mongoose.Types.ObjectId(id) },
+          update: { $set: { sorszam: sorszam } }
+        }
+      });
+    }
+
+    if (bulkOperations.length === 0) {
+      return res.status(400).json({ error: 'Nincs érvényes frissítés.' });
+    }
+
+    const result = await mongoose.connection.collection('dolgozats').bulkWrite(bulkOperations);
+    console.log('✅ Dolgozatok sorrendje frissítve:', result.modifiedCount);
+
+    res.json({ message: 'Sorrend sikeresen frissítve.', updated: result.modifiedCount });
+  } catch (err) {
+    console.error('❌ Hiba a sorrend mentésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a sorrend mentésekor.' });
+  }
 });
 
 

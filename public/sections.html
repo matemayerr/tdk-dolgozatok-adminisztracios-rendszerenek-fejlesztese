@@ -9,29 +9,45 @@
 
 <header>
   <h1>TDK Adminisztrációs Rendszer</h1>
-        <nav>
-            <ul>
-              <li><a href="index.html">Főoldal</a></li>
-              <li><a href="users.html">Felhasználók kezelése</a></li>
-              <li class="dropdown">
-                <a href="#" class="dropbtn">Dolgozatok kezelése</a>
-                <div class="dropdown-content">
-                  <a href="papers.html">Jelentkezés új dolgozattal</a>
-                  <a href="completed-papers.html">Dolgozat feltöltése</a>
-                  <a href="review-papers.html">Dolgozat értékelése</a>
-                </div>
-              </li>
-              <li><a href="statistics.html">Statisztikák</a></li>
-              <li><a href="#" id="logout-link">Kijelentkezés</a></li>
-            </ul>
-          </nav>
+ <nav>
+    <ul>
+      <li><a href="index.html">Főoldal</a></li>
+
+      <li class="dropdown">
+        <a href="#" class="dropbtn">Dolgozatok kezelése</a>
+        <div class="dropdown-content">
+          <a href="papers.html">Jelentkezés új dolgozattal</a>
+          <a href="completed-papers.html">Dolgozat feltöltése</a>
+          <a href="review-papers.html">Dolgozat értékelése</a>
+        </div>
+      </li>
+
+      <li class="dropdown">
+        <a href="#" class="dropbtn">Adminisztrációk</a>
+        <div class="dropdown-content">
+          <a href="sections.html">Szekciók</a>
+          <a href="users.html">Felhasználók kezelése</a>
+          <a href="upload-word.html">Főoldal módosítás</a>
+          <a href="statistics.html">Statisztikák</a>
+        </div>
+      </li>
+
+      <li><a href="#" id="logout-link">Kijelentkezés</a></li>
+    </ul>
+  </nav>
 </header>
 
 <main>
 
 <div class="container mt-4">
   <h2 class="mb-3">Szekciók kezelése</h2>
-   <h3>Aktuális félév: <span id="aktualis-felev">Betöltés...</span></h3>
+
+<button class="btn btn-outline-info ms-2" onclick="openSemesterModal()">
+  Jelenlegi félév módosítása
+</button>
+
+<h3>Aktuális félév: <span id="aktualis-felev">Betöltés...</span></h3>
+
 
   <form id="section-form" class="d-flex gap-2 mb-4">
   <input type="text" id="section-name" placeholder="Szekció neve" class="form-control">
@@ -87,11 +103,21 @@
 </div>
 
 
-
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script src="sections.js"></script>
+<script src="auth.js"></script>
 </body>
 </html>
 
-
+    <div id="semester-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2>Jelenlegi félév beállítása</h2>
+        <form id="semester-form">
+        <input type="text" id="semester-input" placeholder="pl. 2025/26/1">
+        <button type="submit" class="btn btn-primary">Mentés</button>
+        </form>
+        <button onclick="closeSemesterModal()" class="btn btn-secondary mt-2">Mégse</button>
+    </div>
+    </div>
 
 </main>

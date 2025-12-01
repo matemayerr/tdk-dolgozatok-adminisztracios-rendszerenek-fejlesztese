@@ -441,37 +441,7 @@ window.toggleDetails = function (dolgozatId) {
 };
 
 
-//aktuális félév
-function openSemesterModal() {
-  document.getElementById('semester-modal').style.display = 'block';
 
-  fetch('/api/settings/current-semester')
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById('semester-input').value = data.ertek || '';
-    });
-}
-
-function closeSemesterModal() {
-  document.getElementById('semester-modal').style.display = 'none';
-}
-
-document.getElementById('semester-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const ertek = document.getElementById('semester-input').value.trim();
-  if (!ertek) return alert('Kérlek, adj meg egy félévet.');
-
-  fetch('/api/settings/current-semester', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ertek })
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert('Félév sikeresen frissítve.');
-      closeSemesterModal();
-    });
-});
 
 
 
