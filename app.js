@@ -7,16 +7,30 @@ document.addEventListener('DOMContentLoaded', function () {
         dolgozatForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const formData = new FormData(dolgozatForm); // FormData használata a fájlok feltöltéséhez
+            const formData = {
+                cím: document.getElementById('dolgozat-cim').value,
+                hallgato_id: document.getElementById('dolgozat-hallgato-id').value,
+                temavezeto_id: document.getElementById('dolgozat-temavezeto-id').value,
+                allapot: document.getElementById('dolgozat-allapot').value
+            };
+
+            // Ellenőrizzük, hogy minden mező ki van-e töltve
+            if (!formData.cím || !formData.hallgato_id || !formData.temavezeto_id || !formData.allapot) {
+                alert('Kérlek, töltsd ki az összes mezőt!');
+                return;
+            }
 
             const response = await fetch('/api/dolgozatok/feltoltes', {
                 method: 'POST',
-                body: formData // FormData küldése
+                headers: {
+                    'Content-Type': 'application/json' // JSON formátum
+                },
+                body: JSON.stringify(formData)
             });
 
             if (response.ok) {
                 const dolgozat = await response.json();
-                addDolgozatToTable(dolgozat);
+                addDolgozatToTable(dolgozat); // Táblázat frissítése
                 dolgozatForm.reset();
             } else {
                 console.error('Hiba történt a dolgozat hozzáadása során');
@@ -30,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const response = await fetch('/api/dolgozatok');
             const dolgozatok = await response.json();
 
-            dolgozatTbody.innerHTML = '';
+            dolgozatTbody.innerHTML = ''; // Ürítjük a táblázatot
             dolgozatok.forEach(dolgozat => {
                 addDolgozatToTable(dolgozat);
             });
@@ -42,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Dolgozat hozzáadása a táblázathoz
     function addDolgozatToTable(dolgozat) {
         const tr = document.createElement('tr');
-        tr.dataset.id = dolgozat._id;
+        tr.dataset.id = dolgozat._id; // Tároljuk a dolgozat azonosítóját
 
         tr.innerHTML = `
             <td>${dolgozat.cím || 'N/A'}</td>
@@ -70,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const id = tr.dataset.id;
             const response = await fetch(`/api/dolgozatok/${id}`, { method: 'DELETE' });
             if (response.ok) {
-                tr.remove();
+                tr.remove(); // Sor eltávolítása a táblázatból
             } else {
                 console.error('Hiba történt a dolgozat törlése során');
             }
@@ -78,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Módosítás funkció
         editBtn.addEventListener('click', () => {
-            editDolgozat(tr, dolgozat);
+            editDolgozat(tr, dolgozat); // Módosítás kezdeményezése
         });
     }
 
@@ -86,6 +100,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function editDolgozat(tr, dolgozat) {
         const cells = tr.querySelectorAll('td');
         const originalData = { ...dolgozat }; // Az eredeti dolgozat adatok elmentése
+
+        // Ellenőrizzük, hogy van-e azonosító (ID)
+        if (!dolgozat._id) {
+            console.error("Dolgozat ID hiányzik!");
+            return;
+        }
 
         cells[0].innerHTML = `<input type="text" value="${dolgozat.cím}">`;
         cells[1].innerHTML = `<input type="text" value="${dolgozat.hallgato_id}">`;
@@ -123,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (response.ok) {
                 const updatedDolgozatResponse = await response.json();
-                dolgozat = updatedDolgozatResponse; // Frissítjük a dolgozat adatait
+                dolgozat._id = updatedDolgozatResponse._id; // Frissítjük az ID-t a frissített objektumból
 
                 // Frissített adatok visszaírása a táblázatba
                 cells[0].textContent = updatedDolgozat.cím;
@@ -136,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 `;
 
                 // Újra hozzárendeljük az eseményeket
-                attachEventHandlers(tr, dolgozat);
+                attachEventHandlers(tr, updatedDolgozatResponse);
             } else {
                 console.error('Hiba történt a dolgozat módosítása során');
             }
@@ -161,3 +181,4 @@ document.addEventListener('DOMContentLoaded', function () {
     // Dolgozatok listázása indításkor
     listazDolgozatok();
 });
+
