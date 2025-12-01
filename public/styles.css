@@ -188,15 +188,27 @@ nav ul li:last-child {
     box-sizing: border-box;
 }
 
-/* A Hozzáadás és Mégse gomb egységes legyen */
-#hozzaadas-gomb, #megse-gomb {
-    background-color: #242a43;
+/* A Hozzáadás és Mégse gomb */
+#hozzaadas-gomb {
+    border: 2px solid green; /* Zöld szegély */
+    background-color: green;
     color: white;
     border-radius: 5px;
     font-size: 16px;
 }
 
-#hozzaadas-gomb:hover, #megse-gomb:hover {
+#megse-gomb {
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+#hozzaadas-gomb:hover {
+    border: 2px solid green; /* Zöld szegély */
+    background-color: white;
+    color: green;
+}
+
+#megse-gomb:hover {
     background-color: #555;
 }
 
@@ -353,15 +365,6 @@ nav ul li:last-child {
 
 #dolgozat-leiras {
     margin-bottom: 5px;
-}
-
-
-#hozzaadas-gomb, #megse-gomb {
-    background-color: #242a43;
-    color: white;
-    border-radius: 5px;
-    font-size: 16px;
-    margin-top: 5px;
 }
 
 #dolgozat-leiras {
@@ -569,22 +572,28 @@ nav ul li a.active {
 }
 
 #felhasznalo-hozzaadas-gomb {
-    background-color: #242a43;
+    border: 2px solid green; /* Zöld szegély */
+    background-color: green;
     color: white;
+    font-weight: bold;
+    transition: all 0.2s ease-in-out;
     border-radius: 5px;
     font-size: 16px;
     margin-top: 5px;
 }
 
 #felhasznalo-megse-gomb{
-    background-color: #242a43;
-    color: white;
     border-radius: 5px;
     font-size: 16px;
     margin-top: 5px;
 }
 
-#felhasznalo-hozzaadas-gomb:hover,
+#felhasznalo-hozzaadas-gomb:hover {
+    border: 2px solid green; /* Zöld szegély */
+    background-color: white;
+    color: green;
+}
+
 #felhasznalo-megse-gomb:hover {
     background-color: #555;
 }
@@ -841,5 +850,18 @@ body.login-oldal {
     border: 2px solid green; /* Zöld szegély */
     background-color: white;
     color: green;
+}
+
+#logout-link {
+    background-color: red;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#logout-link:hover {
+    background-color: darkred;
 }
 

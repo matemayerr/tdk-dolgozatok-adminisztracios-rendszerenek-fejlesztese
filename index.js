@@ -25,8 +25,8 @@ app.use(express.json()); // JSON adatküldés engedélyezése (pl. POST és PUT 
 const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
     cím: { type: String, required: true },
     leiras: { type: String },
-    hallgato_ids: { type: [String], required: true }, // ✔ Több hallgató támogatása
-    temavezeto_id: { type: String, required: true },
+    hallgato_ids: { type: [String], required: true }, // Több hallgató támogatása
+    temavezeto_ids: { type: [String], required: true }, // Több témavezető támogatása
     allapot: { type: String, default: 'benyújtva' },
     filePath: { type: String },
     pontszam: { type: String, default: '' },

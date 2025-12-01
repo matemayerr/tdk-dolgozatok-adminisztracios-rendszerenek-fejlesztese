@@ -45,7 +45,7 @@ async function betoltFelhasznalok() {
         const temavezetoLista = document.getElementById('temavezeto-lista');
         temavezetoLista.innerHTML = temavezetok.map(t => `
             <label>
-                <input type="radio" name="temavezeto" value="${t.neptun}">
+                <input type="checkbox" value="${t.neptun}">
                 ${t.nev} (${t.neptun})
             </label>
         `).join('');
@@ -160,9 +160,9 @@ detailTr.innerHTML = `
         : '—'
 }</p>
 <p><strong>Témavezető:</strong> ${
-    dolgozat.temavezeto_id
-        ? `${felhasznalokNevek[dolgozat.temavezeto_id] || 'Ismeretlen'} (${dolgozat.temavezeto_id})`
-        : '—'
+    dolgozat.temavezeto_ids
+    ? dolgozat.temavezeto_ids.map(id => `${felhasznalokNevek[id] || 'Ismeretlen'} (${id})`).join(', ')
+    : '—'
 }</p>
 
         </div>
@@ -192,17 +192,20 @@ if (dolgozatForm) {
             return;
         }
 
-        const selectedTemavezeto = document.querySelector('#temavezeto-lista input[name="temavezeto"]:checked');
-        if (!selectedTemavezeto) {
-            alert('Válassz témavezetőt!');
-            return;
-        }
+        const selectedTemavezetok = Array.from(document.querySelectorAll('#temavezeto-lista input[type="checkbox"]:checked'))
+        .map(cb => cb.value);
+    
+    if (selectedTemavezetok.length === 0) {
+        alert('Válassz legalább egy témavezetőt!');
+        return;
+    }
+    
 
         const formData = {
             cím: document.getElementById('dolgozat-cim').value,
             leiras: document.getElementById('dolgozat-leiras').value,
             hallgato_ids: selectedHallgatok,
-            temavezeto_id: selectedTemavezeto.value,
+            temavezeto_ids: selectedTemavezetok,
             allapot: "bírálás alatt"
 
         };
@@ -263,8 +266,12 @@ if (dolgozatForm) {
         // Témavezető
         const temavezetoLista = document.getElementById('modosit-temavezeto-lista');
         temavezetoLista.innerHTML = temavezetok.map(t => `
-            <label><input type="radio" name="modosit-temavezeto" value="${t.neptun}" ${dolgozat.temavezeto_id === t.neptun ? 'checked' : ''}> ${t.nev} (${t.neptun})</label>
+            <label>
+                <input type="checkbox" value="${t.neptun}">
+                ${t.nev} (${t.neptun})
+            </label>
         `).join('');
+        
     
         // Megjelenítés
         document.getElementById('modosit-dolgozat-form').style.display = 'block';
@@ -285,7 +292,7 @@ if (dolgozatForm) {
         const leiras = document.getElementById('modosit-dolgozat-leiras').value;
         const allapot = document.getElementById('modosit-allapot').value;
         const hallgato_ids = Array.from(document.querySelectorAll('#modosit-hallgato-lista input[type="checkbox"]:checked')).map(cb => cb.value);
-        const temavezetoInput = document.querySelector('input[name="modosit-temavezeto"]:checked');
+        const temavezetoInputok = document.querySelectorAll('#temavezeto-lista input[type="checkbox"]:checked');
     
         if (!cim || !leiras || !hallgato_ids.length || !temavezetoInput) {
             alert('Minden mező kitöltése kötelező!');
