@@ -10,14 +10,23 @@ document.addEventListener('DOMContentLoaded', function () {
   const uploadCancelBtn = document.getElementById('upload-cancel-btn');
   const sorokSzamaSelect = document.getElementById('sorokSzama');
 
+  // 🔹 Fájl törlés megerősítő modal elemei – HTML-hez igazítva
+  const fileDeleteConfirmModal = document.getElementById('confirm-delete-modal');
+  const fileDeleteConfirmText = document.getElementById('confirm-delete-text');
+  const fileDeleteConfirmYesBtn = document.getElementById('confirm-delete-ok');
+  const fileDeleteConfirmNoBtn = document.getElementById('confirm-delete-cancel');
+
   let dolgozatok = [];
   let currentPage = 1;
   let itemsPerPage = 25;
   let currentUploadPaperId = null;
   let selectedFiles = [];        // csak a most kiválasztott, még fel nem töltött fájlok
   let KAROK = [];                // /api/karok-ból jön
-  let GLOBAL_UPLOAD_DEADLINE = null; // 🔹 IDE hozzuk be a globális határidőt
+  let GLOBAL_UPLOAD_DEADLINE = null; // 🔹 globális határidő
 
+  // 🔹 éppen törlésre kijelölt fájl ID + név
+  let deleteTargetFileId = null;
+  let deleteTargetFileName = '';
 
   const feltoltesEngedelyezettAllapotok = [
     'jelentkezett',
@@ -27,15 +36,54 @@ document.addEventListener('DOMContentLoaded', function () {
   ];
 
   // ---------------------------
+  // 🔔 Egységes toast értesítő
+  // ---------------------------
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) {
+      // ha valamiért nincs konténer, fallback alert
+      alert(message);
+      return;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+
+    container.appendChild(toast);
+
+    // kis csúsztatás, hogy az animáció biztosan lefusson
+    requestAnimationFrame(() => {
+      toast.classList.add('show');
+    });
+
+    const removeToast = () => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentNode === container) {
+          container.removeChild(toast);
+        }
+      }, 300);
+    };
+
+    toast.addEventListener('click', removeToast);
+    setTimeout(removeToast, 4000);
+  }
+
+  // ---------------------------
   // 1. Dolgozatok lekérdezése
   // ---------------------------
   async function listazDolgozatok() {
     try {
       const response = await fetch('/api/dolgozatok/feltoltheto');
+      if (!response.ok) {
+        throw new Error('Sikertelen válasz a /api/dolgozatok/feltoltheto végponttól.');
+      }
       dolgozatok = await response.json();
       await megjelenitDolgozatok();
     } catch (err) {
       console.error('Hiba történt a dolgozatok lekérése során:', err);
+      showToast('Nem sikerült lekérni a dolgozatokat.', 'error');
     }
   }
 
@@ -49,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let felhasznalokNevek = {};
     try {
       const res = await fetch('/api/felhasznalok');
+      if (!res.ok) throw new Error('Hiba a /api/felhasznalok hívásnál');
       const felhasznalok = await res.json();
       felhasznalok.forEach(f => {
         if (f.neptun && f.nev) {
@@ -57,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     } catch (err) {
       console.error('Nem sikerült lekérni a felhasználókat:', err);
+      showToast('Nem sikerült betölteni a felhasználókat.', 'error');
     }
 
     // 🔹 Szűrés (cím, állapot, Neptun)
@@ -144,8 +194,6 @@ document.addEventListener('DOMContentLoaded', function () {
         actionsCell.appendChild(btn);
       }
 
-
-
       // 🔹 Részletek sor (lenyíló)
       const detailTr = document.createElement('tr');
       detailTr.classList.add('dolgozat-details-row');
@@ -222,6 +270,7 @@ document.addEventListener('DOMContentLoaded', function () {
       renderUploadedFiles(files);
     } catch (err) {
       console.error('Nem sikerült lekérni a fájlokat:', err);
+      showToast('Nem sikerült betölteni a fájlokat.', 'error');
       renderUploadedFiles([]);
     }
 
@@ -263,9 +312,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const li = document.createElement('li');
       li.style.marginBottom = '6px';
 
+      const fileName = file.originalName || file.fileName;
+
       li.innerHTML = `
         <span class="file-name" style="cursor:pointer; text-decoration:underline;">
-          ${file.originalName || file.fileName}
+          ${fileName}
         </span>
         <button class="delete-btn" style="padding:3px 8px; margin-left:8px;">
           Törlés
@@ -276,22 +327,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (file.path) window.open(file.path, '_blank');
       });
 
-      li.querySelector('.delete-btn').addEventListener('click', async () => {
-        if (!confirm('Biztosan törlöd ezt a fájlt?')) return;
-        try {
-          const res = await fetch(
-            `/api/dolgozatok/${currentUploadPaperId}/files/${file._id}`,
-            { method: 'DELETE' }
-          );
-          if (res.ok) {
-            const updated = await res.json();
-            renderUploadedFiles(updated.files || []);
-          } else {
-            console.error('Hiba történt a fájl törlésekor');
-          }
-        } catch (err) {
-          console.error('Hiba történt a fájl törlésekor:', err);
-        }
+      // confirm() helyett saját modal
+      li.querySelector('.delete-btn').addEventListener('click', () => {
+        openFileDeleteConfirmModal(file._id, fileName);
       });
 
       uploadedFilesList.appendChild(li);
@@ -333,8 +371,82 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(files => renderUploadedFiles(files))
       .catch(err => {
         console.error('Nem sikerült újrarajzolni a listát:', err);
+        showToast('Nem sikerült frissíteni a fájllistát.', 'error');
         renderUploadedFiles([]);
       });
+  }
+
+  // ------------------------------------------------
+  // 5/b. Fájl törlés MODAL logika
+  // ------------------------------------------------
+  function openFileDeleteConfirmModal(fileId, fileName) {
+    deleteTargetFileId = fileId;
+    deleteTargetFileName = fileName || '';
+
+    if (fileDeleteConfirmText) {
+      fileDeleteConfirmText.textContent =
+        fileName
+          ? `Biztosan törlöd a(z) "${fileName}" fájlt?`
+          : 'Biztosan törlöd ezt a fájlt?';
+    }
+
+    if (fileDeleteConfirmModal) {
+      fileDeleteConfirmModal.style.display = 'block';
+    }
+  }
+
+  function closeFileDeleteConfirmModal() {
+    if (fileDeleteConfirmModal) {
+      fileDeleteConfirmModal.style.display = 'none';
+    }
+    deleteTargetFileId = null;
+    deleteTargetFileName = '';
+  }
+
+  // "Mégse" gomb a modalban
+  if (fileDeleteConfirmNoBtn) {
+    fileDeleteConfirmNoBtn.addEventListener('click', () => {
+      closeFileDeleteConfirmModal();
+    });
+  }
+
+  // Modal háttérre kattintás – (ha a teljes overlay a modal elem)
+  if (fileDeleteConfirmModal) {
+    fileDeleteConfirmModal.addEventListener('click', (e) => {
+      if (e.target === fileDeleteConfirmModal) {
+        closeFileDeleteConfirmModal();
+      }
+    });
+  }
+
+  // "Törlés" gomb a modalban
+  if (fileDeleteConfirmYesBtn) {
+    fileDeleteConfirmYesBtn.addEventListener('click', async () => {
+      if (!currentUploadPaperId || !deleteTargetFileId) {
+        closeFileDeleteConfirmModal();
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `/api/dolgozatok/${currentUploadPaperId}/files/${deleteTargetFileId}`,
+          { method: 'DELETE' }
+        );
+        if (res.ok) {
+          const updated = await res.json();
+          renderUploadedFiles(updated.files || []);
+          showToast('Fájl sikeresen törölve.', 'success');
+        } else {
+          console.error('Hiba történt a fájl törlésekor');
+          showToast('Hiba történt a fájl törlésekor.', 'error');
+        }
+      } catch (err) {
+        console.error('Hiba történt a fájl törlésekor:', err);
+        showToast('Hiba történt a fájl törlésekor.', 'error');
+      } finally {
+        closeFileDeleteConfirmModal();
+      }
+    });
   }
 
   // ---------------------------------
@@ -344,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!currentUploadPaperId) return;
 
     if (selectedFiles.length === 0) {
-      alert('Nem választottál új fájlt.');
+      showToast('Nem választottál új fájlt.', 'info');
       return;
     }
 
@@ -359,12 +471,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (!res.ok) {
         console.error('Hiba történt a fájlok feltöltésekor');
-        alert('Hiba történt a feltöltés során.');
+        showToast('Hiba történt a feltöltés során.', 'error');
         return;
       }
 
       const data = await res.json();
-      alert('Fájl(ok) sikeresen feltöltve.');
+      showToast('Fájl(ok) sikeresen feltöltve.', 'success');
 
       selectedFiles = [];
       renderUploadedFiles(data.files || []);
@@ -373,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function () {
       hideUploadModal();
     } catch (err) {
       console.error('Hiba történt a fájlok feltöltésekor:', err);
-      alert('Hiba történt a feltöltés során.');
+      showToast('Hiba történt a feltöltés során.', 'error');
     }
   });
 
@@ -388,10 +500,11 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (err) {
       console.error('Hiba a karok betöltésekor:', err);
       KAROK = [];
+      showToast('Nem sikerült betölteni a karok adatait.', 'error');
     }
   }
 
-  // 🔹 ÚJ: Globális dolgozatfeltöltési határidő betöltése
+  // 🔹 Globális dolgozatfeltöltési határidő betöltése
   async function betoltGlobalFeltoltesHatarido() {
     try {
       const res = await fetch('/api/deadlines/dolgozat_feltoltes_global');
@@ -404,6 +517,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (err) {
       console.error('Hiba a globális feltöltési határidő lekérésekor:', err);
       GLOBAL_UPLOAD_DEADLINE = null;
+      showToast('Nem sikerült betölteni a globális határidőt.', 'error');
     }
   }
 

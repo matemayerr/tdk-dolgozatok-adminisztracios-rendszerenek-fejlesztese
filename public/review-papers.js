@@ -3,6 +3,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('search-input');
     const sorokSzamaSelect = document.getElementById('items-per-page');
 
+    // ⬇️ URL paraméterek – pl. review-papers.html?section=XYZ
+    const urlParams = new URLSearchParams(window.location.search);
+    const sectionIdFromUrl = urlParams.get('section') || null;
+    const isJuryContext = !!sectionIdFromUrl;  // ha van section paraméter, zsűri nézetben vagyunk
+
     let dolgozatok = [];
     let filteredDolgozatok = [];
     let currentPage = 1;
@@ -75,7 +80,11 @@ document.addEventListener('DOMContentLoaded', function () {
             // 🔹 Művelet gomb (Bírálás / Megtekintés / -)
             let gomb = '-';
 
-            if (!currentUser) {
+            // ⬇️ ZSŰRI NÉZET: ha section paraméterrel jöttünk
+            if (isJuryContext) {
+                // Zsűri mindig csak megtekint, jury=true paraméterrel
+                gomb = `<a href="import_form.html?id=${dolgozat._id}&readonly=true&jury=true" class="modosit-btn">Megtekintés</a>`;
+            } else if (!currentUser) {
                 // Ha nincs bejelentkezett user (vagy hiba volt), régi alaplogika:
                 const vanErtekeles = dolgozat.ertekeles && Object.keys(dolgozat.ertekeles).length > 0;
                 gomb = vanErtekeles
@@ -124,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         gomb = `<a href="import_form.html?id=${dolgozat._id}&readonly=true" class="modosit-btn">Megtekintés</a>`;
                     } else {
                         // Nincs elfogadott bírálói státusz és nincs értékelés sem
-                        // (pl. admin, aki még nem csinált semmit) → régi szokás szerint Bírálás engedhető,
+                        // (pl. admin, aki még nem csinált semmit) → Bírálás engedhető,
                         // de már biraloId-vel, hogy hozzád kötődjön a bírálat
                         gomb = `<a href="import_form.html?id=${dolgozat._id}${biraloQuery}" class="jelentkezes-btn">Bírálás</a>`;
                     }
@@ -232,69 +241,86 @@ document.addEventListener('DOMContentLoaded', function () {
     window.searchDolgozatok = searchDolgozatok;
     window.frissitItemsPerPage = frissitItemsPerPage;
 
-// 🔹 Inicializálás: aktuális user + dolgozatok betöltése
-(async () => {
-    currentUser = await loadCurrentUser();
+    // 🔹 Inicializálás: aktuális user + dolgozatok betöltése
+    (async () => {
+        currentUser = await loadCurrentUser();
 
-    if (currentUser && Array.isArray(currentUser.csoportok)) {
-        const csoportok = currentUser.csoportok;
+        if (currentUser && Array.isArray(currentUser.csoportok)) {
+            const csoportok = currentUser.csoportok;
 
-        const tartalmazHallgatot =
-            csoportok.includes('hallgato') ||
-            csoportok.includes('hallgató');
+            const tartalmazHallgatot =
+                csoportok.includes('hallgato') ||
+                csoportok.includes('hallgató');
 
-        const csakHallgato =
-            csoportok.every(c => c === 'hallgato' || c === 'hallgató');
+            const csakHallgato =
+                csoportok.every(c => c === 'hallgato' || c === 'hallgató');
 
-        isStudentUser = tartalmazHallgatot && csakHallgato;
-    }
-
-    try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.warn('Nincs token, nem tudom lekérni a dolgozatokat. Jelentkezz be.');
-            dolgozatok = [];
-            filteredDolgozatok = [];
-            megjelenitDolgozatok();
-            return;
+            isStudentUser = tartalmazHallgatot && csakHallgato;
         }
 
-        const res = await fetch('/api/papers', {
-            headers: {
-                'Authorization': `Bearer ${token}`
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.warn('Nincs token, nem tudom lekérni a dolgozatokat. Jelentkezz be.');
+                dolgozatok = [];
+                filteredDolgozatok = [];
+                megjelenitDolgozatok();
+                return;
             }
-        });
 
-        if (!res.ok) {
-            console.error('Nem sikerült lekérni a dolgozatokat. HTTP:', res.status);
+            const res = await fetch('/api/papers', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!res.ok) {
+                console.error('Nem sikerült lekérni a dolgozatokat. HTTP:', res.status);
+                dolgozatok = [];
+                filteredDolgozatok = [];
+                megjelenitDolgozatok();
+                return;
+            }
+
+            const adatok = await res.json();
+            const lista = Array.isArray(adatok) ? adatok : [];
+
+            const baseReviewStates = [
+                'elfogadva - témavezető által',
+                'bírálat alatt',
+                'bírálva'
+            ];
+
+            // ⬇️ Állapot szűrés felhasználó / zsűri szerint
+            let allowedStates;
+            if (isJuryContext) {
+                // Zsűrinek tipikusan a már lezárt dolgozatok érdekesek
+                allowedStates = ['bírálva', 'zsűrizésre kész'];
+            } else if (isStudentUser) {
+                allowedStates = ['bírálva'];
+            } else {
+                allowedStates = baseReviewStates;
+            }
+
+            // Alap szűrés állapot szerint
+            let listaSzurt = lista.filter(d => allowedStates.includes(d.allapot));
+
+            // Ha section paraméter van, csak az adott szekció dolgozatai maradjanak
+            if (sectionIdFromUrl) {
+                listaSzurt = listaSzurt.filter(d =>
+                    d.szekcioId && String(d.szekcioId) === String(sectionIdFromUrl)
+                );
+            }
+
+            dolgozatok = listaSzurt;
+            filteredDolgozatok = dolgozatok;
+            megjelenitDolgozatok();
+
+        } catch (err) {
+            console.error('Hiba a dolgozatok betöltésekor:', err);
             dolgozatok = [];
             filteredDolgozatok = [];
             megjelenitDolgozatok();
-            return;
         }
-
-        const adatok = await res.json();
-        const lista = Array.isArray(adatok) ? adatok : [];
-
-        const baseReviewStates = [
-            'elfogadva - témavezető által',
-            'bírálat alatt',
-            'bírálva'
-        ];
-
-        const allowedStates = isStudentUser
-            ? ['bírálva']
-            : baseReviewStates;
-
-        dolgozatok = lista.filter(d => allowedStates.includes(d.allapot));
-        filteredDolgozatok = dolgozatok;
-        megjelenitDolgozatok();
-
-    } catch (err) {
-        console.error('Hiba a dolgozatok betöltésekor:', err);
-        dolgozatok = [];
-        filteredDolgozatok = [];
-        megjelenitDolgozatok();
-    }
-})();
+    })();
 });

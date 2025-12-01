@@ -47,11 +47,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  const newTopicBtn       = document.getElementById('new-topic-btn');
-  const topicForm         = document.getElementById('topic-form');
-  const cancelBtn         = document.getElementById('topic-cancel');
-  const tableBody         = document.querySelector('#topic-table tbody');
-  const supervisorSelect  = document.getElementById('topic-supervisor');
+  const newTopicBtn      = document.getElementById('new-topic-btn');
+  const topicForm        = document.getElementById('topic-form');
+  const cancelBtn        = document.getElementById('topic-cancel');
+  const tableBody        = document.querySelector('#topic-table tbody');
+  const supervisorSelect = document.getElementById('topic-supervisor'); // (ha majd lesz ilyen)
 
   let selectedTopicId = null;
   let currentEditId   = null;
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         b.addEventListener('click', () => jelentkezesTema(b.dataset.topicId));
       });
 
-      // 🔹 ÚJ: ha a határidő lejárt, tiltsuk le az összes Jelentkezés gombot
+      // 🔹 Ha a határidő lejárt, tiltsuk le az összes Jelentkezés gombot
       if (window.dolgozatJelentkezesLejart) {
         document
           .querySelectorAll('#topic-table .topic-apply-btn')
@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       console.error('Hiba a témák betöltésekor:', err);
       tableBody.innerHTML = '<tr><td colspan="5">(Hiba a témák betöltésekor)</td></tr>';
+      showToast('Hiba a témák betöltésekor.', 'error');
     }
   }
 
@@ -190,7 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const userData = JSON.parse(localStorage.getItem('felhasznalo') || 'null');
       if (!userData || !userData.nev || !userData.neptun) {
-        alert('Hiba: bejelentkezett felhasználó adatai nem elérhetők.');
+        showToast('Hiba: bejelentkezett felhasználó adatai nem elérhetők.', 'error');
         return;
       }
 
@@ -202,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         : '–';
 
       if (!cim || !osszefoglalo) {
-        alert('Minden mezőt ki kell tölteni!');
+        showToast('Minden mezőt ki kell tölteni!', 'error');
         return;
       }
 
@@ -222,14 +223,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!res.ok) throw new Error('Mentési hiba /api/topics');
 
-        alert('Témajavaslat elmentve.');
+        showToast('Témajavaslat elmentve.', 'success');
         topicForm.reset();
         topicForm.style.display = 'none';
         document.getElementById('uj-topic-homalyositas').style.display = 'none';
         loadTopics();
       } catch (err) {
         console.error('Hiba a téma mentésekor:', err);
-        alert('Hiba történt a téma mentésekor.');
+        showToast('Hiba történt a téma mentésekor.', 'error');
       }
     });
   }
@@ -238,13 +239,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function jelentkezesTema(topicId) {
     // 🔹 Ha lejárt a jelentkezési határidő, ne engedjünk jelentkezni
     if (window.dolgozatJelentkezesLejart) {
-      alert('A dolgozat jelentkezési határideje lejárt, témára már nem lehet jelentkezni.');
+      showToast('A dolgozat jelentkezési határideje lejárt, témára már nem lehet jelentkezni.', 'error');
       return;
     }
 
     const userData = JSON.parse(localStorage.getItem('felhasznalo') || 'null');
     if (!userData || !userData.neptun || !userData.csoportok?.includes('hallgato')) {
-      alert('Csak bejelentkezett hallgató jelentkezhet témára!');
+      showToast('Csak bejelentkezett hallgató jelentkezhet témára!', 'error');
       return;
     }
 
@@ -255,7 +256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const topics = await resTopic.json();
       const selected = topics.find(t => t._id === topicId);
       if (!selected) {
-        alert('A téma nem található.');
+        showToast('A téma nem található.', 'error');
         return;
       }
 
@@ -275,27 +276,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       if (!res.ok) throw new Error('Sikertelen jelentkezés');
-      alert('Sikeresen jelentkeztél a témára!');
+      showToast('Sikeresen jelentkeztél a témára!', 'success');
 
       // 🔹 Frissítjük a listát, hogy eltűnjön a jelentkezett téma
       await loadTopics();
 
     } catch (err) {
       console.error('Hiba a jelentkezés során:', err);
-      alert('Hiba történt a jelentkezés során.');
+      showToast('Hiba történt a jelentkezés során.', 'error');
     }
   }
 
-  // ───────────────────────────────── 5) TÉMA TÖRLÉSE
+  // ───────────────────────────────── 5) TÉMA TÖRLÉSE – szép confirm modallal
   async function torolTema(id) {
-    if (!confirm('Biztosan törlöd ezt a témajavaslatot?')) return;
+    const confirmed = await confirmDialog('Biztosan törlöd ezt a témajavaslatot?');
+    if (!confirmed) return;
+
     try {
       const res = await fetch(`/api/topics/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Törlési hiba');
+      showToast('Téma sikeresen törölve.', 'success');
       loadTopics();
     } catch (err) {
       console.error('Hiba a téma törlésekor:', err);
-      alert('Hiba történt törlés közben.');
+      showToast('Hiba történt törlés közben.', 'error');
     }
   }
 
@@ -373,7 +377,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const osszefoglalo  = document.getElementById('edit-summary').value.trim();
 
       if (!cim || !temavezetoNev || !osszefoglalo) {
-        alert('A cím, témavezető és összefoglaló mező kötelező!');
+        showToast('A cím, témavezető és összefoglaló mező kötelező!', 'error');
         return;
       }
 
@@ -385,13 +389,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         if (!res.ok) throw new Error('Hiba a módosítás mentésekor.');
-        alert('Téma sikeresen módosítva.');
+        showToast('Téma sikeresen módosítva.', 'success');
         document.getElementById('edit-modal').style.display = 'none';
         document.getElementById('uj-topic-homalyositas').style.display = 'none';
         loadTopics();
       } catch (err) {
         console.error('Hiba a mentés során:', err);
-        alert('Nem sikerült a mentés.');
+        showToast('Nem sikerült a mentés.', 'error');
       }
     });
 
@@ -411,7 +415,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ossz = osszElem.value.trim();
 
     if (!cim || !ossz) {
-      alert('Minden mezőt ki kell tölteni!');
+      showToast('Minden mezőt ki kell tölteni!', 'error');
       return;
     }
 
@@ -423,11 +427,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       if (!res.ok) throw new Error('Hiba a módosítás mentésekor.');
-      alert('Téma sikeresen módosítva.');
+      showToast('Téma sikeresen módosítva.', 'success');
       loadTopics();
     } catch (err) {
       console.error('Hiba a módosítás mentésekor:', err);
-      alert('Hiba történt a mentés során.');
+      showToast('Hiba történt a mentés során.', 'error');
     }
   }
 
@@ -479,4 +483,82 @@ function sortTableByColumn(columnIndex) {
     tbody.appendChild(mainRow);
     if (detailRow) tbody.appendChild(detailRow);
   });
+}
+
+
+// ─────────────────────────────
+// SZÉP CONFIRM MODAL + TOAST
+// ─────────────────────────────
+function confirmDialog(message) {
+  return new Promise((resolve) => {
+    const modal     = document.getElementById('confirm-modal');
+    const msgEl     = document.getElementById('confirm-message');
+    const okBtn     = document.getElementById('confirm-ok-btn');
+    const cancelBtn = document.getElementById('confirm-cancel-btn');
+    const homaly    = document.getElementById('uj-topic-homalyositas');
+
+    // ha valami hiányzik, fallback a sima confirmre
+    if (!modal || !msgEl || !okBtn || !cancelBtn) {
+      const res = window.confirm(message || 'Biztosan törlöd?');
+      resolve(res);
+      return;
+    }
+
+    msgEl.textContent = message || 'Biztosan törlöd?';
+
+    modal.style.display = 'flex';   // <-- ez a lényeg
+    if (homaly) homaly.style.display = 'block';
+
+
+    const cleanup = () => {
+      modal.style.display = 'none';
+      if (homaly) homaly.style.display = 'none';
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+    };
+
+    okBtn.onclick = () => {
+      cleanup();
+      resolve(true);
+    };
+
+    cancelBtn.onclick = () => {
+      cleanup();
+      resolve(false);
+    };
+  });
+}
+
+// 🔔 Egységes toast értesítés
+function showToast(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('toast-container');
+
+  // ha valamiért nincs konténer, fallback alertre
+  if (!container) {
+    alert(message);
+    return;
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+
+  // kattintással is bezárható
+  toast.addEventListener('click', () => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  });
+
+  container.appendChild(toast);
+
+  // animáció indítás
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
+
+  // automatikus eltűnés
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
 }

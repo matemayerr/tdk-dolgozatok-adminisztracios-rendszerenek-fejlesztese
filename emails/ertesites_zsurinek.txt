@@ -1,0 +1,9 @@
+Kedves {{NEV}}!
+
+A(z) "{{SZEKCIO}}" TDK szekcióhoz tartozó dolgozatok bírálatai elkészültek.
+
+A bírálatokat a következő linken tudja áttekinteni:
+{{LINK}}
+
+Üdvözlettel:
+TDK adminisztrációs rendszer

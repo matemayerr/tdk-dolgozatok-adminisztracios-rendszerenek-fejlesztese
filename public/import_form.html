@@ -270,6 +270,15 @@
     studentParam === 'true' ||
     urlParams.get('role') === 'student';
 
+  // Zsűrinézet jelölése: ?jury=1 / ?jury=true / ?role=zsuri
+  const juryParam = urlParams.get('jury');
+  const isJuryView =
+    juryParam === '1' ||
+    juryParam === 'true' ||
+    urlParams.get('role') === 'zsuri' ||
+    urlParams.get('role') === 'jury';
+
+
   // Excel feltöltés kezelése
   function handleFile(e) {
     const file = e.target.files[0];
@@ -336,15 +345,15 @@
       if (inp) inp.addEventListener('input', recalcTotal);
     }
 
-    initReadonlyMode();
+        initReadonlyMode();
 
-    // 🔹 Hallgatói nézetben a pontszámokat ne mutassuk
+    // Hallgatói nézetben a pontszámokat NE mutassuk
     if (isStudentView) {
       hideScoresForStudents();
     }
 
-    // Hallgatói nézetben NEM mutatjuk a dolgozatválasztót, csak az URL-ben kapott id alapján töltünk
-    if (!isStudentView) {
+    // Dolgozatválasztó csak normál / bíráló / admin nézetben kell
+    if (!isStudentView && !isJuryView) {
       initPaperSelect();
     } else {
       const wrapper = document.getElementById('paperSelectWrapper');
@@ -353,24 +362,25 @@
 
     await loadReviewDeadline();
 
-    // Readonly nézetben a teljes bírálat (pontok + szövegek) betöltése
-    // (hallgatónál ez csak technikailag töltődik, a pontmezők eleve el vannak rejtve)
-    if (readonlyMode && paperIdFromUrl && !isStudentView) {
+    // readonly + nem hallgató + nem zsűri => saját bírálat megtekintés (bíráló/admin)
+    if (readonlyMode && paperIdFromUrl && !isStudentView && !isJuryView) {
       await loadEvaluation(paperIdFromUrl);
     }
 
     if (paperIdFromUrl) {
       await loadPaperHeader(paperIdFromUrl);
 
-      // 🔹 Hallgatói bírálatok betöltése, ha student nézet
       if (isStudentView) {
         await loadStudentReviews(paperIdFromUrl);
+      } else if (isJuryView) {
+        await loadJuryReviews(paperIdFromUrl);
       }
     }
+
   });
 
   // Readonly mód – mezők tiltása, gombok elrejtése
-  function initReadonlyMode() {
+   function initReadonlyMode() {
     if (!readonlyMode) return;
 
     const feltoltesUtmutato = document.getElementById('feltoltes-utmutato');
@@ -378,22 +388,18 @@
       feltoltesUtmutato.style.display = 'none';
     }
 
-    // Hallgatói nézetben: csak a határidő dobozt rejtsük el,
-    // A PONTOZÓ RÉSZT NEM!
-    if (isStudentView) {
+    // Hallgató és zsűri esetén a bírálati határidő már nem érdekes
+    if (isStudentView || isJuryView) {
       const box = document.getElementById('biralat-deadline-box');
       if (box) box.style.display = 'none';
     }
 
-    // MINDEN input/textarea/select csak olvasható legyen
     document.querySelectorAll('input, textarea, select').forEach(elem => {
-      // dolgozatválasztó mindig maradjon aktív (nem hallgatói nézetben)
+      // dolgozatválasztó maradjon aktív, ha látszik
       if (elem.id === 'paperSelect') return;
 
-      // hallgatói módban a bírálót választó selectet és a szöveges bírálat textarea-t
-      // ne tiltsuk le, csak readonly legyen
-      if (isStudentView && (elem.id === 'biraloSelect' || elem.id === 'student-review-text')) {
-        elem.readOnly = true;
+      // hallgató + zsűri: a bírálót választó <select> maradjon használható
+      if ((isStudentView || isJuryView) && elem.id === 'biraloSelect') {
         return;
       }
 
@@ -401,13 +407,13 @@
       elem.disabled = true;
     });
 
-    // GOMBOK ÉS FILE INPUT ELREJTÉSE – de célzottan
     const mentes = document.getElementById('mentesGomb');
     if (mentes) mentes.style.display = 'none';
 
     const uploadInput = document.getElementById('upload');
     if (uploadInput) uploadInput.style.display = 'none';
   }
+
 
   // Dolgozatlista betöltése + select kezelése (BÍRÁLÓKNAK / ADMINNAK)
   function initPaperSelect() {
@@ -770,8 +776,8 @@
 
   // Bírálati határidő betöltése
   async function loadReviewDeadline() {
-    // Hallgatói nézetben nem mutatunk határidőt
-    if (isStudentView) {
+    // Hallgatói és zsűrinézetben nem mutatunk határidőt
+    if (isStudentView || isJuryView) {
       const box = document.getElementById('biralat-deadline-box');
       if (box) box.style.display = 'none';
       return;
@@ -811,6 +817,103 @@
       console.error('Nem sikerült lekérni a bírálati határidőt:', err);
     }
   }
+
+    let juryReviews = [];
+
+  // Zsűrinézet: bírálatok betöltése pontszámokkal
+  async function loadJuryReviews(id) {
+    if (!isJuryView) return;
+
+    try {
+      const res = await fetch(`/api/papers/${id}/ertekelesek-zsuri`);
+      if (!res.ok) {
+        console.warn('Nincs zsűri-bírálat ehhez a dolgozathoz vagy hiba történt.');
+        return;
+      }
+
+      const data = await res.json();
+      const reviews = data.reviews || [];
+      if (!reviews.length) {
+        console.warn('Nincs még bírálat a zsűri nézethez.');
+        return;
+      }
+
+      juryReviews = reviews;
+
+      // "Bíráló" input lecserélése select-re (ugyanúgy, mint hallgatónál)
+      const biraloInput = document.getElementById('biralo');
+      if (biraloInput && biraloInput.parentElement) {
+        let biraloSelect = document.getElementById('biraloSelect');
+
+        if (!biraloSelect) {
+          biraloSelect = document.createElement('select');
+          biraloSelect.id = 'biraloSelect';
+          biraloSelect.style.width = '25%';
+
+          biraloInput.parentElement.replaceChild(biraloSelect, biraloInput);
+        }
+
+        biraloSelect.innerHTML = '';
+        reviews.forEach((r, index) => {
+          const opt = document.createElement('option');
+          opt.value = r.biraloId;
+          opt.textContent = r.biraloNev || `Bíráló ${index + 1}`;
+          biraloSelect.appendChild(opt);
+        });
+
+        biraloSelect.addEventListener('change', () => {
+          showJuryReview(biraloSelect.value);
+        });
+
+        // első bírálat megjelenítése
+        if (reviews[0]) {
+          showJuryReview(reviews[0].biraloId);
+        }
+      }
+    } catch (err) {
+      console.error('Hiba a zsűri bírálatok betöltésekor:', err);
+    }
+  }
+
+  function showJuryReview(biraloId) {
+    if (!juryReviews.length) return;
+
+    const review = juryReviews.find(r => String(r.biraloId) === String(biraloId));
+    if (!review) return;
+
+    const form = review.form || {};
+
+    // pontszámok
+    for (let i = 1; i <= 5; i++) {
+      const scoreElem = document.getElementById(`score${i}`);
+      if (scoreElem) {
+        scoreElem.value = form[`score${i}`] ?? '';
+      }
+      const textElem = document.getElementById(`text${i}`);
+      if (textElem) {
+        textElem.value = form[`text${i}`] ?? '';
+      }
+    }
+
+    const kerdesElem = document.getElementById('bírálói_kérdések');
+    if (kerdesElem) {
+      kerdesElem.value = form.kerdesek || form['bírálói_kérdések'] || '';
+    }
+
+    const otdkElem = document.getElementById('otdk_reszvetel');
+    if (otdkElem) {
+      otdkElem.value = form.otdk || form.otdk_reszvetel || otdkElem.value;
+    }
+
+    const datumElem = document.getElementById('datum');
+    if (datumElem) {
+      datumElem.value = form.datum || '';
+    }
+
+    // összpontszám frissítése
+    recalcTotal();
+  }
+
 </script>
 
 </body>

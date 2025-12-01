@@ -1204,7 +1204,6 @@ app.post('/api/dolgozatok/ertekeles-feltoltes/:id', upload.single('file'), async
 });
 
 // 🔹 Hallgatói nézethez: bírálatok listája egy dolgozathoz (pontszám nélkül)
-// 🔹 Hallgatói nézethez: bírálatok listája egy dolgozathoz (pontszám nélkül)
 app.get('/api/papers/:id/ertekelesek-hallgato', async (req, res) => {
   try {
     const { id } = req.params;
@@ -1310,6 +1309,66 @@ app.get('/api/papers/:id/ertekelesek-hallgato', async (req, res) => {
   }
 });
 
+// 🔹 Zsűrinézethez: bírálatok listája (pontszámokkal, teljes űrlappal)
+app.get('/api/papers/:id/ertekelesek-zsuri', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Érvénytelen dolgozat ID' });
+    }
+
+    const paper = await Dolgozat.findById(id).lean();
+    if (!paper) {
+      return res.status(404).json({ error: 'Dolgozat nem található.' });
+    }
+
+    // csak bírálva állapot esetén mutatjuk
+    if (paper.allapot !== 'bírálva') {
+      return res.status(400).json({ error: 'A dolgozat még nincs bírálva.' });
+    }
+
+    const felhasznalok = await Felhasznalo.find().lean();
+    const felhasznaloMapId = {};
+    felhasznalok.forEach(f => {
+      felhasznaloMapId[String(f._id)] = f;
+    });
+
+    const acceptedReviewers = (paper.biralok || [])
+      .filter(b => b.allapot === 'Elfogadva')
+      .map(b => {
+        const f = felhasznaloMapId[String(b.felhasznaloId)] || {};
+        return {
+          id: String(b.felhasznaloId),
+          nev: f.nev || 'Ismeretlen bíráló'
+        };
+      });
+
+    const reviews = [];
+    (paper.ertekelesek || []).forEach(e => {
+      const rid = String(e.biraloId || '');
+      const reviewer = acceptedReviewers.find(r => r.id === rid);
+      if (!reviewer) return;
+
+      reviews.push({
+        biraloId: rid,
+        biraloNev: reviewer.nev,
+        pontszam: e.pontszam ?? null,
+        form: e.form && typeof e.form === 'object' ? e.form : {},
+        leadva: e.createdAt || null
+      });
+    });
+
+    res.json({
+      paperId: paper._id,
+      cim: paper.cím || paper.cim || '',
+      reviews
+    });
+  } catch (err) {
+    console.error('Hiba a zsűri bírálatok lekérdezésekor:', err);
+    res.status(500).json({ error: 'Szerver hiba' });
+  }
+});
 
 
 app.put('/api/dolgozatok/:id/temavezeto-nyilatkozat', async (req, res) => {
@@ -2102,7 +2161,8 @@ const SectionSchema = new mongoose.Schema({
       szerep: { type: String, enum: ['elnok', 'titkar', 'zsuri'] },
       allapot: { type: String, enum: ['Elfogadás alatt', 'Elfogadva', 'Elutasítva'], default: 'Elfogadás alatt' }
     }
-  ]
+  ],
+    zsuriErtesitesSentAt: { type: Date, default: null }
 });
 
 
@@ -2688,6 +2748,66 @@ async function sendReviewsToStudentsAfterDeadline() {
   }
 }
 
+// 🔹 Zsűritagok értesítése a bírálatokról a globális határidő után
+async function sendZsuriNotificationsAfterDeadline() {
+  try {
+    // 1️⃣ Határidő lekérése
+    const deadline = await Deadline.findOne({ key: 'zsuri_ertesites' }).lean();
+    if (!deadline || !deadline.hatarido) {
+      return; // nincs ilyen határidő beállítva
+    }
+
+    const now = new Date();
+    const hatarido = new Date(deadline.hatarido);
+    if (isNaN(hatarido.getTime())) return;
+
+    // Csak akkor indulunk, ha MÁR LEJÁRT a határidő
+    if (now <= hatarido) return;
+
+    // 2️⃣ Olyan szekciók, ahol van legalább egy elfogadott zsűritag,
+    //    de még NEM küldtünk értesítést (zsuriErtesitesSentAt == null)
+    const sections = await Section.find({
+      'zsuri.allapot': 'Elfogadva',
+      $or: [
+        { zsuriErtesitesSentAt: { $exists: false } },
+        { zsuriErtesitesSentAt: null }
+      ]
+    }).populate('zsuri.felhasznaloId');
+
+    if (!sections.length) return;
+
+    for (const section of sections) {
+      const link = `http://localhost:3000/review-papers.html?section=${section._id}`;
+
+      // minden elfogadott zsűritagnak (elnök, titkár, zsűri)
+      for (const z of section.zsuri || []) {
+        if (z.allapot !== 'Elfogadva') continue;
+        const user = z.felhasznaloId;
+        if (!user || !user.email) continue;
+
+        const emailSzoveg = betoltEmailSablon('ertesites_zsurinek.txt', {
+          NEV: user.nev || 'Tisztelt zsűritag',
+          SZEKCIO: section.name || '',
+          LINK: link
+        });
+
+        await transporter.sendMail({
+          from: 'TDK rendszer <m48625729@gmail.com>',
+          to: user.email,
+          subject: `TDK – bírálatok áttekintése (${section.name})`,
+          text: emailSzoveg
+        });
+      }
+
+      // jelöljük, hogy ez a szekció már megkapta az értesítést
+      section.zsuriErtesitesSentAt = now;
+      await section.save();
+    }
+  } catch (err) {
+    console.error('Hiba a zsűritagok értesítésekor:', err);
+  }
+}
+
 
 // 3️⃣ Időzítő: óránként lefuttatjuk (lastReminderAt miatt így is csak napi 1 mail jut bírálónként)
 setInterval(() => {
@@ -2702,6 +2822,9 @@ setInterval(() => {
   // 3️⃣ Bírálatok kiküldése hallgatóknak (pontszám nélkül)
   sendReviewsToStudentsAfterDeadline()
     .catch(err => console.error('Hiba a bírálatok hallgatóknak való kiküldésekor:', err));
+  // 4️⃣ Zsűritagok értesítése
+      sendZsuriNotificationsAfterDeadline()
+    .catch(err => console.error('Hiba a zsűritagok értesítésekor:', err));
 }, 1000 * 10); // kb. óránként
 
 
