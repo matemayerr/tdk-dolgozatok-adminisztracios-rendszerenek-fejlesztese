@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const gomb = vanErtekeles
                 ? `<a href="import_form.html?id=${dolgozat._id}&readonly=true" class="modosit-btn">Megtekintés</a>`
-                : `<a href="import_form.html?id=${dolgozat._id}" class="jelentkezes-btn">Értékelés</a>`;
+                : `<a href="import_form.html?id=${dolgozat._id}" class="jelentkezes-btn">Bírálás</a>`;
 
             foSor.innerHTML = `
     <td>

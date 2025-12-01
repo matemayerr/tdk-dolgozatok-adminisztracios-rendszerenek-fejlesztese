@@ -920,48 +920,81 @@ app.post('/api/ertekelesek', async (req, res) => {
 });
 
 
-// Egy dolgozat lekérése ID alapján (bíráló névvel együtt)
+// Egy dolgozat lekérése ID alapján (hallgatók, szekció neve, bíráló(k) neve)
 app.get('/api/papers/:id', async (req, res) => {
   try {
-    const paper = await mongoose.connection.collection('dolgozats').findOne({
-      _id: new mongoose.Types.ObjectId(req.params.id)
-    });
+    const { id } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Érvénytelen dolgozat ID' });
+    }
+
+    // Dolgozat lekérése
+    const paper = await Dolgozat.findById(id).lean();
     if (!paper) {
       return res.status(404).json({ error: 'A dolgozat nem található.' });
     }
 
-    // Felhasználók lekérdezése (hallgatók, témavezetők, bírálók)
-    const felhasznalok = await mongoose.connection.collection('felhasznalos').find({}).toArray();
+    // Felhasználók lekérése
+    const felhasznalok = await Felhasznalo.find().lean();
+
+    const felhasznaloMapNeptun = {};
+    const felhasznaloMapId = {};
+
+    felhasznalok.forEach(f => {
+      if (f.neptun) {
+        felhasznaloMapNeptun[f.neptun] = f;
+      }
+      felhasznaloMapId[String(f._id)] = f;
+    });
 
     // Hallgatók adatai
     const szerzok = (paper.hallgato_ids || []).map(neptun => {
-      const felhasznalo = felhasznalok.find(f => f.neptun === neptun);
+      const f = felhasznaloMapNeptun[neptun] || {};
       return {
-        nev: felhasznalo?.nev || '',
-        szak: felhasznalo?.szak || '',
-        evfolyam: felhasznalo?.evfolyam || ''
+        nev: f.nev || '',
+        szak: f.szak || '',
+        evfolyam: f.evfolyam || ''
       };
     });
 
-    // 🔹 Bíráló adatai (ha van a dokumentumban biralo_ids mező)
-    let biraloNev = '';
-    if (paper.biralo_ids && paper.biralo_ids.length > 0) {
-      const biralo = felhasznalok.find(f => f.neptun === paper.biralo_ids[0]);
-      biraloNev = biralo?.nev || '';
+    // 🔹 Elfogadott bírálók nevei (biralok tömb + allapot === 'Elfogadva')
+    const acceptedReviewers = (paper.biralok || [])
+      .filter(b => b.allapot === 'Elfogadva')
+      .map(b => {
+        const f = felhasznaloMapId[String(b.felhasznaloId)] || {};
+        return {
+          id: String(b.felhasznaloId),
+          nev: f.nev || 'Ismeretlen bíráló',
+          email: f.email || ''
+        };
+      });
+
+    // Ha több elfogadott bíráló van, mindet kiírjuk vesszővel elválasztva
+    const biraloNev = acceptedReviewers.map(b => b.nev).join(', ');
+
+    // 🔹 Szekció neve (ha van)
+    let szekcioNev = '';
+    if (paper.szekcioId) {
+      const szekcio = await Section.findById(paper.szekcioId).lean();
+      if (szekcio) {
+        szekcioNev = szekcio.name || '';
+      }
     }
 
     res.json({
-      cim: paper["cím"],
+      _id: paper._id,
+      cim: paper.cím || paper.cim || '',
       szerzok,
-      biralo: biraloNev
+      biralo: biraloNev,     // 👉 Ezt használja az import_form.html a "Bíráló:" mezőhöz
+      biralok: acceptedReviewers,  // 👉 Ha később kell részletes lista
+      szekcioNev
     });
   } catch (err) {
-    console.error('Hiba a dolgozat lekérdezésekor:', err);
+    console.error('Hiba a dolgozat lekérdezésekor (/api/papers/:id):', err);
     res.status(500).json({ error: 'Szerverhiba' });
   }
 });
-
 
 
 

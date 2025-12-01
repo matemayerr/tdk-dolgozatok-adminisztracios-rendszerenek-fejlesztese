@@ -115,10 +115,13 @@
 
 </head>
 <body>
+<div id="paperSelectWrapper" class="form-group" style="display: none;">
   <label for="paperSelect">Dolgozat kiválasztása:</label>
-<select id="paperSelect">
-  <option value="">-- Válassz dolgozatot --</option>
-</select>
+  <select id="paperSelect" class="form-control">
+    <option value="">Válassz dolgozatot...</option>
+  </select>
+</div>
+
 
 
   <h1>Tudományos és Művészeti Diákköri Konferencia</h1>
@@ -249,210 +252,269 @@
   </div>
 </div>
 
+
+  <button id="mentesGomb" onclick="mentesErtekeles()">Értékelés mentése</button>
+
+
 <script>
-  document.getElementById("upload").addEventListener("change", handleFile, false);
+  // URL paraméterek
+  const urlParams = new URLSearchParams(window.location.search);
+  const readonlyMode = urlParams.get('readonly') === 'true';
+  const paperIdFromUrl = urlParams.get('id');
 
-function handleFile(e) {
-  const file = e.target.files[0];
-  const reader = new FileReader();
-
-  reader.onload = function (e) {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: "array" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
-    // 🎯 Csak pontszámok
-    document.getElementById("score1").value = sheet["C12"]?.v || '';
-    document.getElementById("score2").value = sheet["C14"]?.v || '';
-    document.getElementById("score3").value = sheet["C16"]?.v || '';
-    document.getElementById("score4").value = sheet["C18"]?.v || '';
-    document.getElementById("score5").value = sheet["C20"]?.v || '';
-
-
-    // 🎯 Szöveges értékelések
-    document.getElementById("text1").value = sheet["A13"]?.v || '';
-    document.getElementById("text2").value = sheet["A15"]?.v || '';
-    document.getElementById("text3").value = sheet["A17"]?.v || '';
-    document.getElementById("text4").value = sheet["A19"]?.v || '';
-    document.getElementById("text5").value = sheet["A21"]?.v || '';
-
-    const biraloiKerdesek = sheet['B24'] ? sheet['B24'].v : '';
-    const otdkReszvetel = sheet['B25'] ? sheet['B25'].v : '';
-
-    document.getElementById('bírálói_kérdések').value = biraloiKerdesek;
-    document.getElementById('otdk_reszvetel').value = otdkReszvetel;
-
-
-    // 🎯 Dátum és zsűri elnöke
-    const rawDatum = sheet["A27"]?.v || '';
-    const onlyDate = rawDatum.match(/\d{4}\.\d{2}\.\d{2}\./)?.[0] || '';
-    document.getElementById("datum").value = onlyDate;
-
-    document.getElementById("biralo").value = sheet["C24"]?.v || '';
-
-    // 🎯 Összpontszám
-    document.getElementById("totalScore").textContent = sheet["C22"]?.v || '0';
-  };
-
-
-  reader.readAsArrayBuffer(file);
-}
-
-
-  // 🔹 1. Dolgozatlista betöltése
-fetch('/api/papers')
-  .then(res => res.json())
-  .then(papers => {
-    const select = document.getElementById('paperSelect');
-    papers.forEach(paper => {
-      const option = document.createElement('option');
-      option.value = paper._id;
-      option.textContent = paper.cim;
-      select.appendChild(option);
-    });
-
-    // ⬇️ Automatikus kiválasztás URL paraméter alapján
-    const urlParams = new URLSearchParams(window.location.search);
-    const idFromUrl = urlParams.get('id');
-    if (idFromUrl) {
-      select.value = idFromUrl;
-      // Kiváltja a 'change' eseményt, hogy automatikusan töltse be az adatokat
-      const changeEvent = new Event('change');
-      select.dispatchEvent(changeEvent);
-    }
-  })
-  .catch(err => console.error('Hiba a dolgozatok betöltésénél:', err));
-
-
-  // 🔹 2. Dolgozat adatainak betöltése választáskor
-  document.getElementById('paperSelect').addEventListener('change', function() {
-  const id = this.value;
-  if (!id) return;
-
-  fetch(`/api/papers/${id}`)
-    .then(res => res.json())
-    .then(paper => {
-      // Cím és szekció beállítása
-      document.getElementById('cim').value = paper.cim || '';
-      document.getElementById('szekcio').value = paper.szekcio || '';
-
-      // Előző szerzői sorok törlése
-      const szerzokContainer = document.getElementById('szerzok-container');
-      szerzokContainer.innerHTML = '';
-
-      // Új sorok létrehozása szerzők alapján
-      if (Array.isArray(paper.szerzok)) {
-        paper.szerzok.forEach(szerzo => {
-          const row = document.createElement('div');
-          row.className = 'szerzo-row';
-
-          const nevInput = document.createElement('input');
-          nevInput.type = 'text';
-          nevInput.placeholder = 'Szerző neve';
-          nevInput.value = szerzo.nev || '';
-
-          const szakInput = document.createElement('input');
-          szakInput.type = 'text';
-          szakInput.placeholder = 'Szak';
-          szakInput.value = szerzo.szak || '';
-
-          const evfInput = document.createElement('input');
-          evfInput.type = 'text';
-          evfInput.placeholder = 'Évfolyam';
-          evfInput.value = szerzo.evfolyam || '';
-
-          row.appendChild(nevInput);
-          row.appendChild(szakInput);
-          row.appendChild(evfInput);
-          szerzokContainer.appendChild(row);
-        });
-      }
-    })
-    .catch(err => console.error('Hiba a dolgozat adatainak betöltésénél:', err));
-});
-
-function mentesErtekeles() {
-  const id = document.getElementById('paperSelect').value;
-  if (!id) {
-    alert('Előbb válassz dolgozatot!');
-    return;
+  // Excel feltöltés kezelése
+  const uploadInput = document.getElementById("upload");
+  if (uploadInput) {
+    uploadInput.addEventListener("change", handleFile, false);
   }
 
-  const ertekeles = {
-    score1: document.getElementById('score1').value,
-    score2: document.getElementById('score2').value,
-    score3: document.getElementById('score3').value,
-    score4: document.getElementById('score4').value,
-    score5: document.getElementById('score5').value,
-    text1: document.getElementById('text1').value,
-    text2: document.getElementById('text2').value,
-    text3: document.getElementById('text3').value,
-    text4: document.getElementById('text4').value,
-    text5: document.getElementById('text5').value,
-    kerdesek: document.getElementById('bírálói_kérdések').value,
-    otdk: document.getElementById('otdk_reszvetel').value,
-    datum: document.getElementById('datum').value,
-    elnok: document.getElementById('biralo').value
-  };
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  fetch(`/api/papers/${id}/ertekeles`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(ertekeles)
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert('Értékelés elmentve!');
-    })
-    .catch(err => {
-      console.error('Hiba az értékelés mentésénél:', err);
-      alert('Hiba történt!');
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      // 🎯 Csak pontszámok
+      document.getElementById("score1").value = sheet["C12"]?.v || '';
+      document.getElementById("score2").value = sheet["C14"]?.v || '';
+      document.getElementById("score3").value = sheet["C16"]?.v || '';
+      document.getElementById("score4").value = sheet["C18"]?.v || '';
+      document.getElementById("score5").value = sheet["C20"]?.v || '';
+
+      // 🎯 Szöveges értékelések
+      document.getElementById("text1").value = sheet["A13"]?.v || '';
+      document.getElementById("text2").value = sheet["A15"]?.v || '';
+      document.getElementById("text3").value = sheet["A17"]?.v || '';
+      document.getElementById("text4").value = sheet["A19"]?.v || '';
+      document.getElementById("text5").value = sheet["A21"]?.v || '';
+
+      const biraloiKerdesek = sheet['B24'] ? sheet['B24'].v : '';
+      const otdkReszvetel = sheet['B25'] ? sheet['B25'].v : '';
+
+      document.getElementById('bírálói_kérdések').value = biraloiKerdesek;
+      document.getElementById('otdk_reszvetel').value = otdkReszvetel;
+
+      // 🎯 Dátum
+      const rawDatum = sheet["A27"]?.v || '';
+      const onlyDate = rawDatum.match(/\d{4}\.\d{2}\.\d{2}\./)?.[0] || '';
+      document.getElementById("datum").value = onlyDate;
+
+      // 🎯 Összpontszám
+      document.getElementById("totalScore").textContent = sheet["C22"]?.v || '0';
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  // DOM betöltődése után mindent indítunk
+  document.addEventListener('DOMContentLoaded', () => {
+    initReadonlyMode();
+    initPaperSelect();
+
+    if (readonlyMode && paperIdFromUrl) {
+      loadEvaluation(paperIdFromUrl);
+    }
+
+    if (paperIdFromUrl) {
+      loadPaperHeader(paperIdFromUrl);
+    }
+  });
+
+  // Readonly mód – mezők tiltása, gombok elrejtése
+  function initReadonlyMode() {
+    if (!readonlyMode) return;
+
+    const feltoltesUtmutato = document.getElementById('feltoltes-utmutato');
+    if (feltoltesUtmutato) {
+      feltoltesUtmutato.style.display = 'none';
+    }
+
+    document.querySelectorAll('input, textarea, select').forEach(elem => {
+      if (elem.id === 'paperSelect') return; // dolgozatot továbbra is lehessen választani
+      elem.readOnly = true;
+      elem.disabled = true;
     });
-}
 
+    document.querySelectorAll('button, input[type="submit"], input[type="file"]').forEach(btn => {
+      btn.style.display = 'none';
+    });
+  }
 
-document.addEventListener('DOMContentLoaded', function () {
-    const urlParams = new URLSearchParams(window.location.search);
-    const readonlyMode = urlParams.get('readonly') === 'true';
+  // Dolgozatlista betöltése + select kezelése
+  function initPaperSelect() {
+    const select = document.getElementById('paperSelect');
+    const wrapper = document.getElementById('paperSelectWrapper');
+    if (!select) return;
 
-    if (readonlyMode) {
-        // Minden input és textarea mezőt letiltunk
-        document.querySelectorAll('input, textarea, select').forEach(elem => {
-            elem.setAttribute('readonly', true);
-            elem.setAttribute('disabled', true);
+    if (wrapper) wrapper.style.display = 'block';
+
+    fetch('/api/papers')
+      .then(res => res.json())
+      .then(papers => {
+        papers.forEach(paper => {
+          const option = document.createElement('option');
+          option.value = paper._id;
+          option.textContent = paper.cim;
+          select.appendChild(option);
         });
 
-        // Gombokat elrejtjük
-        const gombok = document.querySelectorAll('button, input[type="submit"], input[type="file"]');
-        gombok.forEach(gomb => gomb.style.display = 'none');
-    }
-});
+        // URL alapján előválasztás
+        if (paperIdFromUrl) {
+          select.value = paperIdFromUrl;
+        }
 
-// 🔹 3. Értékelés betöltése, ha readonly módban nyílt meg az oldal
-document.addEventListener('DOMContentLoaded', async function () {
-  const urlParams = new URLSearchParams(window.location.search);
-  const id = urlParams.get('id');
-  const readonlyMode = urlParams.get('readonly') === 'true';
+        if (select.value) {
+          onPaperChange();  // automatikusan betöltjük az adatokat
+        }
+      })
+      .catch(err => console.error('Hiba a dolgozatok betöltésénél:', err));
 
-  if (id && readonlyMode) {
+    select.addEventListener('change', onPaperChange);
+  }
+
+  // Dolgozat adatainak betöltése választáskor
+  async function onPaperChange() {
+    const select = document.getElementById('paperSelect');
+    if (!select) return;
+
+    const id = select.value;
+    if (!id) return;
+
+    await loadPaperHeader(id);
+  }
+
+  // Cím, szekció, szerzők, (opcionálisan) bíráló betöltése
+  async function loadPaperHeader(id) {
     try {
-      const response = await fetch(`/api/papers/${id}/ertekeles`);
-      if (!response.ok) throw new Error('Nem sikerült lekérni az értékelést');
-      const data = await response.json();
+      const response = await fetch(`/api/papers/${id}`);
+      const paper = await response.json();
 
-      // 🎯 Pontszámok és szöveges mezők kitöltése
-      for (let i = 1; i <= 5; i++) {
-        document.getElementById(`score${i}`).value = data[`score${i}`] || '';
-        document.getElementById(`text${i}`).value = data[`text${i}`] || '';
+      const cimInput = document.getElementById('cim');
+      const szekcioInput = document.getElementById('szekcio');
+      const biraloInput = document.getElementById('biralo');
+
+      if (cimInput) cimInput.value = paper.cim || '';
+      if (szekcioInput) szekcioInput.value = paper.szekcioNev || '';
+
+      if (biraloInput && !biraloInput.value.trim() && paper.biralo) {
+        biraloInput.value = paper.biralo;
       }
 
-      // 🎯 Egyéb mezők visszatöltése
+      // Szerzők
+      const szerzokContainer = document.getElementById('szerzok-container');
+      if (szerzokContainer) {
+        szerzokContainer.innerHTML = '';
+        if (Array.isArray(paper.szerzok)) {
+          paper.szerzok.forEach(szerzo => {
+            const row = document.createElement('div');
+            row.className = 'szerzo-row';
+
+            const nevInput = document.createElement('input');
+            nevInput.type = 'text';
+            nevInput.placeholder = 'Szerző neve';
+            nevInput.value = szerzo.nev || '';
+
+            const szakInput = document.createElement('input');
+            szakInput.type = 'text';
+            szakInput.placeholder = 'Szak';
+            szakInput.value = szerzo.szak || '';
+
+            const evfInput = document.createElement('input');
+            evfInput.type = 'text';
+            evfInput.placeholder = 'Évfolyam';
+            evfInput.value = szerzo.evfolyam || '';
+
+            if (readonlyMode) {
+              [nevInput, szakInput, evfInput].forEach(el => {
+                el.readOnly = true;
+                el.disabled = true;
+              });
+            }
+
+            row.appendChild(nevInput);
+            row.appendChild(szakInput);
+            row.appendChild(evfInput);
+            szerzokContainer.appendChild(row);
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Nem sikerült betölteni a dolgozat vagy bíráló adatait:', err);
+    }
+  }
+
+  // Értékelés mentése
+  async function mentesErtekeles() {
+    const select = document.getElementById('paperSelect');
+    const id = select ? select.value : '';
+    if (!id) {
+      alert('Előbb válassz dolgozatot!');
+      return;
+    }
+
+    const ertekeles = {
+      score1: document.getElementById('score1').value,
+      score2: document.getElementById('score2').value,
+      score3: document.getElementById('score3').value,
+      score4: document.getElementById('score4').value,
+      score5: document.getElementById('score5').value,
+      text1: document.getElementById('text1').value,
+      text2: document.getElementById('text2').value,
+      text3: document.getElementById('text3').value,
+      text4: document.getElementById('text4').value,
+      text5: document.getElementById('text5').value,
+      kerdesek: document.getElementById('bírálói_kérdések').value,
+      otdk: document.getElementById('otdk_reszvetel').value,
+      datum: document.getElementById('datum').value,
+      elnok: document.getElementById('biralo').value
+    };
+
+    try {
+      const res = await fetch(`/api/papers/${id}/ertekeles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ertekeles)
+      });
+
+      if (!res.ok) throw new Error('Hibás válasz a szervertől.');
+      await res.json();
+      alert('Értékelés elmentve!');
+    } catch (err) {
+      console.error('Hiba az értékelés mentésénél:', err);
+      alert('Hiba történt az értékelés mentésekor.');
+    }
+  }
+
+  // Readonly módban elmentett értékelés betöltése
+  async function loadEvaluation(id) {
+    try {
+      const res = await fetch(`/api/papers/${id}/ertekeles`);
+      if (!res.ok) {
+        console.warn('Nincs elmentett értékelés ehhez a dolgozathoz.');
+        return;
+      }
+      const data = await res.json();
+
+      // 🎯 Pontszámok és szöveg
+      for (let i = 1; i <= 5; i++) {
+        const scoreInput = document.getElementById(`score${i}`);
+        const textInput = document.getElementById(`text${i}`);
+        if (scoreInput) scoreInput.value = data[`score${i}`] || '';
+        if (textInput) textInput.value = data[`text${i}`] || '';
+      }
+
       document.getElementById('bírálói_kérdések').value = data.kerdesek || '';
       document.getElementById('otdk_reszvetel').value = data.otdk || 'Nem';
       document.getElementById('datum').value = data.datum || '';
-      document.getElementById('biralo').value = data.elnok || '';
+      const biraloInput = document.getElementById('biralo');
+      if (biraloInput) biraloInput.value = data.elnok || biraloInput.value;
 
-      // 🎯 Összpontszám kiszámítása
+      // 🎯 Összpontszám
       const total = [1, 2, 3, 4, 5]
         .map(i => Number(data[`score${i}`]) || 0)
         .reduce((a, b) => a + b, 0);
@@ -461,45 +523,9 @@ document.addEventListener('DOMContentLoaded', async function () {
       console.error('Hiba az értékelés betöltésekor:', err);
     }
   }
-});
-
-
-const urlParams = new URLSearchParams(window.location.search);
-  const readonly = urlParams.get('readonly') === 'true';
-
-  if (readonly) {
-    const feltoltesUtmutato = document.getElementById('feltoltes-utmutato');
-    if (feltoltesUtmutato) {
-      feltoltesUtmutato.style.display = 'none';
-    }
-  }
-
-  // Bíráló név betöltése
-document.addEventListener('DOMContentLoaded', async function () {
-  const urlParams = new URLSearchParams(window.location.search);
-  const id = urlParams.get('id');
-  const readonly = urlParams.get('readonly') === 'true';
-  const biraloInput = document.getElementById('biralo');
-
-  try {
-    // Lekérjük a dolgozatot, és abból a bíráló nevét
-    const response = await fetch(`/api/papers/${id}`);
-    const paper = await response.json();
-
-    if (biraloInput && !biraloInput.value.trim()) {
-      biraloInput.value = paper.biralo || '';
-    }
-
-    if (readonly) {
-      biraloInput.setAttribute('readonly', true);
-    }
-
-  } catch (err) {
-    console.error('Nem sikerült betölteni a dolgozat vagy bíráló adatait:', err);
-  }
-});
-
 </script>
+
+
 
 </body>
 </html>
