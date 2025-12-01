@@ -24,17 +24,19 @@ app.use(express.json()); // JSON adatküldés engedélyezése (pl. POST és PUT 
 
 // Mongoose modellek létrehozása a "Dolgozat" és "Felhasznalo" gyűjteményekhez
 const Dolgozat = mongoose.model('dolgozat', new mongoose.Schema({
-    cím: { type: String, required: true },
-    leiras: { type: String },
-    hallgato_ids: { type: [String], required: true }, // Több hallgató támogatása
-    temavezeto_ids: { type: [String], required: true }, // Több témavezető támogatása
-    allapot: { type: String, default: 'jelentkezett' },
-    filePath: { type: String },
-    pontszam: { type: String, default: '' },
-    ertekelesFilePath: { type: String },
-    elutasitas_oka: { type: String },
-    szovegesErtekeles: { type: String }
+  cím: { type: String, required: true },
+  leiras: { type: String },
+  hallgato_ids: { type: [String], required: true },
+  temavezeto_ids: { type: [String], required: true },
+  allapot: { type: String, default: 'jelentkezett' },
+  filePath: { type: String },
+  pontszam: { type: String, default: '' },
+  ertekelesFilePath: { type: String },
+  elutasitas_oka: { type: String },
+  szovegesErtekeles: { type: String },
+  ertekeles: { type: Object, default: {} }   // 🔹 EZ HIÁNYZOTT
 }));
+
 
 
 const bcrypt = require('bcrypt');
@@ -501,18 +503,34 @@ app.post('/api/papers/:id/ertekeles', async (req, res) => {
   const ertekeles = req.body;
 
   try {
-    const paper = await Dolgozat.findById(id);
-    if (!paper) return res.status(404).send('Dolgozat nem található');
+    const dolgozat = await Dolgozat.findById(id);
+    if (!dolgozat) return res.status(404).send('Dolgozat nem található');
 
-    paper.ertekeles = ertekeles;
-    await paper.save();
+    dolgozat.ertekeles = ertekeles;
+    await dolgozat.save();
 
-    res.send({ message: 'Értékelés elmentve' });
+    res.json({ message: 'Értékelés elmentve', dolgozat });
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Hiba történt');
+    console.error('Hiba az értékelés mentésekor:', err);
+    res.status(500).json({ error: 'Szerver hiba' });
   }
 });
+
+
+// Értékelés lekérdezése (megtekintéshez)
+app.get('/api/papers/:id/ertekeles', async (req, res) => {
+  try {
+    const dolgozat = await Dolgozat.findById(req.params.id);
+    if (!dolgozat) return res.status(404).json({ error: 'Dolgozat nem található' });
+
+    res.json(dolgozat.ertekeles || {});
+  } catch (err) {
+    console.error('Hiba az értékelés lekérdezésekor:', err);
+    res.status(500).json({ error: 'Szerver hiba' });
+  }
+});
+
+
 
 
   // Csak a kész (feltölthető) dolgozatok lekérdezése
@@ -733,10 +751,10 @@ app.get('/api/papers/:id', async (req, res) => {
 
 app.get('/api/papers', async (req, res) => {
   try {
-    const dolgozatok = await mongoose.connection.collection('dolgozats').find({}).toArray();
-    const felhasznalok = await mongoose.connection.collection('felhasznalos').find({}).toArray();
+    const dolgozatok = await Dolgozat.find().lean();
+    const felhasznalok = await Felhasznalo.find().lean();
 
-    // Map Neptun → felhasználó
+    // Neptun → felhasználó map
     const felhasznaloMap = {};
     felhasznalok.forEach(f => {
       if (f.neptun) felhasznaloMap[f.neptun] = f;
@@ -745,25 +763,18 @@ app.get('/api/papers', async (req, res) => {
     const eredmeny = dolgozatok.map(d => ({
       _id: d._id,
       cim: d["cím"],
-      leiras: d.leiras,
       allapot: d.allapot,
-      pontszam: d.pontszam || '',
-      hallgatok: d.hallgato_ids.map(neptun => {
-        const felh = felhasznaloMap[neptun] || {};
-        return {
-          nev: felh.nev || '',
-          neptun: neptun,
-          szak: felh.szak || '',
-          evfolyam: felh.evfolyam || ''
-        };
-      }),
-      temavezeto: d.temavezeto_ids.map(neptun => {
-        const felh = felhasznaloMap[neptun] || {};
-        return {
-          nev: felh.nev || '',
-          neptun: neptun
-        };
-      })
+      ertekeles: d.ertekeles || {},   // 🔹 FONTOS
+      szerzok: (d.hallgato_ids || []).map(neptun => ({
+        nev: felhasznaloMap[neptun]?.nev || '',
+        neptun: neptun,
+        szak: felhasznaloMap[neptun]?.szak || '',
+        evfolyam: felhasznaloMap[neptun]?.evfolyam || ''
+      })),
+      temavezeto: (d.temavezeto_ids || []).map(neptun => ({
+        nev: felhasznaloMap[neptun]?.nev || '',
+        neptun: neptun
+      }))
     }));
 
     res.json(eredmeny);
@@ -772,6 +783,7 @@ app.get('/api/papers', async (req, res) => {
     res.status(500).json({ error: 'Hiba történt a dolgozatok lekérdezésekor' });
   }
 });
+
 
 
 
@@ -806,6 +818,91 @@ app.post('/api/reset-jelszo-kerelem', async (req, res) => {
         res.status(500).json({ error: 'Nem sikerült e-mailt küldeni.' });
     }
 });
+
+
+// 🔹 Témaajánlók kezeléséhez új Mongoose modell
+const TemaJavaslat = mongoose.model('temajavaslat', new mongoose.Schema({
+  cim: { type: String, required: true },
+  osszefoglalo: { type: String, required: true },
+  temavezetoNev: { type: String, required: true },
+  temavezetoNeptun: { type: String, required: false },
+}));
+
+// 🔹 Témaajánlatok lekérése
+app.get('/api/topics', async (req, res) => {
+  try {
+    const topics = await TemaJavaslat.find();
+    res.json(topics);
+  } catch (err) {
+    console.error('Hiba a témák lekérésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a témák lekérésekor' });
+  }
+});
+
+// 🔹 Új témajavaslat mentése
+app.post('/api/topics', async (req, res) => {
+  const { cim, osszefoglalo, temavezetoNev, temavezetoNeptun } = req.body;
+  try {
+    const ujTema = new TemaJavaslat({ cim, osszefoglalo, temavezetoNev, temavezetoNeptun });
+    await ujTema.save();
+    res.status(201).json({ message: 'Téma sikeresen mentve', tema: ujTema });
+  } catch (err) {
+    console.error('Hiba téma mentésekor:', err);
+    res.status(500).json({ error: 'Hiba téma mentésekor' });
+  }
+});
+
+// 🔹 Téma törlése
+app.delete('/api/topics/:id', async (req, res) => {
+  try {
+    const result = await TemaJavaslat.findByIdAndDelete(req.params.id);
+    if (!result) return res.status(404).json({ error: 'Téma nem található' });
+    res.json({ message: 'Téma törölve' });
+  } catch (err) {
+    console.error('Hiba téma törlésekor:', err);
+    res.status(500).json({ error: 'Hiba téma törlésekor' });
+  }
+});
+
+// 🔹 Témavezetők listázása (MongoDB-ből)
+app.get('/api/temavezetok', async (req, res) => {
+  try {
+    const temavezetok = await Felhasznalo.find({ csoportok: { $in: ['temavezeto'] } });
+    res.json(temavezetok);
+  } catch (err) {
+    console.error('Hiba a témavezetők lekérésekor:', err);
+    res.status(500).json({ error: 'Szerverhiba a témavezetők lekérésekor' });
+  }
+});
+
+
+// Hallgató(k) jelentkezése egy témajavaslatra
+app.post('/api/topics/:id/jelentkezes', async (req, res) => {
+  const { id } = req.params;
+  const { hallgato_ids } = req.body; // Több hallgató jelentkezhet
+
+  try {
+    const topic = await TemaJavaslat.findById(id); // ✅ helyes modellnév
+    if (!topic) return res.status(404).json({ error: 'Téma nem található' });
+
+    const newDolgozat = new Dolgozat({
+      cím: topic.cim,
+      leiras: topic.osszefoglalo,
+      hallgato_ids: hallgato_ids || [],
+      temavezeto_ids: [topic.temavezetoNeptun],
+      allapot: 'jelentkezett'
+    });
+
+    await newDolgozat.save();
+    res.status(201).json({ message: 'Jelentkezés sikeres, a dolgozat létrehozva.', dolgozat: newDolgozat });
+  } catch (err) {
+    console.error('Hiba a jelentkezés során:', err);
+    res.status(500).json({ error: 'Szerverhiba a jelentkezés mentésekor' });
+  }
+});
+
+
+
 
 
 //Új jelszó mentése token alapján

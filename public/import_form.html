@@ -428,6 +428,41 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+// 🔹 3. Értékelés betöltése, ha readonly módban nyílt meg az oldal
+document.addEventListener('DOMContentLoaded', async function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const id = urlParams.get('id');
+  const readonlyMode = urlParams.get('readonly') === 'true';
+
+  if (id && readonlyMode) {
+    try {
+      const response = await fetch(`/api/papers/${id}/ertekeles`);
+      if (!response.ok) throw new Error('Nem sikerült lekérni az értékelést');
+      const data = await response.json();
+
+      // 🎯 Pontszámok és szöveges mezők kitöltése
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`score${i}`).value = data[`score${i}`] || '';
+        document.getElementById(`text${i}`).value = data[`text${i}`] || '';
+      }
+
+      // 🎯 Egyéb mezők visszatöltése
+      document.getElementById('bírálói_kérdések').value = data.kerdesek || '';
+      document.getElementById('otdk_reszvetel').value = data.otdk || 'Nem';
+      document.getElementById('datum').value = data.datum || '';
+      document.getElementById('elnok').value = data.elnok || '';
+
+      // 🎯 Összpontszám kiszámítása
+      const total = [1, 2, 3, 4, 5]
+        .map(i => Number(data[`score${i}`]) || 0)
+        .reduce((a, b) => a + b, 0);
+      document.getElementById('totalScore').textContent = total;
+    } catch (err) {
+      console.error('Hiba az értékelés betöltésekor:', err);
+    }
+  }
+});
+
 
 </script>
 

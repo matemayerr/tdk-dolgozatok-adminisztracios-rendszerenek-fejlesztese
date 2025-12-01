@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Témaajánlók</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>TDK Adminisztrációs Rendszer</h1>
+        <nav>
+            <ul>
+              <li><a href="index.html">Főoldal</a></li>
+              <li><a href="users.html">Felhasználók kezelése</a></li>
+              <li class="dropdown">
+                <a href="#" class="dropbtn">Dolgozatok kezelése</a>
+                <div class="dropdown-content">
+                  <a href="papers.html">Jelentkezés új dolgozattal</a>
+                  <a href="completed-papers.html">Dolgozat feltöltése</a>
+                  <a href="review-papers.html">Dolgozat értékelése</a>
+                </div>
+              </li>
+              <li><a href="statistics.html">Statisztikák</a></li>
+              <li><a href="#" id="logout-link">Kijelentkezés</a></li>
+            </ul>
+          </nav>
+</header>
+
+<main>
+  <section>
+    <h2>Témaajánlók kezelése</h2>
+
+    <button id="new-topic-btn">Új témajavaslat hozzáadása</button>
+
+    <form id="topic-form" style="display:none; margin-top: 1rem;">
+      <input type="text" id="topic-title" placeholder="Téma címe" required><br><br>
+      <textarea id="topic-description" placeholder="Tartalmi összefoglaló" required></textarea><br><br>
+
+      <label for="topic-supervisor">Témavezető:</label><br>
+      <select id="topic-supervisor" required>
+        <option value="">Válassz témavezetőt...</option>
+      </select><br><br>
+
+      <button type="submit">Mentés</button>
+      <button type="button" id="topic-cancel">Mégse</button>
+    </form>
+
+    <h3>Elérhető témajavaslatok</h3>
+    <table id="topic-table" width="100%">
+      <thead>
+        <tr>
+          <th>Cím</th>
+          <th>Témavezető</th>
+          <th>Neptun-kód</th>
+          <th>Összefoglaló</th>
+          <th>Művelet</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- Modal a hallgatók kiválasztásához -->
+<div id="jelentkezes-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <h3>Hallgatók kiválasztása a témához</h3>
+    <div id="hallgato-valaszto"></div>
+    <button id="jelentkezes-mentes">Jelentkezés mentése</button>
+    <button id="jelentkezes-bezar">Mégse</button>
+  </div>
+</div>
+
+  </section>
+</main>
+
+<script src="topics.js" defer></script>
+<script src="auth.js" defer></script>
+</body>
+</html>
+

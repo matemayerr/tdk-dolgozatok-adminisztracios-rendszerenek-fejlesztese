@@ -17,14 +17,18 @@ document.addEventListener('DOMContentLoaded', function () {
         filteredDolgozatok.slice(startIndex, endIndex).forEach(dolgozat => {
             const sor = document.createElement("tr");
 
+            // Ha már van értékelés mentve, akkor "Megtekintés", különben "Értékelés"
+            const vanErtekeles = dolgozat.ertekeles && Object.keys(dolgozat.ertekeles).length > 0;
+            const gomb = vanErtekeles
+                ? `<a href="import_form.html?id=${dolgozat._id}&readonly=true" class="custom-button view-button">Megtekintés</a>`
+                : `<a href="import_form.html?id=${dolgozat._id}" class="custom-button eval-button">Értékelés</a>`;
+
             sor.innerHTML = `
                 <td>${dolgozat.cim}</td>
                 <td>${dolgozat.szerzok?.map(s => s.nev).join(", ") || ''}</td>
                 <td>${dolgozat.temavezeto?.nev || ''}</td>
                 <td>${dolgozat.allapot || ''}</td>
-                <td>
-                    <a href="import_form.html?id=${dolgozat._id}&cim=${encodeURIComponent(dolgozat.cim)}" class="custom-button">Értékelés</a>
-                </td>
+                <td>${gomb}</td>
             `;
 
             tabla.appendChild(sor);
@@ -55,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fetch('/api/papers')
         .then(res => res.json())
         .then(adatok => {
+            // Csak az elfogadott dolgozatokat listázzuk
             dolgozatok = adatok.filter(d => d.allapot === 'elfogadva - témavezető által');
             filteredDolgozatok = dolgozatok;
             megjelenitDolgozatok();

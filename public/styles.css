@@ -1106,5 +1106,59 @@ body.login-oldal {
 .custom-button:hover {
     background-color: #45a049;
 }
-  
+
+.eval-button {
+  background-color: #4CAF50; /* zöld */
+  color: white;
+  padding: 5px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+}
+.eval-button:hover {
+  background-color: #45a049;
+}
+
+.view-button {
+  background-color: #007bff; /* kék */
+  color: white;
+  padding: 5px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+}
+.view-button:hover {
+  background-color: #0069d9;
+}
+
+/* Témajavaslatok oldalspecifikus beállítások */
+#topicsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+#topicsTable th, #topicsTable td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.delete-btn {
+  background-color: #c62828;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #a61717;
+}
+
+.form-section, .list-section {
+  margin: 20px auto;
+  width: 95%;
+}
+
   
