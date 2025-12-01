@@ -61,6 +61,16 @@ app.get('/api/dolgozatok', async (req, res) => {
     }
 });
 
+// Kész dolgozatok lekérdezése
+app.get('/api/dolgozatok/kesz', async (req, res) => {
+    try {
+        const keszDolgozatok = await Dolgozat.find({ allapot: 'elfogadva' });
+        res.json(keszDolgozatok);
+    } catch (error) {
+        res.status(500).json({ error: 'Hiba történt a kész dolgozatok lekérésekor' });
+    }
+});
+
 // Dolgozat módosítása
 app.put('/api/dolgozatok/:id', async (req, res) => {
     const { cím, hallgato_id, temavezeto_id, allapot } = req.body;
@@ -93,15 +103,14 @@ app.delete('/api/dolgozatok/:id', async (req, res) => {
     try {
         const dolgozat = await Dolgozat.findByIdAndDelete(req.params.id);
         if (!dolgozat) {
-            return res.status(404).json({ error: 'Dolgozat nem található' });
+            return res.status(404 ).json({ error: 'Dolgozat nem található' });
         }
         res.json({ message: 'Dolgozat sikeresen törölve' });
     } catch (error) {
-        res.status(500).json({ error: 'Hiba történt a dolgozat törlésekor' });
+        res.status(500).json({ error: 'Hiba történt a dolgozat törlése során' });
     }
 });
 
-// Szerver indítása
 app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+    console.log(`Server started on port ${port}`);
 });

@@ -1,39 +1,50 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const uploadForm = document.getElementById('upload-form');
-    const feltoltottDolgozatokTbody = document.getElementById('feltoltott-dolgozatok-tbody');
+document.addEventListener('DOMContentLoaded', function () {
+    const keszDolgozatokTbody = document.getElementById('kesz-dolgozatok-tbody');
 
-    if (uploadForm) {
-        uploadForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
+    // Kész dolgozatok listázása
+   async function listazKeszDolgozatok() {
+    try {
+        const response = await fetch('/api/dolgozatok/kesz');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const keszDolgozatok = await response.json();
 
-            const formData = new FormData();
-            const fileInput = document.getElementById('dolgozat-file');
-            const cím = document.getElementById('dolgozat-cim').value;
+        keszDolgozatokTbody.innerHTML = '';
+        keszDolgozatok.forEach(dolgozat => {
+            addDolgozatToTable(dolgozat);
+        });
+    } catch (err) {
+        console.error('Hiba történt a kész dolgozatok listázása során:', err);
+    }
+}
 
-            formData.append('dolgozatFile', fileInput.files[0]);
-            formData.append('cím', cím);
+// A kész dolgozatok listázását elindítjuk
+listazKeszDolgozatok();
 
-            const response = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData
-            });
+    // Kész dolgozat hozzáadása a táblázathoz
+    function addDolgozatToTable(dolgozat) {
+        const tr = document.createElement('tr');
+        tr.dataset.id = dolgozat._id;
 
-            if (response.ok) {
-                const result = await response.json();
-                addUploadedDolgozatToTable(cím, result.fájl);
-            } else {
-                console.error('Hiba történt a dolgozat feltöltése során');
-            }
+        tr.innerHTML = `
+            <td>${dolgozat.cím || 'N/A'}</td>
+            <td>${dolgozat.hallgato_id || 'N/A'}</td>
+            <td>${dolgozat.temavezeto_id || 'N/A'}</td>
+            <td>${dolgozat.allapot || 'N/A'}</td>
+            <td>
+                <button class="upload-btn">Feltöltés</button>
+            </td>
+        `;
+        keszDolgozatokTbody.appendChild(tr);
+
+        // Eseménykezelő hozzárendelése a feltöltési gombhoz
+        const uploadBtn = tr.querySelector('.upload-btn');
+        uploadBtn.addEventListener('click', async () => {
+            // Feltöltési funkció implementálása
         });
     }
 
-    function addUploadedDolgozatToTable(cím, fájl) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${cím}</td>
-            <td><a href="/uploads/${fájl}" target="_blank">Megtekintés</a></td>
-        `;
-        feltoltottDolgozatokTbody.appendChild(tr);
-    }
+    // Kész dolgozatok listázása indításkor
+    listazKeszDolgozatok();
 });
-
