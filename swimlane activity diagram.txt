@@ -1,0 +1,43 @@
+@startuml
+|Felhasználó|
+start
+:Oldal megnyitása (papers.html);
+
+|Frontend (JavaScript)|
+:JS betöltődik;
+:fetch GET /api/papers;
+
+|Backend (Express)|
+:Kérés fogadása;
+:Adatok lekérdezése Mongoose-szal;
+
+|MongoDB|
+:TDK dolgozatok lekérdezése;
+:Találatok visszaadása;
+
+|Backend (Express)|
+:Adatok átalakítása
+(nevek összevonása, szekciónév képzése);
+:JSON válasz küldése;
+
+|Frontend (JavaScript)|
+:JSON feldolgozása;
+:DOM frissítése
+(táblázat, lenyitható sorok, gombok);
+
+if ("Felhasználó műveletet végez?\n(pl. bírálat mentése)") then (igen)
+  :Modális ablak kitöltése;
+  :fetch POST /api/papers/:id/ertekeles;
+  |Backend (Express)|
+  :Értékelés mentése az adatbázisba;
+  |MongoDB|
+  :Értékelés tárolása;
+  |Backend (Express)|
+  :Sikeres válasz küldése;
+  |Frontend (JavaScript)|
+  :Visszajelzés megjelenítése;
+endif
+
+|Felhasználó|
+stop
+@enduml
