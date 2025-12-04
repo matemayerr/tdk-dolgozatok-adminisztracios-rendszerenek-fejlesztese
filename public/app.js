@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentPage = 1;
     let aktualisModositandoId = null;
     let itemsPerPage = 25;
-    let loggedInUser = null; // 🔹 bejelentkezett felhasználó adatai
+    let loggedInUser = null; // bejelentkezett felhasználó adatai
     let dolgozatJelentkezesDeadline = null;
     let dolgozatJelentkezesLejart = false;
 
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
 }
 
 
-    // 🔹 Határidő lekérése a backendről
+    // Határidő lekérése a backendről
     async function betoltDolgozatJelentkezesHatarido() {
         try {
             const res = await fetch('/api/deadlines/dolgozat_jelentkezes');
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // 🔹 UI frissítése: szöveg + gombok
+    // UI frissítése: szöveg + gombok
     function frissitDolgozatJelentkezesUI() {
         if (!dolgozatJelentkezesDeadline) return;
 
@@ -350,7 +350,7 @@ window.editDolgozat = async function (id) {
         return;
     }
 
-    // 🔹 CSAK hallgató profilnál elrejtjük a hallgató/témavezető részt
+    // CSAK hallgató profilnál elrejtjük a hallgató/témavezető részt
     const csakHallgato = isOnlyHallgatoUser();
 
     const hallgatoFormGroup = document
@@ -371,7 +371,7 @@ window.editDolgozat = async function (id) {
     document.getElementById('modosit-dolgozat-cim').value = dolgozat.cim || dolgozat.cím || '';
     document.getElementById('modosit-dolgozat-leiras').value = dolgozat.leiras || '';
 
-    // ⬇⬇ A FELHASZNÁLÓK BETÖLTÉSE CSAK AKKOR KELL, HA NEM CSAK HALLGATÓ
+    // A FELHASZNÁLÓK BETÖLTÉSE CSAK AKKOR KELL, HA NEM CSAK HALLGATÓ
     if (!csakHallgato) {
         const response = await fetch('/api/felhasznalok');
         const felhasznalok = await response.json();
@@ -458,14 +458,14 @@ window.editDolgozat = async function (id) {
     let formData;
 
     if (isOnlyHallgatoUser()) {
-        // 🔹 CSAK hallgató profil: csak cím + leírás módosítható
+        // CSAK hallgató profil: csak cím + leírás módosítható
         formData = {
             cím: cim,
             leiras: leiras
             // NINCS hallgato_ids, temavezeto_ids → backend nem nyúl hozzájuk
         };
     } else {
-        // 🔹 Minden más profil: a régi logika marad
+        // Minden más profil: a régi logika marad
         const hallgato_ids = Array.from(
             document.querySelectorAll('#modosit-hallgato-lista input[type="checkbox"]:checked')
         ).map(cb => cb.value);
@@ -653,7 +653,7 @@ window.editDolgozat = async function (id) {
                 nevSpan.textContent = `${loggedInUser.nev} (${neptun})`;
             }
 
-            // 🔹 szerep betöltve → most kérjük le a dolgozatokat
+            // szerep betöltve → most kérjük le a dolgozatokat
             await listazDolgozatok();
         } catch (err) {
             console.error('Hiba az aktuális felhasználó lekérésekor:', err);
@@ -856,7 +856,7 @@ window.editDolgozat = async function (id) {
         });
     }
 
-    // 🔔 Egységes toast értesítés (sections.js-ből átvéve)
+    // Egységes toast értesítés (sections.js-ből átvéve)
     function showToast(message, type = 'info', duration = 3000) {
         const container = document.getElementById('toast-container');
 

@@ -7,6 +7,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const resetTokens = {}; // egyszerű token tárolás memóriában (indítás után elveszik)
 const Paper = require('./models/Paper');
+require('dotenv').config();
 
 
 
@@ -14,10 +15,12 @@ const Paper = require('./models/Paper');
 const app = express();
 const port = 3000;
 
+
 // MongoDB kapcsolat létrehozása
-mongoose.connect('mongodb://localhost:27017/tdk_adatbazis')
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('Could not connect to MongoDB:', err));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('Could not connect to MongoDB:', err));
+
 
 // Statikus fájlok kiszolgálása (pl. CSS, JavaScript, képek)
 app.use(express.static(path.join(__dirname, 'public')));
